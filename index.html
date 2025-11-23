@@ -154,23 +154,26 @@
                     </div>
                     <div class="text-4xl font-bold mb-1"><span id="temperature">--</span>°</div>
                     <div id="weatherDesc" class="text-xs text-slate-300">--</div>
-                    <div class="flex gap-3 mt-3 text-xs text-slate-400">
+                    
+                    <!-- NEU: Min / Max Temperatur -->
+                    <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2">
+                        <span class="flex items-center"><i data-lucide="arrow-up" size="14" class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span>
+                        <span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span>
+                    </div>
+
+                    <div class="flex gap-3 mt-1 text-xs text-slate-400">
                         <span class="flex items-center gap-1"><i data-lucide="wind" size="12"></i> <span id="windSpeed">--</span></span>
                         <span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span>
                     </div>
                 </div>
 
-                <!-- Moto Score Karte (Update: Jetzt mit Tagesschnitt) -->
                 <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
-                    
-                    <!-- Großer Aktueller Score -->
                     <div id="motoScoreCircle" class="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner">
                         <span id="motoScoreValue" class="text-2xl font-black">--</span>
                     </div>
                     <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
                     
-                    <!-- NEU: Tages Durchschnitt -->
                     <div class="border-t border-slate-600/50 w-full pt-2 mt-1">
                         <div class="flex justify-between items-center px-1 text-xs">
                             <span class="text-slate-400">Heute Ø</span>
@@ -242,30 +245,24 @@
                 <i data-lucide="layers" size="20"></i> Kartenart wählen
             </h3>
             <div class="grid grid-cols-2 gap-3">
-                <!-- Regen (Forecast) -->
                 <button onclick="selectLayer('rain', 'Regen (Vorschau)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group">
                     <i data-lucide="cloud-rain" size="24" class="text-blue-300 group-hover:text-white"></i>
                     <span class="text-sm font-medium">Regen (Vorschau)</span>
                     <span class="text-[10px] text-slate-400 group-hover:text-blue-200">Mit Zukunft</span>
                 </button>
-                
-                <!-- Radar (Real) -->
                 <button onclick="selectLayer('radar', 'Radar (Live/Ist)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group">
                     <i data-lucide="radar" size="24" class="text-yellow-300 group-hover:text-white"></i>
                     <span class="text-sm font-medium">Radar (Live/Ist)</span>
                     <span class="text-[10px] text-slate-400 group-hover:text-blue-200">Vergangenheit</span>
                 </button>
-                
                 <button onclick="selectLayer('wind', 'Wind')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="wind" size="24" class="text-teal-300"></i>
                     <span class="text-sm font-medium">Wind</span>
                 </button>
-                
                 <button onclick="selectLayer('clouds', 'Wolken')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="cloud" size="24" class="text-gray-300"></i>
                     <span class="text-sm font-medium">Wolken</span>
                 </button>
-                
                 <button onclick="selectLayer('temp', 'Temperatur')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="thermometer" size="24" class="text-red-400"></i>
                     <span class="text-sm font-medium">Temperatur</span>
@@ -478,37 +475,19 @@
         }
 
         function calculateDailyScore(hourly) {
-            // Heutiges Datum aus API oder Systemzeit
-            // Wir nehmen die Systemzeit, korrigieren um Offset der API für "lokalen Tag"
-            // Aber um es simpel zu halten: Wir schauen auf die ersten 24 Einträge (heute)
-            // und filtern nach is_day. Besser: Wir parsen das Datum.
-            
             const now = new Date();
-            const todayDateString = now.toISOString().slice(0, 10); // YYYY-MM-DD in UTC... 
-            // Vorsicht: Timezone. Besser wir iterieren und schauen auf die lokale Zeit
-            
+            const offsetMs = (lastWeatherData.utc_offset_seconds || 0) * 1000;
             let totalScore = 0;
             let count = 0;
-            
-            // Offset berücksichtigen für korrekte Tageszuordnung
-            const offsetMs = (lastWeatherData.utc_offset_seconds || 0) * 1000;
 
             for (let i = 0; i < hourly.time.length; i++) {
-                const timeMs = new Date(hourly.time[i]).getTime(); // UTC time of data point
-                // Lokale Zeit simulieren
-                const localDate = new Date(timeMs + offsetMs); // Das ist jetzt "lokale Zeit" im Date Objekt (vorsicht, .getHours() nutzt Systemzeit, .getUTCHours() die verschobene)
-                
-                // Wir prüfen einfach, ob der Tag mit "Heute" übereinstimmt.
-                // Einfacher: Wir nehmen an, die API liefert sortiert ab "jetzt" (oder 00:00 heute).
-                // Wir checken nur die ersten 24h oder solange das Datum passt.
-                
-                // Robuster: String Vergleich des Datums (lokal)
+                const timeMs = new Date(hourly.time[i]).getTime();
+                const localDate = new Date(timeMs + offsetMs);
                 const pointDateStr = localDate.toISOString().slice(0, 10);
                 const nowDateStr = new Date(Date.now() + offsetMs).toISOString().slice(0, 10);
                 
-                if (pointDateStr !== nowDateStr) continue; // Nicht mehr heute (oder gestern)
+                if (pointDateStr !== nowDateStr) continue;
 
-                // Nur Tagfahrten bewerten
                 if (hourly.is_day[i] === 1) {
                     const score = calculateMotoScore(
                         hourly.temperature_2m[i],
@@ -521,9 +500,8 @@
                     count++;
                 }
             }
-
             if (count === 0) return "--";
-            return Math.round((totalScore / count) * 10) / 10; // Eine Nachkommastelle
+            return Math.round((totalScore / count) * 10) / 10;
         }
 
         function getScoreColor(score) {
@@ -557,16 +535,17 @@
 
         async function fetchWeather(name, country) {
             errorMessage.classList.add('hidden');
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,is_day&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&forecast_days=3&timezone=auto`;
+            // UPDATE: Added daily parameters
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,is_day&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto`;
             try {
                 const res = await fetch(url);
                 lastWeatherData = await res.json();
-                updateUI(name); // Initial call uses "Current" state
+                updateUI(name); 
                 updateRadar();
             } catch (e) { errorMessage.classList.remove('hidden'); showLoading(false); }
         }
 
-        function updateMainValues(temp, wind, hum, rain, code, isDay, timeText) {
+        function updateMainValues(temp, wind, hum, rain, code, isDay, timeText, dayIndex = 0) {
             document.getElementById('temperature').innerText = Math.round(temp);
             document.getElementById('windSpeed').innerText = wind + " km/h";
             document.getElementById('humidity').innerText = hum + "%";
@@ -589,6 +568,12 @@
                  timeLabel.innerText = "Aktuell";
                  timeLabel.classList.remove('opacity-0');
             }
+
+            // Update Min/Max based on Day Index
+            if (lastWeatherData && lastWeatherData.daily && lastWeatherData.daily.temperature_2m_max[dayIndex] !== undefined) {
+                document.getElementById('tempMax').innerText = Math.round(lastWeatherData.daily.temperature_2m_max[dayIndex]);
+                document.getElementById('tempMin').innerText = Math.round(lastWeatherData.daily.temperature_2m_min[dayIndex]);
+            }
             
             lucide.createIcons();
         }
@@ -596,10 +581,9 @@
         function updateUI(name) {
             if(name) document.getElementById('cityName').innerText = name;
             const cur = lastWeatherData.current;
-            updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, "Aktuell");
+            updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, "Aktuell", 0);
             checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
             
-            // Calculate and update Daily Score
             const dailyAvg = calculateDailyScore(lastWeatherData.hourly);
             document.getElementById('dailyScoreValue').innerText = dailyAvg + " / 10";
 
@@ -624,6 +608,11 @@
             const day = date.toLocaleDateString('de-DE', {weekday: 'long'});
             const hour = date.getHours();
             const timeStr = `${day} ${hour}:00`;
+
+            // Calculate Day Index for Min/Max (approx 0-23 = 0, 24-47 = 1)
+            // Since we use timezone=auto and index starts at 00:00 usually (or relative to current time if current was fetched? No, hourly is fixed grid)
+            // The hourly array starts at 00:00 of current day usually.
+            const dayIndex = Math.floor(index / 24);
 
             const motoCheck = calculateMotoScore(temp, wind, rain, isDay, code);
             const scoreColor = getScoreColor(motoCheck.score);
