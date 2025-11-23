@@ -200,7 +200,7 @@
         <!-- Initialer State -->
         <div id="startPrompt" class="text-center py-20 text-slate-500">
             <i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i>
-            <p>Tippe oben, um zu starten.</p>
+            <p>Standort wird ermittelt...</p>
         </div>
 
     </main>
@@ -277,7 +277,6 @@
         function toggleLegend() {
             const modal = document.getElementById('legendModal');
             modal.classList.toggle('hidden');
-            // Icons im Modal neu rendern, falls sie noch nicht gerendert sind
             lucide.createIcons();
         }
 
@@ -457,14 +456,27 @@
             }
         }
 
-        function locateMe() {
-            if (!navigator.geolocation) return alert("Kein GPS verfügbar");
+        function locateMe(silent = false) {
+            if (!navigator.geolocation) {
+                 if(!silent) alert("Kein GPS verfügbar");
+                 return;
+            }
+            // Zeige Ladeindikator wenn nicht silent, oder auch bei silent für Feedback
             showLoading(true);
+            
             navigator.geolocation.getCurrentPosition(pos => {
                 currentLat = pos.coords.latitude;
                 currentLon = pos.coords.longitude;
                 fetchWeather("Mein Standort", "");
-            }, () => { showLoading(false); alert("Standort nicht erlaubt"); });
+            }, () => { 
+                showLoading(false);
+                if(!silent) alert("Standort nicht erlaubt");
+                else {
+                    // Falls Silent (Auto-Start) und Fehler: Zeige StartPrompt wieder
+                    startPrompt.innerText = "Tippe oben, um zu starten.";
+                    startPrompt.classList.remove('hidden');
+                }
+            });
         }
 
         async function fetchWeather(name, country) {
@@ -564,6 +576,13 @@
             if(show) { loadingIndicator.classList.remove('hidden'); weatherContent.classList.add('hidden'); startPrompt.classList.add('hidden'); }
             else { loadingIndicator.classList.add('hidden'); }
         }
+
+        // AUTO-INIT beim Laden der Seite
+        document.addEventListener('DOMContentLoaded', () => {
+             // Rufe locateMe im "silent" Modus auf (true)
+             locateMe(true);
+        });
+
     </script>
 </body>
 </html>
