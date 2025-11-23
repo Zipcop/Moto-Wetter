@@ -2,10 +2,8 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <!-- WICHTIG für iPhone: Verhindert Zoomen beim Tippen und setzt korrekte Skalierung -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- iOS Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MotoWeather">
@@ -100,14 +98,12 @@
         <!-- Header / Suche -->
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             
-            <!-- Obere Zeile mit Titel und Glocke -->
             <div class="flex justify-between items-center mb-3">
                 <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="bike" size="16"></i> MotoWeather
                 </h1>
                 <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative">
                     <i data-lucide="bell" size="18"></i>
-                    <!-- Roter Punkt wenn aktiv (wird per JS gesteuert) -->
                     <span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span>
                 </button>
             </div>
@@ -132,6 +128,7 @@
             </div>
             
             <div id="cityName" class="text-xl font-bold mt-4 text-center tracking-wide text-blue-100">--</div>
+            
             <div id="errorMessage" class="hidden text-red-400 text-center text-sm mt-2">Stadt nicht gefunden.</div>
         </div>
 
@@ -143,7 +140,7 @@
             
             <!-- Aktuelles Wetter & Moto Score -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300">
                     <div id="weatherIconContainer" class="mb-1 text-blue-300">
                         <i data-lucide="cloud" size="40"></i>
                     </div>
@@ -155,7 +152,7 @@
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
                     <div id="motoScoreCircle" class="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner">
                         <span id="motoScoreValue" class="text-2xl font-black">--</span>
@@ -195,9 +192,8 @@
             <div id="timelineCard" class="glass-panel rounded-2xl p-4 transition-all duration-300">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300">
-                        <i data-lucide="clock" size="16"></i> Vorhersage (24h)
+                        <i data-lucide="clock" size="16"></i> Vorhersage (Details antippen)
                     </h3>
-                    <!-- Legende Button -->
                     <button onclick="toggleLegend()" class="text-slate-400 hover:text-white transition p-1 bg-slate-800/50 rounded-full hover:bg-slate-700" title="Symbol-Legende">
                         <i data-lucide="info" size="16"></i>
                     </button>
@@ -210,7 +206,6 @@
 
         </div>
 
-        <!-- Initialer State -->
         <div id="startPrompt" class="text-center py-20 text-slate-500">
             <i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i>
             <p>Standort wird ermittelt...</p>
@@ -218,50 +213,71 @@
 
     </main>
 
+    <!-- Detail Modal für Stunden -->
+    <div id="hourlyDetailsModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50">
+            <button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full transition">
+                <i data-lucide="x" size="20"></i>
+            </button>
+            
+            <!-- Modal Header -->
+            <div class="text-center mb-4">
+                <div id="modalTime" class="text-lg font-bold text-blue-200">--:--</div>
+                <div id="modalDesc" class="text-sm text-slate-400">--</div>
+            </div>
+
+            <!-- Modal Main Icon & Temp -->
+            <div class="flex flex-col items-center justify-center mb-6">
+                <div id="modalIcon" class="mb-2 transform scale-125"></div>
+                <div class="text-5xl font-bold tracking-tighter"><span id="modalTemp">--</span>°</div>
+            </div>
+
+            <!-- Modal Grid Stats -->
+            <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                <div class="bg-slate-800/50 rounded-lg p-2">
+                    <div class="text-slate-400 text-[10px] mb-1"><i data-lucide="wind" size="12" class="inline"></i> Wind</div>
+                    <div id="modalWind" class="font-bold text-sm">--</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-2">
+                    <div class="text-slate-400 text-[10px] mb-1"><i data-lucide="umbrella" size="12" class="inline"></i> Regen</div>
+                    <div id="modalRain" class="font-bold text-sm">--</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-2">
+                    <div class="text-slate-400 text-[10px] mb-1"><i data-lucide="droplets" size="12" class="inline"></i> Feuchte</div>
+                    <div id="modalHum" class="font-bold text-sm">--</div>
+                </div>
+            </div>
+
+            <!-- Modal Moto Score Footer -->
+            <div id="modalScoreBg" class="rounded-xl p-3 border flex items-center justify-between">
+                <span class="font-bold uppercase text-xs tracking-wider">Moto Index</span>
+                <div class="text-right">
+                    <span id="modalScoreVal" class="text-xl font-black">--</span>
+                    <span class="text-xs opacity-80">/10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Legende Modal -->
     <div id="legendModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50">
             <button onclick="toggleLegend()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full">
                 <i data-lucide="x" size="20"></i>
             </button>
-            
             <h3 class="text-lg font-bold mb-4 text-blue-100 flex items-center gap-2">
                 <i data-lucide="cloud-sun" size="20"></i> Wetter-Legende
             </h3>
-            
             <div class="grid grid-cols-1 gap-2 text-sm text-slate-300">
-                <!-- Kategorien -->
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="sun" class="text-yellow-400 w-6 h-6"></i> <span>Klar / Heiter</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-sun" class="text-blue-200 w-6 h-6"></i> <span>Wolkig / Bedeckt</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-fog" class="text-slate-400 w-6 h-6"></i> <span>Nebel</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-drizzle" class="text-blue-300 w-6 h-6"></i> <span>Nieselregen</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-rain" class="text-blue-400 w-6 h-6"></i> <span>Regen</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-rain-wind" class="text-blue-500 w-6 h-6"></i> <span>Schauer / Sturm</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="snowflake" class="text-white w-6 h-6"></i> <span>Schnee / Eis</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-lightning" class="text-yellow-500 w-6 h-6"></i> <span>Gewitter</span>
-                </div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl">
-                    <i data-lucide="cloud-hail" class="text-white w-6 h-6"></i> <span>Hagel / Eisregen</span>
-                </div>
-            </div>
-            
-            <div class="mt-6 pt-4 border-t border-slate-600/50 text-xs text-center text-slate-500">
-                Datenquelle: Open-Meteo
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="sun" class="text-yellow-400 w-6 h-6"></i> <span>Klar / Heiter</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-sun" class="text-blue-200 w-6 h-6"></i> <span>Wolkig / Bedeckt</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-fog" class="text-slate-400 w-6 h-6"></i> <span>Nebel</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-drizzle" class="text-blue-300 w-6 h-6"></i> <span>Nieselregen</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain" class="text-blue-400 w-6 h-6"></i> <span>Regen</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain-wind" class="text-blue-500 w-6 h-6"></i> <span>Schauer / Sturm</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="snowflake" class="text-white w-6 h-6"></i> <span>Schnee / Eis</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning" class="text-yellow-500 w-6 h-6"></i> <span>Gewitter</span></div>
+                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-hail" class="text-white w-6 h-6"></i> <span>Hagel / Eisregen</span></div>
             </div>
         </div>
     </div>
@@ -286,194 +302,108 @@
         const suggestionsList = document.getElementById('suggestionsList');
         const liveClock = document.getElementById('liveClock');
 
-        // --- BENACHRICHTIGUNGEN LOGIK ---
-        
+        // --- BENACHRICHTIGUNGEN ---
         async function enableNotifications() {
-            if (!("Notification" in window)) {
-                alert("Dein Browser unterstützt keine Benachrichtigungen.");
-                return;
-            }
-
-            // Status prüfen und anfordern
+            if (!("Notification" in window)) { alert("Nicht unterstützt."); return; }
             if (Notification.permission === "granted") {
-                alert("Benachrichtigungen sind bereits aktiv!");
-                // Wir schicken eine Test-Nachricht
-                checkAndSendNotification(10); // Simuliere perfekten Score zum Test
+                alert("Aktiv!"); checkAndSendNotification(10);
             } else if (Notification.permission !== "denied") {
                 const permission = await Notification.requestPermission();
                 if (permission === "granted") {
                     document.getElementById('notifyBadge').classList.remove('hidden');
-                    new Notification("MotoWeather", {
-                        body: "Benachrichtigungen aktiviert! Wir melden uns bei Biker-Wetter.",
-                        icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png"
-                    });
+                    new Notification("MotoWeather", { body: "Aktiviert!", icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png" });
                 }
-            } else {
-                alert("Benachrichtigungen wurden blockiert. Bitte in den Browsereinstellungen aktivieren.");
-            }
+            } else { alert("Blockiert."); }
         }
-
-        // Wird nach jedem Wetter-Update aufgerufen
         function checkAndSendNotification(score) {
-            // Nur benachrichtigen wenn erlaubt UND Score sehr gut (>= 8)
             if (Notification.permission === "granted" && score >= 8) {
-                // Verhindern, dass wir alle 5 Minuten spammen (simple Sperre via sessionStorage)
                 const lastNotified = sessionStorage.getItem('lastNotificationTime');
                 const now = Date.now();
-                
-                // Nur alle 4 Stunden benachrichtigen
                 if (!lastNotified || (now - lastNotified > 4 * 60 * 60 * 1000)) {
-                    new Notification("Perfektes Biker-Wetter! 🏍️", {
-                        body: `Der aktuelle Moto-Score ist ${score}/10! Zeit für eine Ausfahrt.`,
-                        icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png"
-                    });
+                    new Notification("Biker-Wetter!", { body: `Score: ${score}/10`, icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png" });
                     sessionStorage.setItem('lastNotificationTime', now);
                 }
             }
         }
+        if ("Notification" in window && Notification.permission === "granted") document.getElementById('notifyBadge').classList.remove('hidden');
+
+        // --- LEGENDE & MODAL ---
+        function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
         
-        // Check beim Laden: Wenn erlaubt, zeige den blauen Punkt an der Glocke
-        if ("Notification" in window && Notification.permission === "granted") {
-            document.getElementById('notifyBadge').classList.remove('hidden');
+        function closeHourlyModal() {
+            document.getElementById('hourlyDetailsModal').classList.add('hidden');
         }
 
-
-        // --- LEGENDE LOGIK ---
-        function toggleLegend() {
-            const modal = document.getElementById('legendModal');
-            modal.classList.toggle('hidden');
-            lucide.createIcons();
-        }
-
-        // --- UHRZEIT LOGIK ---
-        function startClock() {
-            updateClock();
-            if (clockInterval) clearInterval(clockInterval);
-            clockInterval = setInterval(updateClock, 1000);
-        }
-
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            liveClock.innerText = timeString;
-        }
+        // --- UHR ---
+        function startClock() { updateClock(); if (clockInterval) clearInterval(clockInterval); clockInterval = setInterval(updateClock, 1000); }
+        function updateClock() { liveClock.innerText = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); }
         startClock();
 
-        // --- AUTOCOMPLETE LOGIK ---
-        cityInput.addEventListener('input', function(e) {
-            const query = e.target.value.trim();
+        // --- AUTOCOMPLETE ---
+        cityInput.addEventListener('input', (e) => {
             clearTimeout(debounceTimer);
-            if (query.length < 2) { suggestionsList.classList.add('hidden'); return; }
-            debounceTimer = setTimeout(() => fetchSuggestions(query), 300);
+            if (e.target.value.trim().length < 2) { suggestionsList.classList.add('hidden'); return; }
+            debounceTimer = setTimeout(() => fetchSuggestions(e.target.value.trim()), 300);
         });
-
-        document.addEventListener('click', function(e) {
-            if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-                suggestionsList.classList.add('hidden');
-            }
-        });
+        document.addEventListener('click', (e) => { if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) suggestionsList.classList.add('hidden'); });
 
         async function fetchSuggestions(query) {
             try {
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=de&format=json`;
-                const res = await fetch(url);
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=de&format=json`);
                 const data = await res.json();
-                if (data.results && data.results.length > 0) renderSuggestions(data.results);
-                else suggestionsList.classList.add('hidden');
-            } catch (error) { console.error("Vorschlag-Fehler:", error); }
+                if (data.results) renderSuggestions(data.results); else suggestionsList.classList.add('hidden');
+            } catch (e) {}
         }
-
         function renderSuggestions(results) {
             suggestionsList.innerHTML = '';
             results.forEach(place => {
                 const div = document.createElement('div');
                 div.className = "p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 flex flex-col";
-                const extra = [place.admin1, place.country].filter(Boolean).join(', ');
-                div.innerHTML = `<span class="font-bold text-white text-sm">${place.name}</span><span class="text-xs text-slate-400">${extra}</span>`;
+                div.innerHTML = `<span class="font-bold text-white text-sm">${place.name}</span><span class="text-xs text-slate-400">${[place.admin1, place.country].filter(Boolean).join(', ')}</span>`;
                 div.onclick = () => selectLocation(place);
                 suggestionsList.appendChild(div);
             });
             suggestionsList.classList.remove('hidden');
         }
-
         function selectLocation(place) {
-            cityInput.value = place.name;
-            suggestionsList.classList.add('hidden');
-            cityInput.blur();
-            currentLat = place.latitude;
-            currentLon = place.longitude;
+            cityInput.value = place.name; suggestionsList.classList.add('hidden'); cityInput.blur();
+            currentLat = place.latitude; currentLon = place.longitude;
             fetchWeather(place.name, place.country);
         }
 
-        // --- VOLLBILD LOGIK ---
+        // --- VOLLBILD ---
         function toggleFullscreen() {
             const card = document.getElementById('radarCard');
-            const icon = document.getElementById('fullscreenIcon');
-            const overlay = document.getElementById('radarOverlay');
-            
             isFullscreen = !isFullscreen;
-
             if (isFullscreen) {
                 card.classList.add('radar-fullscreen');
-                icon.setAttribute('data-lucide', 'x');
-                overlay.classList.add('hidden');
+                document.getElementById('fullscreenIcon').setAttribute('data-lucide', 'x');
+                document.getElementById('radarOverlay').classList.add('hidden');
                 document.body.style.overflow = 'hidden';
             } else {
                 card.classList.remove('radar-fullscreen');
-                icon.setAttribute('data-lucide', 'maximize-2');
-                overlay.classList.remove('hidden');
+                document.getElementById('fullscreenIcon').setAttribute('data-lucide', 'maximize-2');
+                document.getElementById('radarOverlay').classList.remove('hidden');
                 document.body.style.overflow = '';
             }
-            lucide.createIcons();
-            updateRadar();
+            lucide.createIcons(); updateRadar();
         }
 
-        // Mapping WMO Codes
+        // --- WETTER LOGIK ---
         function getWeatherInfo(code) {
-            const map = {
-                0: { t: "Klar", i: "sun" }, 
-                1: { t: "Heiter", i: "sun" }, 
-                2: { t: "Wolkig", i: "cloud-sun" }, 
-                3: { t: "Bedeckt", i: "cloud" },
-                45: { t: "Nebel", i: "cloud-fog" }, 
-                48: { t: "Nebel", i: "cloud-fog" },
-                51: { t: "Niesel", i: "cloud-drizzle" }, 
-                53: { t: "Niesel", i: "cloud-drizzle" }, 
-                55: { t: "Niesel", i: "cloud-drizzle" },
-                56: { t: "Gefrier. Niesel", i: "cloud-drizzle" }, 
-                57: { t: "Gefrier. Niesel", i: "cloud-drizzle" }, 
-                61: { t: "Regen", i: "cloud-rain" }, 
-                63: { t: "Regen", i: "cloud-rain" }, 
-                65: { t: "Starkregen", i: "cloud-rain" },
-                66: { t: "Gefrier. Regen", i: "cloud-hail" }, 
-                67: { t: "Gefrier. Regen", i: "cloud-hail" }, 
-                71: { t: "Schnee", i: "snowflake" }, 
-                73: { t: "Schnee", i: "snowflake" }, 
-                75: { t: "Schnee", i: "snowflake" }, 
-                77: { t: "Schneegriesel", i: "snowflake" }, 
-                80: { t: "Schauer", i: "cloud-rain-wind" }, 
-                81: { t: "Schauer", i: "cloud-rain-wind" }, 
-                82: { t: "Starkschauer", i: "cloud-rain-wind" },
-                85: { t: "Schneeschauer", i: "snowflake" }, 
-                86: { t: "Schneeschauer", i: "snowflake" }, 
-                95: { t: "Gewitter", i: "cloud-lightning" }, 
-                96: { t: "Gewitter", i: "cloud-lightning" }, 
-                99: { t: "Gewitter", i: "cloud-lightning" }
-            };
-            return map[code] || { t: "Unbekannt", i: "help-circle" };
+            const map = { 0:{t:"Klar",i:"sun"},1:{t:"Heiter",i:"sun"},2:{t:"Wolkig",i:"cloud-sun"},3:{t:"Bedeckt",i:"cloud"},45:{t:"Nebel",i:"cloud-fog"},48:{t:"Nebel",i:"cloud-fog"},51:{t:"Niesel",i:"cloud-drizzle"},53:{t:"Niesel",i:"cloud-drizzle"},55:{t:"Niesel",i:"cloud-drizzle"},56:{t:"Gefrier. Niesel",i:"cloud-drizzle"},57:{t:"Gefrier. Niesel",i:"cloud-drizzle"},61:{t:"Regen",i:"cloud-rain"},63:{t:"Regen",i:"cloud-rain"},65:{t:"Starkregen",i:"cloud-rain"},66:{t:"Gefrier. Regen",i:"cloud-hail"},67:{t:"Gefrier. Regen",i:"cloud-hail"},71:{t:"Schnee",i:"snowflake"},73:{t:"Schnee",i:"snowflake"},75:{t:"Schnee",i:"snowflake"},77:{t:"Schneegriesel",i:"snowflake"},80:{t:"Schauer",i:"cloud-rain-wind"},81:{t:"Schauer",i:"cloud-rain-wind"},82:{t:"Starkschauer",i:"cloud-rain-wind"},85:{t:"Schneeschauer",i:"snowflake"},86:{t:"Schneeschauer",i:"snowflake"},95:{t:"Gewitter",i:"cloud-lightning"},96:{t:"Gewitter",i:"cloud-lightning"},99:{t:"Gewitter",i:"cloud-lightning"} };
+            return map[code] || {t:"Unbekannt",i:"help-circle"};
         }
 
-        // --- MOTORRAD ALGORITHMUS ---
         function calculateMotoScore(temp, wind, rain, isDay, code) {
-            let score = 10;
-            let reason = "Perfekt";
+            let score = 10, reason = "Perfekt";
             if (temp < 0) { score -= 10; reason = "Eisgefahr"; }
             else if (temp < 5) { score -= 8; reason = "Zu kalt"; }
             else if (temp < 10) { score -= 5; reason = "Kalt"; }
             else if (temp > 35) { score -= 4; reason = "Hitze"; }
             if (code >= 51 && code <= 99) {
                 if (code >= 95) { score -= 10; reason = "Gewitter"; }
-                else if (code >= 66 && code <= 77) { score -= 9; reason = "Eis/Schnee"; } 
+                else if (code >= 66 && code <= 77) { score -= 9; reason = "Eis/Schnee"; }
                 else if (code >= 61) { score -= 7; reason = "Regen"; }
                 else { score -= 4; reason = "Niesel"; }
             }
@@ -492,104 +422,119 @@
             return { bg: "border-red-500 text-red-400", hex: "#ef4444" };
         }
 
-        // --- UI & LOGIK ---
-        cityInput.addEventListener("keypress", (e) => { 
-            if(e.key === "Enter") {
-                e.preventDefault();
-                suggestionsList.classList.add('hidden');
-                cityInput.blur();
-                searchCity(); 
-            }
-        });
-
+        cityInput.addEventListener("keypress", (e) => { if(e.key === "Enter") { e.preventDefault(); suggestionsList.classList.add('hidden'); cityInput.blur(); searchCity(); }});
         async function searchCity() {
-            const city = cityInput.value.trim();
-            if (!city) return;
+            const city = cityInput.value.trim(); if (!city) return;
             showLoading(true);
             try {
-                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=de&format=json`;
-                const res = await fetch(geoUrl);
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=de&format=json`);
                 const data = await res.json();
-                if (!data.results) throw new Error("Nicht gefunden");
-                const loc = data.results[0];
-                currentLat = loc.latitude;
-                currentLon = loc.longitude;
+                if (!data.results) throw new Error();
+                const loc = data.results[0]; currentLat = loc.latitude; currentLon = loc.longitude;
                 fetchWeather(loc.name, loc.country);
-            } catch (e) {
-                errorMessage.classList.remove('hidden');
-                showLoading(false);
-            }
+            } catch (e) { errorMessage.classList.remove('hidden'); showLoading(false); }
         }
 
         function locateMe(silent = false) {
-            if (!navigator.geolocation) {
-                 if(!silent) alert("Kein GPS verfügbar");
-                 return;
-            }
-            // Zeige Ladeindikator wenn nicht silent, oder auch bei silent für Feedback
+            if (!navigator.geolocation) { if(!silent) alert("Kein GPS"); return; }
             showLoading(true);
-            
             navigator.geolocation.getCurrentPosition(pos => {
-                currentLat = pos.coords.latitude;
-                currentLon = pos.coords.longitude;
+                currentLat = pos.coords.latitude; currentLon = pos.coords.longitude;
                 fetchWeather("Mein Standort", "");
-            }, () => { 
-                showLoading(false);
-                if(!silent) alert("Standort nicht erlaubt");
-                else {
-                    // Falls Silent (Auto-Start) und Fehler: Zeige StartPrompt wieder
-                    startPrompt.innerText = "Tippe oben, um zu starten.";
-                    startPrompt.classList.remove('hidden');
-                }
-            });
+            }, () => { showLoading(false); if(!silent) alert("Standort verweigert"); else { startPrompt.innerText = "Tippe oben, um zu starten."; startPrompt.classList.remove('hidden'); }});
         }
 
         async function fetchWeather(name, country) {
             errorMessage.classList.add('hidden');
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,is_day&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m,is_day&forecast_days=3&timezone=auto`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,is_day&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&forecast_days=3&timezone=auto`;
             try {
                 const res = await fetch(url);
-                const data = await res.json();
-                lastWeatherData = data;
-                updateUI(data, name, country);
+                lastWeatherData = await res.json();
+                updateUI(name); // Initial call uses "Current" state
                 updateRadar();
             } catch (e) { errorMessage.classList.remove('hidden'); showLoading(false); }
         }
 
-        function updateUI(data, name, country) {
-            const cur = data.current;
-            document.getElementById('cityName').innerText = name;
-            document.getElementById('temperature').innerText = Math.round(cur.temperature_2m);
-            document.getElementById('windSpeed').innerText = cur.wind_speed_10m + " km/h";
-            document.getElementById('humidity').innerText = cur.relative_humidity_2m + "%";
-            const wInfo = getWeatherInfo(cur.weather_code);
+        function updateMainValues(temp, wind, hum, rain, code, isDay, timeText) {
+            document.getElementById('temperature').innerText = Math.round(temp);
+            document.getElementById('windSpeed').innerText = wind + " km/h";
+            document.getElementById('humidity').innerText = hum + "%";
+            
+            const wInfo = getWeatherInfo(code);
             document.getElementById('weatherDesc').innerText = wInfo.t;
             document.getElementById('weatherIconContainer').innerHTML = `<i data-lucide="${wInfo.i}" class="w-12 h-12"></i>`;
 
-            const motoCheck = calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation || 0, cur.is_day, cur.weather_code);
+            const motoCheck = calculateMotoScore(temp, wind, rain, isDay, code);
             const scoreColor = getScoreColor(motoCheck.score);
             const scoreEl = document.getElementById('motoScoreCircle');
             scoreEl.className = `w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${scoreColor.bg}`;
             document.getElementById('motoScoreValue').innerText = motoCheck.score;
             document.getElementById('motoScoreText').innerText = motoCheck.reason;
-
-            // HIER PRÜFEN WIR AUF BENACHRICHTIGUNG
-            checkAndSendNotification(motoCheck.score);
-
-            renderHourly(data.hourly);
-            startPrompt.classList.add('hidden');
-            weatherContent.classList.remove('hidden');
-            showLoading(false);
+            
             lucide.createIcons();
         }
 
-        function renderHourly(hourly) {
+        // Initiales UI Update (Aktuelles Wetter)
+        function updateUI(name) {
+            if(name) document.getElementById('cityName').innerText = name;
+            const cur = lastWeatherData.current;
+            // Hauptwerte nur beim ersten Laden setzen (Aktuell)
+            updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, "Aktuell");
+            checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
+            renderHourly();
+            startPrompt.classList.add('hidden');
+            weatherContent.classList.remove('hidden');
+            showLoading(false);
+        }
+
+        // NEU: POPUP statt Main-Update
+        function selectHour(index) {
+            if(!lastWeatherData || !lastWeatherData.hourly) return;
+            const h = lastWeatherData.hourly;
+            
+            const temp = Math.round(h.temperature_2m[index]);
+            const wind = h.wind_speed_10m[index];
+            const hum = h.relative_humidity_2m[index];
+            const rain = h.precipitation[index];
+            const code = h.weather_code[index];
+            const isDay = h.is_day[index];
+            
+            // Time Formatting
+            const date = new Date(h.time[index]);
+            const day = date.toLocaleDateString('de-DE', {weekday: 'long'});
+            const hour = date.getHours();
+            const timeStr = `${day} ${hour}:00`;
+
+            // Score
+            const motoCheck = calculateMotoScore(temp, wind, rain, isDay, code);
+            const scoreColor = getScoreColor(motoCheck.score);
+            
+            // Populate Modal
+            document.getElementById('modalTime').innerText = timeStr;
+            document.getElementById('modalTemp').innerText = temp;
+            document.getElementById('modalDesc').innerText = getWeatherInfo(code).t;
+            document.getElementById('modalIcon').innerHTML = `<i data-lucide="${getWeatherInfo(code).i}" size="48"></i>`;
+            
+            document.getElementById('modalWind').innerText = wind + " km/h";
+            document.getElementById('modalRain').innerText = rain + " mm";
+            document.getElementById('modalHum').innerText = hum + "%";
+            
+            document.getElementById('modalScoreVal').innerText = motoCheck.score;
+            // Farben setzen
+            const bgEl = document.getElementById('modalScoreBg');
+            bgEl.className = `rounded-xl p-3 border flex items-center justify-between ${scoreColor.bg} bg-slate-900/50`; // Nutze die Farbklasse vom Score, aber dunkleren BG
+
+            // Show
+            document.getElementById('hourlyDetailsModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function renderHourly() {
             const container = document.getElementById('hourlyContainer');
             container.innerHTML = '';
-            
+            const hourly = lastWeatherData.hourly;
             const now = new Date();
             const currentHourISO = now.toISOString().slice(0, 13);
-            
             let startIndex = hourly.time.findIndex(t => t.startsWith(currentHourISO));
             if(startIndex === -1) startIndex = 0;
 
@@ -598,31 +543,33 @@
                 const timeStr = hourly.time[i];
                 const hourDate = new Date(timeStr);
                 const hour = hourDate.getHours();
-                const dayName = hourDate.toLocaleDateString('de-DE', { weekday: 'short' });
-                const displayTime = `${dayName} ${hour}:00`;
+                const displayTime = `${hour}:00`;
                 const temp = Math.round(hourly.temperature_2m[i]);
                 const rating = calculateMotoScore(temp, hourly.wind_speed_10m[i], hourly.precipitation[i], hourly.is_day[i], hourly.weather_code[i]);
                 const color = getScoreColor(rating.score);
                 const icon = getWeatherInfo(hourly.weather_code[i]).i;
-                const activeClass = (i === startIndex) ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent";
+                
+                const isNow = (i === startIndex);
+                const baseClass = isNow ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent";
 
-                const html = `
-                    <div class="snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${activeClass} flex flex-col items-center justify-between h-32">
-                        <span class="text-[10px] text-slate-400 font-mono text-center leading-tight">${displayTime}</span>
-                        <div class="text-blue-200"><i data-lucide="${icon}" size="20"></i></div>
-                        <span class="text-sm font-bold">${temp}°</span>
-                        <div class="w-full flex justify-center mt-1"><div class="h-1.5 w-8 rounded-full ${color.bg.replace('text-', 'bg-').split(' ')[1]}"></div></div>
-                    </div>`;
-                container.innerHTML += html;
+                const div = document.createElement('div');
+                div.className = `hour-card cursor-pointer snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${baseClass} flex flex-col items-center justify-between h-32 hover:bg-slate-700 transition-all`;
+                div.onclick = () => selectHour(i);
+                
+                div.innerHTML = `
+                    <span class="text-xs text-slate-400 font-mono text-center leading-tight">${displayTime}</span>
+                    <div class="text-blue-200"><i data-lucide="${icon}" size="20"></i></div>
+                    <span class="text-sm font-bold">${temp}°</span>
+                    <div class="w-full flex justify-center mt-1"><div class="h-1.5 w-8 rounded-full ${color.bg.replace('text-', 'bg-').split(' ')[1]}"></div></div>
+                `;
+                container.appendChild(div);
             }
             lucide.createIcons();
         }
 
         function updateRadar() {
-            const overlay = currentRadarType === 'rain' ? 'rain' : 'wind';
-            const metricWind = 'km%2Fh';
             const h = isFullscreen ? 1000 : 384;
-            const src = `https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${overlay}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=${metricWind}&metricTemp=%C2%B0C&radarRange=-1`;
+            const src = `https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType === 'rain' ? 'rain' : 'wind'}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
             document.getElementById('radarFrame').src = src;
         }
 
@@ -631,11 +578,11 @@
             const btnRain = document.getElementById('btnRain');
             const btnWind = document.getElementById('btnWind');
             if (type === 'rain') {
-                btnRain.className = "px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white transition touch-manipulation";
-                btnWind.className = "px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-700 text-slate-300 transition touch-manipulation";
+                btnRain.className = "px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white transition";
+                btnWind.className = "px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-700 text-slate-300 transition";
             } else {
-                btnWind.className = "px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white transition touch-manipulation";
-                btnRain.className = "px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-700 text-slate-300 transition touch-manipulation";
+                btnWind.className = "px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white transition";
+                btnRain.className = "px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-700 text-slate-300 transition";
             }
             updateRadar();
         }
@@ -645,11 +592,7 @@
             else { loadingIndicator.classList.add('hidden'); }
         }
 
-        // AUTO-INIT beim Laden der Seite
-        document.addEventListener('DOMContentLoaded', () => {
-             // Rufe locateMe im "silent" Modus auf (true)
-             locateMe(true);
-        });
+        document.addEventListener('DOMContentLoaded', () => locateMe(true));
 
     </script>
 </body>
