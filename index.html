@@ -99,6 +99,19 @@
         
         <!-- Header / Suche -->
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
+            
+            <!-- Obere Zeile mit Titel und Glocke -->
+            <div class="flex justify-between items-center mb-3">
+                <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="bike" size="16"></i> MotoWeather
+                </h1>
+                <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative">
+                    <i data-lucide="bell" size="18"></i>
+                    <!-- Roter Punkt wenn aktiv (wird per JS gesteuert) -->
+                    <span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span>
+                </button>
+            </div>
+
             <div class="flex gap-2 relative">
                 <div class="relative flex-grow">
                     <input type="text" id="cityInput" placeholder="Stadt eingeben..." 
@@ -272,6 +285,58 @@
         const cityInput = document.getElementById('cityInput');
         const suggestionsList = document.getElementById('suggestionsList');
         const liveClock = document.getElementById('liveClock');
+
+        // --- BENACHRICHTIGUNGEN LOGIK ---
+        
+        async function enableNotifications() {
+            if (!("Notification" in window)) {
+                alert("Dein Browser unterstützt keine Benachrichtigungen.");
+                return;
+            }
+
+            // Status prüfen und anfordern
+            if (Notification.permission === "granted") {
+                alert("Benachrichtigungen sind bereits aktiv!");
+                // Wir schicken eine Test-Nachricht
+                checkAndSendNotification(10); // Simuliere perfekten Score zum Test
+            } else if (Notification.permission !== "denied") {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    document.getElementById('notifyBadge').classList.remove('hidden');
+                    new Notification("MotoWeather", {
+                        body: "Benachrichtigungen aktiviert! Wir melden uns bei Biker-Wetter.",
+                        icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png"
+                    });
+                }
+            } else {
+                alert("Benachrichtigungen wurden blockiert. Bitte in den Browsereinstellungen aktivieren.");
+            }
+        }
+
+        // Wird nach jedem Wetter-Update aufgerufen
+        function checkAndSendNotification(score) {
+            // Nur benachrichtigen wenn erlaubt UND Score sehr gut (>= 8)
+            if (Notification.permission === "granted" && score >= 8) {
+                // Verhindern, dass wir alle 5 Minuten spammen (simple Sperre via sessionStorage)
+                const lastNotified = sessionStorage.getItem('lastNotificationTime');
+                const now = Date.now();
+                
+                // Nur alle 4 Stunden benachrichtigen
+                if (!lastNotified || (now - lastNotified > 4 * 60 * 60 * 1000)) {
+                    new Notification("Perfektes Biker-Wetter! 🏍️", {
+                        body: `Der aktuelle Moto-Score ist ${score}/10! Zeit für eine Ausfahrt.`,
+                        icon: "https://cdn-icons-png.flaticon.com/512/3799/3799969.png"
+                    });
+                    sessionStorage.setItem('lastNotificationTime', now);
+                }
+            }
+        }
+        
+        // Check beim Laden: Wenn erlaubt, zeige den blauen Punkt an der Glocke
+        if ("Notification" in window && Notification.permission === "granted") {
+            document.getElementById('notifyBadge').classList.remove('hidden');
+        }
+
 
         // --- LEGENDE LOGIK ---
         function toggleLegend() {
@@ -507,6 +572,9 @@
             scoreEl.className = `w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${scoreColor.bg}`;
             document.getElementById('motoScoreValue').innerText = motoCheck.score;
             document.getElementById('motoScoreText').innerText = motoCheck.reason;
+
+            // HIER PRÜFEN WIR AUF BENACHRICHTIGUNG
+            checkAndSendNotification(motoCheck.score);
 
             renderHourly(data.hourly);
             startPrompt.classList.add('hidden');
