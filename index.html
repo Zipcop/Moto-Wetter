@@ -160,12 +160,23 @@
                     </div>
                 </div>
 
+                <!-- Moto Score Karte (Update: Jetzt mit Tagesschnitt) -->
                 <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
+                    
+                    <!-- Großer Aktueller Score -->
                     <div id="motoScoreCircle" class="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner">
                         <span id="motoScoreValue" class="text-2xl font-black">--</span>
                     </div>
-                    <div id="motoScoreText" class="text-xs font-semibold">--</div>
+                    <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
+                    
+                    <!-- NEU: Tages Durchschnitt -->
+                    <div class="border-t border-slate-600/50 w-full pt-2 mt-1">
+                        <div class="flex justify-between items-center px-1 text-xs">
+                            <span class="text-slate-400">Heute Ø</span>
+                            <span id="dailyScoreValue" class="font-bold text-blue-100">--</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -173,15 +184,13 @@
             <div id="radarCard" class="glass-panel rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col">
                 <div class="bg-slate-800/80 p-3 flex justify-between items-center border-b border-slate-700 shrink-0">
                     <h3 class="text-sm font-semibold flex items-center gap-2">
-                        <i data-lucide="radar" size="16" class="text-blue-400"></i>
-                        <span id="radarTitle">Regen</span> <!-- Titel des aktuellen Layers -->
+                        <i data-lucide="map" size="16" class="text-blue-400"></i>
+                        <span id="radarTitle">Regen (Vorschau)</span>
                     </h3>
                     <div class="flex items-center gap-2">
-                        <!-- Layer Switcher Button -->
                         <button onclick="toggleLayerMenu()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation flex items-center gap-2" title="Kartenart ändern">
                             <i data-lucide="layers" size="16"></i>
                         </button>
-                        <!-- Fullscreen -->
                         <button onclick="toggleFullscreen()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation" title="Vollbild">
                             <i id="fullscreenIcon" data-lucide="maximize-2" size="16"></i>
                         </button>
@@ -223,7 +232,7 @@
 
     </main>
 
-    <!-- LAYER MENU (Neu) -->
+    <!-- LAYER MENU -->
     <div id="layerMenuModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-slate-500/50">
             <button onclick="toggleLayerMenu()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full transition">
@@ -233,22 +242,30 @@
                 <i data-lucide="layers" size="20"></i> Kartenart wählen
             </h3>
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="selectLayer('rain', 'Regen (Modell)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
-                    <i data-lucide="cloud-rain" size="24" class="text-blue-300"></i>
-                    <span class="text-sm font-medium">Regen (Modell)</span>
+                <!-- Regen (Forecast) -->
+                <button onclick="selectLayer('rain', 'Regen (Vorschau)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group">
+                    <i data-lucide="cloud-rain" size="24" class="text-blue-300 group-hover:text-white"></i>
+                    <span class="text-sm font-medium">Regen (Vorschau)</span>
+                    <span class="text-[10px] text-slate-400 group-hover:text-blue-200">Mit Zukunft</span>
                 </button>
-                <button onclick="selectLayer('radar', 'Wetterradar')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
-                    <i data-lucide="radar" size="24" class="text-yellow-300"></i>
-                    <span class="text-sm font-medium">Wetterradar</span>
+                
+                <!-- Radar (Real) -->
+                <button onclick="selectLayer('radar', 'Radar (Live/Ist)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group">
+                    <i data-lucide="radar" size="24" class="text-yellow-300 group-hover:text-white"></i>
+                    <span class="text-sm font-medium">Radar (Live/Ist)</span>
+                    <span class="text-[10px] text-slate-400 group-hover:text-blue-200">Vergangenheit</span>
                 </button>
+                
                 <button onclick="selectLayer('wind', 'Wind')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="wind" size="24" class="text-teal-300"></i>
                     <span class="text-sm font-medium">Wind</span>
                 </button>
+                
                 <button onclick="selectLayer('clouds', 'Wolken')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="cloud" size="24" class="text-gray-300"></i>
                     <span class="text-sm font-medium">Wolken</span>
                 </button>
+                
                 <button onclick="selectLayer('temp', 'Temperatur')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400">
                     <i data-lucide="thermometer" size="24" class="text-red-400"></i>
                     <span class="text-sm font-medium">Temperatur</span>
@@ -257,7 +274,7 @@
         </div>
     </div>
 
-    <!-- Detail Modal für Stunden -->
+    <!-- Detail Modal -->
     <div id="hourlyDetailsModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
         <div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50">
             <button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full transition">
@@ -295,7 +312,7 @@
         </div>
     </div>
 
-    <!-- Legende Modal -->
+    <!-- Legende -->
     <div id="legendModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50">
             <button onclick="toggleLegend()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full">
@@ -321,11 +338,11 @@
     <script>
         lucide.createIcons();
 
-        // State variables
+        // State
         let currentLat = 51.1657; 
         let currentLon = 10.4515;
         let currentRadarType = 'rain'; 
-        let currentRadarTitle = 'Regen'; // Default Title
+        let currentRadarTitle = 'Regen (Vorschau)'; 
         let lastWeatherData = null;
         let isFullscreen = false;
         let debounceTimer;
@@ -375,7 +392,7 @@
             currentRadarType = type;
             currentRadarTitle = title;
             document.getElementById('radarTitle').innerText = title;
-            toggleLayerMenu(); // Close Menu
+            toggleLayerMenu(); 
             updateRadar();
         }
 
@@ -460,6 +477,55 @@
             return { score: Math.max(0, Math.min(10, score)), reason: reason };
         }
 
+        function calculateDailyScore(hourly) {
+            // Heutiges Datum aus API oder Systemzeit
+            // Wir nehmen die Systemzeit, korrigieren um Offset der API für "lokalen Tag"
+            // Aber um es simpel zu halten: Wir schauen auf die ersten 24 Einträge (heute)
+            // und filtern nach is_day. Besser: Wir parsen das Datum.
+            
+            const now = new Date();
+            const todayDateString = now.toISOString().slice(0, 10); // YYYY-MM-DD in UTC... 
+            // Vorsicht: Timezone. Besser wir iterieren und schauen auf die lokale Zeit
+            
+            let totalScore = 0;
+            let count = 0;
+            
+            // Offset berücksichtigen für korrekte Tageszuordnung
+            const offsetMs = (lastWeatherData.utc_offset_seconds || 0) * 1000;
+
+            for (let i = 0; i < hourly.time.length; i++) {
+                const timeMs = new Date(hourly.time[i]).getTime(); // UTC time of data point
+                // Lokale Zeit simulieren
+                const localDate = new Date(timeMs + offsetMs); // Das ist jetzt "lokale Zeit" im Date Objekt (vorsicht, .getHours() nutzt Systemzeit, .getUTCHours() die verschobene)
+                
+                // Wir prüfen einfach, ob der Tag mit "Heute" übereinstimmt.
+                // Einfacher: Wir nehmen an, die API liefert sortiert ab "jetzt" (oder 00:00 heute).
+                // Wir checken nur die ersten 24h oder solange das Datum passt.
+                
+                // Robuster: String Vergleich des Datums (lokal)
+                const pointDateStr = localDate.toISOString().slice(0, 10);
+                const nowDateStr = new Date(Date.now() + offsetMs).toISOString().slice(0, 10);
+                
+                if (pointDateStr !== nowDateStr) continue; // Nicht mehr heute (oder gestern)
+
+                // Nur Tagfahrten bewerten
+                if (hourly.is_day[i] === 1) {
+                    const score = calculateMotoScore(
+                        hourly.temperature_2m[i],
+                        hourly.wind_speed_10m[i],
+                        hourly.precipitation[i],
+                        hourly.is_day[i],
+                        hourly.weather_code[i]
+                    ).score;
+                    totalScore += score;
+                    count++;
+                }
+            }
+
+            if (count === 0) return "--";
+            return Math.round((totalScore / count) * 10) / 10; // Eine Nachkommastelle
+        }
+
         function getScoreColor(score) {
             if (score >= 8) return { bg: "border-emerald-500 text-emerald-400", hex: "#10b981" };
             if (score >= 5) return { bg: "border-yellow-500 text-yellow-400", hex: "#eab308" };
@@ -532,6 +598,11 @@
             const cur = lastWeatherData.current;
             updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, "Aktuell");
             checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
+            
+            // Calculate and update Daily Score
+            const dailyAvg = calculateDailyScore(lastWeatherData.hourly);
+            document.getElementById('dailyScoreValue').innerText = dailyAvg + " / 10";
+
             renderHourly();
             startPrompt.classList.add('hidden');
             weatherContent.classList.remove('hidden');
@@ -596,6 +667,7 @@
                 const rating = calculateMotoScore(temp, hourly.wind_speed_10m[i], hourly.precipitation[i], hourly.is_day[i], hourly.weather_code[i]);
                 const color = getScoreColor(rating.score);
                 const icon = getWeatherInfo(hourly.weather_code[i]).i;
+                
                 const isNow = (i === startIndex);
                 const baseClass = isNow ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent";
 
@@ -616,8 +688,13 @@
 
         function updateRadar() {
             const h = isFullscreen ? 1000 : 384;
-            const src = `https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+            const src = `https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C`;
             document.getElementById('radarFrame').src = src;
+        }
+
+        function switchRadar(type) {
+            currentRadarType = type;
+            updateRadar();
         }
 
         function showLoading(show) {
