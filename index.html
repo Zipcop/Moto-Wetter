@@ -8,6 +8,7 @@
     
     <meta name="apple-mobile-web-app-title" content="Wetter">
     
+    <!-- NEUES ICON (Hochauflösend von Icons8, mit Cache-Buster ?v=2) -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     
@@ -16,7 +17,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; overflow: hidden; }
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .loader { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid #3b82f6; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -35,18 +36,79 @@
         
         /* Warn-Animation */
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        /* SPLASH SCREEN ANIMATIONS */
+        #splashScreen { transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.6s ease-out; }
+        .splash-hidden { transform: translateY(-100%); opacity: 0; pointer-events: none; }
         
-        /* Kompass-Aktiv Indikator */
-        .compass-active { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+        @keyframes floatUp { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        .animate-float-up { animation: floatUp 0.8s ease-out forwards; }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+
+        /* BACKGROUND WEATHER EFFECTS */
+        @keyframes rain-fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.3); top: -20px; animation: rain-fall 0.8s linear infinite; }
+
+        @keyframes snow-fall { 0% { transform: translateY(-10vh) translateX(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(110vh) translateX(20px); opacity: 0.3; } }
+        .snowflake { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: -10px; filter: blur(1px); animation: snow-fall 4s linear infinite; }
+
+        @keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; box-shadow: 0 0 6px rgba(255,255,255,0.9); }
+
+        @keyframes fog-drift { 0% { transform: translateX(-10%); opacity: 0.2; } 50% { transform: translateX(10%); opacity: 0.5; } 100% { transform: translateX(-10%); opacity: 0.2; } }
+        .fog-layer { position: absolute; left: -20%; right: -20%; height: 100px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent); filter: blur(20px); animation: fog-drift 8s infinite ease-in-out; }
+        
+        /* NEW: CLOUDS - Improved visibility and size */
+        @keyframes cloud-drift { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
+        .cloud-shape { position: absolute; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); width: 800px; height: 300px; border-radius: 50%; filter: blur(35px); animation: cloud-drift 40s linear infinite; }
+
+        .sun-glow { position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(253, 224, 71, 0.4) 0%, transparent 70%); filter: blur(30px); animation: pulse 4s infinite; }
     </style>
 </head>
 <body class="flex flex-col items-center">
 
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" class="fixed inset-0 z-[100] flex flex-col items-center justify-between p-10 bg-gradient-to-br from-slate-900 via-[#0f172a] to-blue-900 text-white overflow-hidden">
+        
+        <!-- Container für Wettereffekte -->
+        <div id="splashEffects" class="absolute inset-0 z-0 pointer-events-none"></div>
+
+        <div class="mt-10 text-center opacity-0 animate-float-up relative z-10">
+            <div class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold">
+                <i data-lucide="map-pin" size="14"></i> Aktueller Standort
+            </div>
+            <!-- HIER GEÄNDERT: Starttext -->
+            <h1 id="splashCity" class="text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
+        </div>
+
+        <div class="flex flex-col items-center justify-center opacity-0 animate-float-up delay-100 relative z-10">
+            <div id="splashIcon" class="mb-4 transform scale-150 drop-shadow-2xl text-blue-200">
+                <div class="loader border-t-white/50"></div>
+            </div>
+            <div class="text-8xl font-black tracking-tighter drop-shadow-xl">
+                <span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span>
+            </div>
+            <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
+        </div>
+
+        <div class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer relative z-10" onclick="dismissSplash()">
+            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten wischen</span>
+            <div class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition">
+                <i data-lucide="chevron-up" class="text-white"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTENT -->
     <main class="w-full max-w-lg space-y-4 pt-4 pb-10">
         
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
-                <!-- HIER GEÄNDERT: Sichtbarer Name -->
                 <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="bike" size="16"></i> Wetter
                 </h1>
@@ -62,14 +124,11 @@
                     <div id="suggestionsList" class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto"></div>
                 </div>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="search"></i></button>
-                <button type="button" onclick="locateMe()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0" title="Standort & Kompass"><i data-lucide="map-pin"></i></button>
+                <button type="button" onclick="locateMe()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="map-pin"></i></button>
             </form>
             
             <div id="cityName" class="text-xl font-bold mt-4 text-center tracking-wide text-blue-100">--</div>
-            <!-- OFFLINE BANNER (wird per JS eingeblendet) -->
-            <div id="offlineBanner" class="hidden text-[10px] text-orange-300 text-center uppercase tracking-wider font-bold mb-1 bg-orange-500/20 rounded py-0.5 px-2 mx-auto w-fit animate-pulse">
-                Offline-Modus
-            </div>
+            <div id="offlineBanner" class="hidden text-[10px] text-orange-300 text-center uppercase tracking-wider font-bold mb-1 bg-orange-500/20 rounded py-0.5 px-2 mx-auto w-fit animate-pulse">Offline-Modus</div>
             <div id="timeLabel" class="text-xs text-slate-400 text-center uppercase tracking-wider mb-1 font-semibold opacity-0 transition-opacity duration-300">Aktuell</div>
             <div id="errorMessage" class="hidden text-red-400 text-center text-sm mt-2 font-semibold bg-red-500/10 p-2 rounded-lg border border-red-500/20">Stadt nicht gefunden.</div>
         </div>
@@ -91,11 +150,8 @@
                         <span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span>
                     </div>
                     <div class="flex gap-3 mt-1 text-xs text-slate-400">
-                        <!-- Wind-Kompass hier integriert -->
                         <span class="flex items-center gap-1">
-                            <div class="bg-slate-700 border border-slate-600 rounded-full p-1 transform transition-transform duration-700" id="windDirArrow">
-                                <i data-lucide="arrow-up" size="12" class="text-blue-200"></i>
-                            </div>
+                            <div class="bg-slate-700 border border-slate-600 rounded-full p-1 transform transition-transform duration-700" id="windDirArrow"><i data-lucide="arrow-up" size="12" class="text-blue-200"></i></div>
                             <span id="windSpeed">--</span>
                         </span>
                         <span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span>
@@ -148,45 +204,16 @@
             </div>
         </div>
         
-        <!-- Footer & Start Prompt -->
-        <div id="startPrompt" class="text-center py-20 text-slate-500"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
+        <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
         
-        <!-- VERSION FOOTER -->
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">
-            v1.4 • n.w.
-        </div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v2.0 • n.w.</div>
     </main>
 
     <!-- Modals (Same as before) -->
-    <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
-        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
-            <button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-6 text-blue-100 flex items-center gap-2"><i data-lucide="calendar" size="20"></i> Tages-Infos (Heute)</h3>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunrise" size="12"></i> Aufgang</div><div id="detailSunrise" class="font-bold">--:--</div></div>
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunset" size="12"></i> Untergang</div><div id="detailSunset" class="font-bold">--:--</div></div>
-            </div>
-            <!-- Sonnen Countdown -->
-            <div id="sunCountdownContainer" class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 mb-6 text-center">
-                <div class="text-xs text-yellow-200 font-medium flex items-center justify-center gap-2">
-                    <i data-lucide="hourglass" size="12"></i> <span id="sunCountdownText">Berechne Licht...</span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="eye" size="12"></i> Sicht</div><div id="detailVisibility" class="font-bold">-- km</div></div>
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sun" size="12"></i> UV-Index</div><div id="detailUV" class="font-bold">--</div></div>
-            </div>
-            <div class="mb-2"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Luftqualität</h4><div class="bg-slate-800/50 p-4 rounded-xl"><div class="flex justify-between items-center mb-2"><span class="text-sm text-slate-300">AQI (Europa)</span><span id="detailAqiVal" class="font-bold text-white">--</span></div><div class="w-full bg-slate-700 rounded-full h-2 mb-3"><div id="detailAqiBar" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div></div><div id="detailAqiText" class="text-xs text-center text-slate-400 italic">Wird geladen...</div></div></div>
-        </div>
-    </div>
-
+    <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-6 text-blue-100 flex items-center gap-2"><i data-lucide="calendar" size="20"></i> Tages-Infos (Heute)</h3><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunrise" size="12"></i> Aufgang</div><div id="detailSunrise" class="font-bold">--:--</div></div><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunset" size="12"></i> Untergang</div><div id="detailSunset" class="font-bold">--:--</div></div></div><div id="sunCountdownContainer" class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 mb-6 text-center"><div class="text-xs text-yellow-200 font-medium flex items-center justify-center gap-2"><i data-lucide="hourglass" size="12"></i> <span id="sunCountdownText">Berechne Licht...</span></div></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="eye" size="12"></i> Sicht</div><div id="detailVisibility" class="font-bold">-- km</div></div><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sun" size="12"></i> UV-Index</div><div id="detailUV" class="font-bold">--</div></div></div><div class="mb-2"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Luftqualität</h4><div class="bg-slate-800/50 p-4 rounded-xl"><div class="flex justify-between items-center mb-2"><span class="text-sm text-slate-300">AQI (Europa)</span><span id="detailAqiVal" class="font-bold text-white">--</span></div><div class="w-full bg-slate-700 rounded-full h-2 mb-3"><div id="detailAqiBar" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div></div><div id="detailAqiText" class="text-xs text-center text-slate-400 italic">Wird geladen...</div></div></div></div></div>
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i data-lucide="bike" size="24" class="text-blue-400"></i> Moto Analyse</h3><p class="text-xs text-slate-400 mb-4">Warum ist der Score so?</p><div id="motoAnalysisList" class="space-y-3 mb-6"></div><h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3><div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3"><div id="gearIcon" class="text-2xl">🧥</div><div class="text-sm font-medium text-slate-200" id="gearText">Lade Empfehlung...</div></div></div></div>
-
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><div class="text-center mb-4"><div id="modalTime" class="text-lg font-bold text-blue-200">--:--</div><div id="modalDesc" class="text-sm text-slate-400">--</div></div><div class="flex flex-col items-center justify-center mb-6"><div id="modalIcon" class="mb-2 transform scale-125"></div><div class="text-5xl font-bold tracking-tighter"><span id="modalTemp">--</span>°</div></div><div class="grid grid-cols-3 gap-2 mb-4 text-center"><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="wind" size="12" class="inline"></i> Wind</div><div id="modalWind" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="umbrella" size="12" class="inline"></i> Regen</div><div id="modalRain" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="droplets" size="12" class="inline"></i> Feuchte</div><div id="modalHum" class="font-bold text-sm">--</div></div></div><div id="modalScoreBg" class="rounded-xl p-3 border flex items-center justify-between"><span class="font-bold uppercase text-xs tracking-wider">Moto Index</span><div class="text-right"><span id="modalScoreVal" class="text-xl font-black">--</span><span class="text-xs opacity-80">/10</span></div></div></div></div>
-
     <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content"><button onclick="toggleLegend()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-blue-100 flex items-center gap-2"><i data-lucide="cloud-sun" size="20"></i> Wetter-Legende</h3><div class="grid grid-cols-1 gap-2 text-sm text-slate-300"><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="sun" class="text-yellow-400 w-6 h-6"></i> <span>Klar / Heiter</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-sun" class="text-blue-200 w-6 h-6"></i> <span>Wolkig / Bedeckt</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-fog" class="text-slate-400 w-6 h-6"></i> <span>Nebel</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-drizzle" class="text-blue-300 w-6 h-6"></i> <span>Nieselregen</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain" class="text-blue-400 w-6 h-6"></i> <span>Regen</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain-wind" class="text-blue-500 w-6 h-6"></i> <span>Schauer / Sturm</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="snowflake" class="text-white w-6 h-6"></i> <span>Schnee / Eis</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning" class="text-yellow-500 w-6 h-6"></i> <span>Gewitter</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-hail" class="text-white w-6 h-6"></i> <span>Hagel / Eisregen</span></div></div></div></div>
-
     <div id="layerMenuModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleLayerMenu()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layers" size="20"></i> Kartenart wählen</h3><div class="grid grid-cols-2 gap-3"><button onclick="selectLayer('rain', 'Regen (Vorschau)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group"><i data-lucide="cloud-rain" size="24" class="text-blue-300 group-hover:text-white"></i><span class="text-sm font-medium">Regen (Vorschau)</span><span class="text-[10px] text-slate-400 group-hover:text-blue-200">Mit Zukunft</span></button><button onclick="selectLayer('radar', 'Radar (Live/Ist)')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400 group"><i data-lucide="radar" size="24" class="text-yellow-300 group-hover:text-white"></i><span class="text-sm font-medium">Radar (Live/Ist)</span><span class="text-[10px] text-slate-400 group-hover:text-blue-200">Vergangenheit</span></button><button onclick="selectLayer('wind', 'Wind')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400"><i data-lucide="wind" size="24" class="text-teal-300"></i><span class="text-sm font-medium">Wind</span></button><button onclick="selectLayer('clouds', 'Wolken')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400"><i data-lucide="cloud" size="24" class="text-gray-300"></i><span class="text-sm font-medium">Wolken</span></button><button onclick="selectLayer('temp', 'Temperatur')" class="flex flex-col items-center justify-center p-4 bg-slate-800 hover:bg-blue-600 rounded-xl transition gap-2 border border-slate-700 hover:border-blue-400"><i data-lucide="thermometer" size="24" class="text-red-400"></i><span class="text-sm font-medium">Temperatur</span></button></div></div></div>
 
     <script>
@@ -197,7 +224,12 @@
         let currentRadarType = 'rain'; let currentRadarTitle = 'Regen (Vorschau)'; 
         let lastWeatherData = null;
         let isFullscreen = false; let debounceTimer; let clockInterval;
-        let currentHeading = 0; // Default north
+        let currentHeading = 0;
+        let isFirstLoad = true; 
+        
+        // Swipe State
+        let touchStartY = 0;
+        const splash = document.getElementById('splashScreen');
 
         const cityInput = document.getElementById('cityInput');
         const suggestionsList = document.getElementById('suggestionsList');
@@ -206,64 +238,61 @@
         const warningContainer = document.getElementById('warningContainer');
         const offlineBanner = document.getElementById('offlineBanner');
 
+        // --- SWIPE LOGIC ---
+        splash.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].screenY; });
+        splash.addEventListener('touchend', e => {
+            const touchEndY = e.changedTouches[0].screenY;
+            if (touchStartY - touchEndY > 50) dismissSplash(); 
+        });
+
+        function dismissSplash() {
+            splash.classList.add('splash-hidden');
+            document.body.style.overflow = 'auto'; 
+        }
+        
+        // --- INIT SPLASH FX IMMEDIATELY ---
+        function initSplash() {
+            const hour = new Date().getHours();
+            const isDay = (hour >= 6 && hour < 20) ? 1 : 0; // Simple estimation
+            // Render "Clear" sky effects immediately as placeholder
+            renderSplashEffects(0, isDay); 
+        }
+        initSplash();
+
         // --- COMPASS LOGIC ---
         function initCompass() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
                         if (response === 'granted') {
                             window.addEventListener('deviceorientation', handleOrientation, true);
                             document.getElementById('windDirArrow').classList.add('compass-active');
-                        } else {
-                            alert("Kompass-Zugriff verweigert.");
-                        }
+                        } else alert("Kompass-Zugriff verweigert.");
                     })
                     .catch(console.error);
             } else if (window.addEventListener) {
-                // Android / Standard
                 window.addEventListener('deviceorientation', handleOrientation, true);
                 document.getElementById('windDirArrow').classList.add('compass-active');
             }
         }
-
         function handleOrientation(event) {
-            // iOS vs Android differences
-            if (event.webkitCompassHeading) {
-                // iOS
-                currentHeading = event.webkitCompassHeading;
-            } else if (event.alpha !== null) {
-                // Android (alpha is reversed, 0 is North)
-                currentHeading = 360 - event.alpha;
-            }
-            
-            // Update arrow immediately
-            if(lastWeatherData) {
-                updateWindArrow();
-            }
+            if (event.webkitCompassHeading) currentHeading = event.webkitCompassHeading;
+            else if (event.alpha !== null) currentHeading = 360 - event.alpha;
+            if(lastWeatherData) updateWindArrow();
         }
-
         function updateWindArrow() {
             if(!lastWeatherData || !lastWeatherData.current || lastWeatherData.current.wind_direction_10m === undefined) return;
-            
             const windDeg = lastWeatherData.current.wind_direction_10m;
             const arrow = document.getElementById('windDirArrow');
-            
-            // Formula: WindDir + 180 (to point where wind goes) - DeviceHeading
             const rotation = windDeg + 180 - currentHeading;
-            
-            if(arrow) {
-                arrow.style.transform = `rotate(${rotation}deg)`;
-            }
+            if(arrow) arrow.style.transform = `rotate(${rotation}deg)`;
         }
-
 
         // --- OFFLINE / CACHE LOGIC ---
         function saveToCache(name, data) {
             const cacheObj = { name, data, timestamp: Date.now() };
             localStorage.setItem('motoWeather_cache', JSON.stringify(cacheObj));
         }
-
         function loadFromCache() {
             const raw = localStorage.getItem('motoWeather_cache');
             if (!raw) return null;
@@ -314,51 +343,25 @@
             if(!lastWeatherData) return; 
             const daily = lastWeatherData.daily; 
             const cur = lastWeatherData.current;
-
             document.getElementById('detailSunrise').innerText = new Date(daily.sunrise[0]).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}); 
             document.getElementById('detailSunset').innerText = new Date(daily.sunset[0]).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}); 
             document.getElementById('detailVisibility').innerText = cur.visibility > 9999 ? ">10 km" : (cur.visibility/1000).toFixed(1) + " km";
             document.getElementById('detailUV').innerText = cur.uv_index;
-
-            // Sonnen-Countdown
-            const now = new Date();
-            const sunset = new Date(daily.sunset[0]);
-            const diffMs = sunset - now;
-            const countdownEl = document.getElementById('sunCountdownText');
-            if (diffMs > 0) {
-                const h = Math.floor(diffMs / (1000 * 60 * 60));
-                const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                countdownEl.innerText = `Noch ${h} Std ${m} Min Licht`;
-            } else {
-                countdownEl.innerText = "Sonne ist untergegangen";
-            }
-
+            const now = new Date(); const sunset = new Date(daily.sunset[0]); const diffMs = sunset - now; const countdownEl = document.getElementById('sunCountdownText');
+            if (diffMs > 0) { const h = Math.floor(diffMs / (1000 * 60 * 60)); const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); countdownEl.innerText = `Noch ${h} Std ${m} Min Licht`; } else { countdownEl.innerText = "Sonne ist untergegangen"; }
             try { 
                 const res = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`); 
-                const aqData = await res.json(); 
-                const aqi = aqData.current.european_aqi; 
-                document.getElementById('detailAqiVal').innerText = aqi; 
-                let color = "bg-green-500", text = "Sehr Gut", width = "20%"; 
-                if(aqi > 20) { color = "bg-teal-400"; text = "Gut"; width="40%"; } 
-                if(aqi > 40) { color = "bg-yellow-400"; text = "Mittel"; width="60%"; } 
-                if(aqi > 60) { color = "bg-orange-500"; text = "Schlecht"; width="80%"; } 
-                if(aqi > 80) { color = "bg-red-600"; text = "Sehr Schlecht"; width="100%"; } 
-                const bar = document.getElementById('detailAqiBar'); 
-                bar.className = `h-2 rounded-full ${color}`; bar.style.width = width; 
-                document.getElementById('detailAqiText').innerText = text; 
+                const aqData = await res.json(); const aqi = aqData.current.european_aqi; document.getElementById('detailAqiVal').innerText = aqi; 
+                let color = "bg-green-500", text = "Sehr Gut", width = "20%"; if(aqi > 20) { color = "bg-teal-400"; text = "Gut"; width="40%"; } if(aqi > 40) { color = "bg-yellow-400"; text = "Mittel"; width="60%"; } if(aqi > 60) { color = "bg-orange-500"; text = "Schlecht"; width="80%"; } if(aqi > 80) { color = "bg-red-600"; text = "Sehr Schlecht"; width="100%"; } 
+                const bar = document.getElementById('detailAqiBar'); bar.className = `h-2 rounded-full ${color}`; bar.style.width = width; document.getElementById('detailAqiText').innerText = text; 
             } catch(e) { document.getElementById('detailAqiText').innerText = "Nicht verfügbar"; } 
-            
-            document.getElementById('dailyDetailsModal').classList.remove('hidden'); 
-            lucide.createIcons(); 
+            document.getElementById('dailyDetailsModal').classList.remove('hidden'); lucide.createIcons(); 
         }
         
         function getGearRecommendation(temp, rain) {
            let text = "Standard-Ausrüstung"; let icon = "🧥";
-           if(temp > 26) { text = "Leichte Sommer-Kombi / Mesh"; icon="👕"; }
-           else if(temp < 10) { text = "Winter-Gear & Thermowäsche"; icon="🧣"; }
-           else if(temp < 18) { text = "Thermo-Futter / Softshell drunter"; icon="🧥"; }
-           if(rain > 0.5) { text += " + Regenkombi!"; icon="☔"; }
-           return {text, icon};
+           if(temp > 26) { text = "Leichte Sommer-Kombi / Mesh"; icon="👕"; } else if(temp < 10) { text = "Winter-Gear & Thermowäsche"; icon="🧣"; } else if(temp < 18) { text = "Thermo-Futter / Softshell drunter"; icon="🧥"; }
+           if(rain > 0.5) { text += " + Regenkombi!"; icon="☔"; } return {text, icon};
         }
 
         function showMotoDetails() { 
@@ -369,8 +372,7 @@
             analysis.cons.forEach(c => { list.innerHTML += `<div class="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0"></i><span class="text-sm text-red-100">${c}</span></div>`; }); 
             if(analysis.pros.length === 0 && analysis.cons.length === 0) list.innerHTML = `<div class="text-center text-slate-400 italic">Keine besonderen Vorkommnisse.</div>`; 
             const gear = getGearRecommendation(cur.temperature_2m, cur.precipitation);
-            document.getElementById('gearText').innerText = gear.text;
-            document.getElementById('gearIcon').innerText = gear.icon;
+            document.getElementById('gearText').innerText = gear.text; document.getElementById('gearIcon').innerText = gear.icon;
             document.getElementById('motoDetailsModal').classList.remove('hidden'); lucide.createIcons(); 
         }
 
@@ -401,16 +403,84 @@
                 document.getElementById('tempMax').innerText = Math.round(lastWeatherData.daily.temperature_2m_max[dayIndex]); 
                 document.getElementById('tempMin').innerText = Math.round(lastWeatherData.daily.temperature_2m_min[dayIndex]); 
             } 
-            
-            // Call arrow update here as well for initial load or city change
             updateWindArrow();
-
             lucide.createIcons(); 
+        }
+
+        // --- SPLASH EFFECTS RENDER ---
+        function renderSplashEffects(code, isDay) {
+            const container = document.getElementById('splashEffects');
+            container.innerHTML = '';
+            let html = '';
+
+            // Rain
+            if ([51,53,55,61,63,65,66,67,80,81,82,95,96,99].includes(code)) {
+                for(let i=0; i<20; i++) {
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 1;
+                    const dur = 0.5 + Math.random() * 0.5;
+                    html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s"></div>`;
+                }
+            }
+            // Snow
+            else if ([71,73,75,77,85,86].includes(code)) {
+                for(let i=0; i<20; i++) {
+                     const left = Math.random() * 100;
+                    const delay = Math.random() * 2;
+                    const dur = 2 + Math.random() * 2;
+                    html += `<div class="snowflake" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s; opacity:${Math.random()}"></div>`;
+                }
+            }
+            // Fog
+            else if ([45,48].includes(code)) {
+                html += `<div class="fog-layer" style="top: 20%; height: 20%;"></div>`;
+                html += `<div class="fog-layer" style="top: 50%; height: 30%; animation-delay: -2s;"></div>`;
+                html += `<div class="fog-layer" style="top: 80%; height: 20%; animation-delay: -5s;"></div>`;
+            }
+            // Clear/Cloudy
+            else {
+                // Wolken für Code > 0 (auch bei Nacht) - Increased visibility and count
+                if (code > 0) {
+                     html += `<div class="cloud-shape" style="top: 5%; left: -15%; animation-duration: 30s;"></div>`;
+                     html += `<div class="cloud-shape" style="top: 35%; right: -25%; animation-duration: 40s; animation-direction: reverse;"></div>`;
+                     html += `<div class="cloud-shape" style="top: 65%; left: -10%; animation-duration: 35s; animation-delay: -10s;"></div>`;
+                     html += `<div class="cloud-shape" style="top: 20%; right: 10%; animation-duration: 45s; animation-delay: -5s; animation-direction: reverse;"></div>`;
+                }
+
+                if (isDay === 1) {
+                     // Sun -> Allow for code <= 2 (Teilweise bewölkt)
+                     if (code <= 2) {
+                         html += `<div class="sun-glow"></div>`;
+                     }
+                } else {
+                    // Stars -> Always visible at night unless it's raining/snowing/foggy
+                     for(let i=0; i<80; i++) {
+                        const top = Math.random() * 70; // upper part
+                        const left = Math.random() * 100;
+                        const size = 1.5 + Math.random() * 2.5;
+                        const delay = Math.random() * 2;
+                        html += `<div class="star" style="top:${top}%; left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s"></div>`;
+                    }
+                }
+            }
+            
+            container.innerHTML = html;
         }
 
         function updateUI(name, fromCache = false) { 
             if(name) document.getElementById('cityName').innerText = name; 
             const cur = lastWeatherData.current; 
+            
+            // UPDATE SPLASH SCREEN DATA
+            document.getElementById('splashCity').innerText = name || "Unbekannt";
+            document.getElementById('splashTemp').innerText = Math.round(cur.temperature_2m);
+            const splashWInfo = getWeatherInfo(cur.weather_code);
+            document.getElementById('splashIcon').innerHTML = `<i data-lucide="${splashWInfo.i}" class="w-24 h-24"></i>`;
+            document.getElementById('splashDesc').innerText = splashWInfo.t;
+            
+            // Render Effects
+            renderSplashEffects(cur.weather_code, cur.is_day);
+
             updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, 0); 
             checkWarnings(cur); 
             if(!fromCache) checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score); 
@@ -420,24 +490,24 @@
             document.getElementById('weatherContent').classList.remove('hidden'); 
             loadingIndicator.classList.add('hidden'); 
             updateRadar(); 
+
+            // SHOW SPLASH ONLY ON FIRST LOAD
+            if (isFirstLoad) {
+                const splash = document.getElementById('splashScreen');
+                splash.classList.remove('splash-hidden'); 
+                isFirstLoad = false;
+            }
         }
         
-        // --- API FETCH WITH OFFLINE FALLBACK ---
         async function fetchWeather(name, country) { 
             loadingIndicator.classList.remove('hidden'); 
             offlineBanner.classList.add('hidden');
-
-            // Added wind_direction_10m
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=3&timezone=auto`; 
-            
             try { 
                 const res = await fetch(url); 
                 if(!res.ok) throw new Error("Netzwerk");
                 lastWeatherData = await res.json(); 
-                
-                // Save to Cache
                 saveToCache(name, lastWeatherData);
-                
                 updateUI(name); 
             } catch (e) { 
                 console.log("Fetch failed, trying cache...");
@@ -456,6 +526,7 @@
             } 
         }
         
+        // UPDATED LOCATE ME WITH REVERSE GEOCODING
         function locateMe(silent = false) { 
             if (!navigator.geolocation) { if(!silent) alert("Kein GPS"); return; } 
             document.getElementById('loadingIndicator').classList.remove('hidden'); 
@@ -465,10 +536,23 @@
                 initCompass();
             }
 
-            navigator.geolocation.getCurrentPosition(pos => { 
+            navigator.geolocation.getCurrentPosition(async pos => { 
                 currentLat = pos.coords.latitude; 
                 currentLon = pos.coords.longitude; 
-                fetchWeather("Mein Standort", ""); 
+                
+                // Reverse Geocoding
+                let locationName = "Mein Standort";
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${currentLat}&longitude=${currentLon}&language=de&format=json`);
+                    const data = await res.json();
+                    if (data.results && data.results[0]) {
+                        locationName = data.results[0].name;
+                    }
+                } catch (e) {
+                    console.error("Reverse Geo failed", e);
+                }
+                
+                fetchWeather(locationName, ""); 
             }, () => { 
                 document.getElementById('loadingIndicator').classList.add('hidden'); 
                 if(!silent) alert("Standort verweigert"); 
@@ -478,7 +562,6 @@
                 }
             }); 
         }
-
         async function searchCity() { const val = cityInput.value.trim(); if (!val) return; suggestionsList.classList.add('hidden'); errorMessage.classList.add('hidden'); loadingIndicator.classList.remove('hidden'); try { const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=10&language=de&format=json`; const res = await fetch(url); if (!res.ok) throw new Error(); const data = await res.json(); if (!data.results || data.results.length === 0) throw new Error(); const loc = data.results[0]; currentLat = loc.latitude; currentLon = loc.longitude; fetchWeather(loc.name, loc.country); } catch (e) { loadingIndicator.classList.add('hidden'); errorMessage.classList.remove('hidden'); setTimeout(() => errorMessage.classList.add('hidden'), 3000); } }
         cityInput.addEventListener('input', (e) => { clearTimeout(debounceTimer); const val = e.target.value.trim(); if (val.length < 2) { suggestionsList.classList.add('hidden'); return; } debounceTimer = setTimeout(async () => { try { const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=5&language=de&format=json`); const data = await res.json(); suggestionsList.innerHTML = ''; if (data.results && data.results.length > 0) { data.results.forEach(place => { const div = document.createElement('div'); div.className = "p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 flex flex-col"; div.innerHTML = `<span class="font-bold text-white text-sm">${place.name}</span><span class="text-xs text-slate-400">${[place.admin1, place.country].filter(Boolean).join(', ')}</span>`; div.onclick = () => { cityInput.value = place.name; suggestionsList.classList.add('hidden'); cityInput.blur(); currentLat = place.latitude; currentLon = place.longitude; fetchWeather(place.name, place.country); }; suggestionsList.appendChild(div); }); suggestionsList.classList.remove('hidden'); } else { suggestionsList.classList.add('hidden'); } } catch (e) {} }, 300); });
         document.addEventListener('click', (e) => { if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) suggestionsList.classList.add('hidden'); });
@@ -501,13 +584,18 @@
                 const color = getScoreColor(calculateMotoScore(temp, hourly.wind_speed_10m[i], hourly.precipitation[i], hourly.is_day[i], hourly.weather_code[i]).score); 
                 const icon = getWeatherInfo(hourly.weather_code[i]).i; 
                 const activeClass = (i === startIndex) ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent"; 
+                
                 const isDay = hourly.is_day[i];
                 const dayNightIcon = isDay === 1 ? "sun" : "moon";
                 const dayNightColor = isDay === 1 ? "text-yellow-500/40" : "text-blue-300/30";
 
                 container.innerHTML += `
                 <div onclick="selectHour(${i})" class="relative hour-card cursor-pointer snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${activeClass} flex flex-col items-center justify-between h-32 hover:bg-slate-700 transition-all">
-                    <div class="absolute top-1.5 right-1.5 ${dayNightColor}"><i data-lucide="${dayNightIcon}" size="10"></i></div>
+                    
+                    <div class="absolute top-1 right-1 ${dayNightColor}">
+                        <i data-lucide="${dayNightIcon}" size="8"></i>
+                    </div>
+
                     <span class="text-xs text-slate-400 font-mono text-center leading-tight">${hour}:00</span>
                     <div class="text-blue-200"><i data-lucide="${icon}" size="20"></i></div>
                     <span class="text-sm font-bold">${temp}°</span>
