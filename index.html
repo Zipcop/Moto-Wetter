@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- HIER GEÄNDERT: Name für den Home-Screen -->
+    
     <meta name="apple-mobile-web-app-title" content="Wetter">
     
-    <!-- NEUES, STABILES ICON (Sonne & Wolke) -->
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1146/1146869.png">
+    <!-- NEUES ICON (Hochauflösend von Icons8, mit Cache-Buster ?v=2) -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/weather.png?v=2">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     
-    <!-- HIER GEÄNDERT: Browser Titel -->
     <title>Wetter Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -134,7 +134,14 @@
                 <div id="hourlyContainer" class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x"></div>
             </div>
         </div>
+        
+        <!-- Footer & Start Prompt -->
         <div id="startPrompt" class="text-center py-20 text-slate-500"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
+        
+        <!-- VERSION FOOTER -->
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">
+            v1.0 • n.w.
+        </div>
     </main>
 
     <!-- Modals (Same as before) -->
