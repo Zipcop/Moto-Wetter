@@ -32,7 +32,12 @@
         .modal-overlay { cursor: pointer; }
         .modal-content { cursor: default; }
         #suggestionsList { z-index: 100 !important; }
+        
+        /* Warn-Animation */
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        /* Kompass-Aktiv Indikator */
+        .compass-active { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
     </style>
 </head>
 <body class="flex flex-col items-center">
@@ -41,6 +46,7 @@
         
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
+                <!-- HIER GEÄNDERT: Sichtbarer Name -->
                 <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="bike" size="16"></i> Wetter
                 </h1>
@@ -56,7 +62,7 @@
                     <div id="suggestionsList" class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto"></div>
                 </div>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="search"></i></button>
-                <button type="button" onclick="locateMe()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="map-pin"></i></button>
+                <button type="button" onclick="locateMe()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0" title="Standort & Kompass"><i data-lucide="map-pin"></i></button>
             </form>
             
             <div id="cityName" class="text-xl font-bold mt-4 text-center tracking-wide text-blue-100">--</div>
@@ -70,6 +76,7 @@
 
         <div id="loadingIndicator" class="hidden flex justify-center py-10"><div class="loader"></div></div>
 
+        <!-- WARN CONTAINER -->
         <div id="warningContainer" class="hidden w-full max-w-lg animate-fade-in"></div>
 
         <div id="weatherContent" class="hidden space-y-4 animate-fade-in">
@@ -86,8 +93,8 @@
                     <div class="flex gap-3 mt-1 text-xs text-slate-400">
                         <!-- Wind-Kompass hier integriert -->
                         <span class="flex items-center gap-1">
-                            <div class="bg-slate-700 rounded-full p-0.5 transform transition-transform duration-700" id="windDirArrow">
-                                <i data-lucide="arrow-up" size="10" class="text-blue-200"></i>
+                            <div class="bg-slate-700 border border-slate-600 rounded-full p-1 transform transition-transform duration-700" id="windDirArrow">
+                                <i data-lucide="arrow-up" size="12" class="text-blue-200"></i>
                             </div>
                             <span id="windSpeed">--</span>
                         </span>
@@ -141,13 +148,16 @@
             </div>
         </div>
         
+        <!-- Footer & Start Prompt -->
         <div id="startPrompt" class="text-center py-20 text-slate-500"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
         
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v1.3 • n.w.</div>
+        <!-- VERSION FOOTER -->
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">
+            v1.4 • n.w.
+        </div>
     </main>
 
-    <!-- Modals (Daily, Moto, Hourly, Legend, Layer) -->
-    <!-- TAGES DETAILS (Updated: Sonnen-Countdown) -->
+    <!-- Modals (Same as before) -->
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
@@ -171,7 +181,6 @@
         </div>
     </div>
 
-    <!-- Other Modals (Moto, Hourly, Legend, Layer - Unchanged structure) -->
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i data-lucide="bike" size="24" class="text-blue-400"></i> Moto Analyse</h3><p class="text-xs text-slate-400 mb-4">Warum ist der Score so?</p><div id="motoAnalysisList" class="space-y-3 mb-6"></div><h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3><div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3"><div id="gearIcon" class="text-2xl">🧥</div><div class="text-sm font-medium text-slate-200" id="gearText">Lade Empfehlung...</div></div></div></div>
 
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><div class="text-center mb-4"><div id="modalTime" class="text-lg font-bold text-blue-200">--:--</div><div id="modalDesc" class="text-sm text-slate-400">--</div></div><div class="flex flex-col items-center justify-center mb-6"><div id="modalIcon" class="mb-2 transform scale-125"></div><div class="text-5xl font-bold tracking-tighter"><span id="modalTemp">--</span>°</div></div><div class="grid grid-cols-3 gap-2 mb-4 text-center"><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="wind" size="12" class="inline"></i> Wind</div><div id="modalWind" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="umbrella" size="12" class="inline"></i> Regen</div><div id="modalRain" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="droplets" size="12" class="inline"></i> Feuchte</div><div id="modalHum" class="font-bold text-sm">--</div></div></div><div id="modalScoreBg" class="rounded-xl p-3 border flex items-center justify-between"><span class="font-bold uppercase text-xs tracking-wider">Moto Index</span><div class="text-right"><span id="modalScoreVal" class="text-xl font-black">--</span><span class="text-xs opacity-80">/10</span></div></div></div></div>
@@ -188,6 +197,7 @@
         let currentRadarType = 'rain'; let currentRadarTitle = 'Regen (Vorschau)'; 
         let lastWeatherData = null;
         let isFullscreen = false; let debounceTimer; let clockInterval;
+        let currentHeading = 0; // Default north
 
         const cityInput = document.getElementById('cityInput');
         const suggestionsList = document.getElementById('suggestionsList');
@@ -195,6 +205,58 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const warningContainer = document.getElementById('warningContainer');
         const offlineBanner = document.getElementById('offlineBanner');
+
+        // --- COMPASS LOGIC ---
+        function initCompass() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation, true);
+                            document.getElementById('windDirArrow').classList.add('compass-active');
+                        } else {
+                            alert("Kompass-Zugriff verweigert.");
+                        }
+                    })
+                    .catch(console.error);
+            } else if (window.addEventListener) {
+                // Android / Standard
+                window.addEventListener('deviceorientation', handleOrientation, true);
+                document.getElementById('windDirArrow').classList.add('compass-active');
+            }
+        }
+
+        function handleOrientation(event) {
+            // iOS vs Android differences
+            if (event.webkitCompassHeading) {
+                // iOS
+                currentHeading = event.webkitCompassHeading;
+            } else if (event.alpha !== null) {
+                // Android (alpha is reversed, 0 is North)
+                currentHeading = 360 - event.alpha;
+            }
+            
+            // Update arrow immediately
+            if(lastWeatherData) {
+                updateWindArrow();
+            }
+        }
+
+        function updateWindArrow() {
+            if(!lastWeatherData || !lastWeatherData.current || lastWeatherData.current.wind_direction_10m === undefined) return;
+            
+            const windDeg = lastWeatherData.current.wind_direction_10m;
+            const arrow = document.getElementById('windDirArrow');
+            
+            // Formula: WindDir + 180 (to point where wind goes) - DeviceHeading
+            const rotation = windDeg + 180 - currentHeading;
+            
+            if(arrow) {
+                arrow.style.transform = `rotate(${rotation}deg)`;
+            }
+        }
+
 
         // --- OFFLINE / CACHE LOGIC ---
         function saveToCache(name, data) {
@@ -339,17 +401,9 @@
                 document.getElementById('tempMax').innerText = Math.round(lastWeatherData.daily.temperature_2m_max[dayIndex]); 
                 document.getElementById('tempMin').innerText = Math.round(lastWeatherData.daily.temperature_2m_min[dayIndex]); 
             } 
-
-            // Wind Direction Update
-            if(lastWeatherData.current && lastWeatherData.current.wind_direction_10m !== undefined) {
-                const deg = lastWeatherData.current.wind_direction_10m;
-                const arrow = document.getElementById('windDirArrow');
-                // 180 deg flip because arrow-up needs to point to where wind goes, usually wind direction is "coming from"
-                // But standard is: wind direction 0 = North wind (coming from North). Arrow should point South?
-                // Visual convention: Arrow usually points INTO direction of flow.
-                // If wind comes from North (0), it blows to South (180).
-                arrow.style.transform = `rotate(${deg + 180}deg)`;
-            }
+            
+            // Call arrow update here as well for initial load or city change
+            updateWindArrow();
 
             lucide.createIcons(); 
         }
@@ -402,7 +456,29 @@
             } 
         }
         
-        function locateMe(silent = false) { if (!navigator.geolocation) { if(!silent) alert("Kein GPS"); return; } document.getElementById('loadingIndicator').classList.remove('hidden'); navigator.geolocation.getCurrentPosition(pos => { currentLat = pos.coords.latitude; currentLon = pos.coords.longitude; fetchWeather("Mein Standort", ""); }, () => { document.getElementById('loadingIndicator').classList.add('hidden'); if(!silent) alert("Standort verweigert"); else { document.getElementById('startPrompt').innerText = "Tippe oben, um zu starten."; document.getElementById('startPrompt').classList.remove('hidden'); }}); }
+        function locateMe(silent = false) { 
+            if (!navigator.geolocation) { if(!silent) alert("Kein GPS"); return; } 
+            document.getElementById('loadingIndicator').classList.remove('hidden'); 
+            
+            // Only trigger compass permission if user explicitly clicked (silent = false)
+            if(!silent) {
+                initCompass();
+            }
+
+            navigator.geolocation.getCurrentPosition(pos => { 
+                currentLat = pos.coords.latitude; 
+                currentLon = pos.coords.longitude; 
+                fetchWeather("Mein Standort", ""); 
+            }, () => { 
+                document.getElementById('loadingIndicator').classList.add('hidden'); 
+                if(!silent) alert("Standort verweigert"); 
+                else { 
+                    document.getElementById('startPrompt').innerText = "Tippe oben, um zu starten."; 
+                    document.getElementById('startPrompt').classList.remove('hidden'); 
+                }
+            }); 
+        }
+
         async function searchCity() { const val = cityInput.value.trim(); if (!val) return; suggestionsList.classList.add('hidden'); errorMessage.classList.add('hidden'); loadingIndicator.classList.remove('hidden'); try { const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=10&language=de&format=json`; const res = await fetch(url); if (!res.ok) throw new Error(); const data = await res.json(); if (!data.results || data.results.length === 0) throw new Error(); const loc = data.results[0]; currentLat = loc.latitude; currentLon = loc.longitude; fetchWeather(loc.name, loc.country); } catch (e) { loadingIndicator.classList.add('hidden'); errorMessage.classList.remove('hidden'); setTimeout(() => errorMessage.classList.add('hidden'), 3000); } }
         cityInput.addEventListener('input', (e) => { clearTimeout(debounceTimer); const val = e.target.value.trim(); if (val.length < 2) { suggestionsList.classList.add('hidden'); return; } debounceTimer = setTimeout(async () => { try { const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=5&language=de&format=json`); const data = await res.json(); suggestionsList.innerHTML = ''; if (data.results && data.results.length > 0) { data.results.forEach(place => { const div = document.createElement('div'); div.className = "p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 flex flex-col"; div.innerHTML = `<span class="font-bold text-white text-sm">${place.name}</span><span class="text-xs text-slate-400">${[place.admin1, place.country].filter(Boolean).join(', ')}</span>`; div.onclick = () => { cityInput.value = place.name; suggestionsList.classList.add('hidden'); cityInput.blur(); currentLat = place.latitude; currentLon = place.longitude; fetchWeather(place.name, place.country); }; suggestionsList.appendChild(div); }); suggestionsList.classList.remove('hidden'); } else { suggestionsList.classList.add('hidden'); } } catch (e) {} }, 300); });
         document.addEventListener('click', (e) => { if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) suggestionsList.classList.add('hidden'); });
@@ -452,6 +528,8 @@
 
         function updateRadar() {
             const h = isFullscreen ? 1000 : 384;
+            // WICHTIG: Standardmäßig KEIN radarRange Parameter, damit "Regen (Vorschau)" auch Zukunft zeigt.
+            // Falls 'radar' (Vergangenheit) gewählt wird, zeigt Windy das automatisch korrekt.
             const src = `https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C`;
             document.getElementById('radarFrame').src = src;
         }
