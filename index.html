@@ -99,8 +99,9 @@
                     <input type="search" id="cityInput" placeholder="Stadt eingeben..." class="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 px-4 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition appearance-none" autocomplete="off">
                     <div id="suggestionsList" class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto"></div>
                 </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="search"></i></button>
-                <button type="button" onclick="locateMe()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="map-pin"></i></button>
+                <!-- BUTTONS JETZT IM "GLASS"-LOOK -->
+                <button type="submit" class="bg-slate-800/50 hover:bg-slate-700/50 active:bg-slate-700/80 border border-slate-600 backdrop-blur-md text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="search"></i></button>
+                <button type="button" onclick="locateMe()" class="bg-slate-800/50 hover:bg-slate-700/50 active:bg-slate-700/80 border border-slate-600 backdrop-blur-md text-white p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i data-lucide="map-pin"></i></button>
             </form>
             <div id="cityName" class="text-xl font-bold mt-4 text-center tracking-wide text-blue-100">--</div>
             <!-- OFFLINE BANNER MIT RELOAD -->
@@ -113,12 +114,12 @@
         
         <div id="loadingIndicator" class="hidden flex justify-center py-10"><div class="loader"></div></div>
         
-        <!-- GPS Error Fallback -->
+        <!-- GPS Error Fallback - Button auch angepasst -->
         <div id="gpsErrorPrompt" class="hidden text-center py-10 animate-fade-in">
              <div class="bg-slate-800/50 p-4 rounded-2xl inline-flex flex-col items-center gap-3 border border-slate-600/50">
                  <i data-lucide="map-off" size="32" class="text-slate-400"></i>
                  <p class="text-sm text-slate-300">Standortzugriff verweigert</p>
-                 <button onclick="locateMe()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded-xl transition">Erneut versuchen</button>
+                 <button onclick="locateMe()" class="bg-slate-800/50 hover:bg-slate-700/50 active:bg-slate-700/80 border border-slate-600 backdrop-blur-md text-white text-xs font-bold py-2 px-4 rounded-xl transition">Erneut versuchen</button>
              </div>
         </div>
 
@@ -173,7 +174,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v2.5 • n.w.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v2.5_fixed • n.w.</div>
     </main>
 
     <!-- MODALS (Settings, Daily, Moto, Hourly, Legend, Layer) - UNCHANGED LOGIC MOSTLY -->
@@ -252,9 +253,9 @@
         function updateWindArrow() { if(!lastWeatherData?.current?.wind_direction_10m)return; const a=document.getElementById('windDirArrow'); if(a) a.style.transform=`rotate(${lastWeatherData.current.wind_direction_10m+180-currentHeading}deg)`; }
 
         // --- OFFLINE/CACHE ---
-        // NEW: v2.5 Cache Key -> FORCE RESET
-        function saveToCache(n, d) { try{localStorage.setItem('motoWeather_cache_v2_5', JSON.stringify({name:n,data:d,timestamp:Date.now()}));}catch(e){} }
-        function loadFromCache() { try{return JSON.parse(localStorage.getItem('motoWeather_cache_v2_5'));}catch(e){return null;} }
+        // NEW: v2.5_fixed Cache Key -> FORCE RESET AGAIN
+        function saveToCache(n, d) { try{localStorage.setItem('motoWeather_cache_v2_5_fixed', JSON.stringify({name:n,data:d,timestamp:Date.now()}));}catch(e){} }
+        function loadFromCache() { try{return JSON.parse(localStorage.getItem('motoWeather_cache_v2_5_fixed'));}catch(e){return null;} }
         async function enableNotifications() { if(!("Notification" in window))return alert("N/A"); if(Notification.permission==="granted"){alert("Aktiv!");checkAndSendNotification(10);} else if(Notification.permission!=="denied"){const p=await Notification.requestPermission();if(p==="granted")document.getElementById('notifyBadge').classList.remove('hidden');} else alert("Blockiert"); }
         function checkAndSendNotification(s) { if(Notification.permission==="granted"&&s>=8){const l=sessionStorage.getItem('lastNotificationTime'); if(!l||Date.now()-l>14400000){new Notification("Biker-Wetter!",{body:`Score: ${s}/10`,icon:"https://img.icons8.com/fluency/512/weather.png?v=2"});sessionStorage.setItem('lastNotificationTime',Date.now());}} }
         if ("Notification" in window && Notification.permission === "granted") document.getElementById('notifyBadge').classList.remove('hidden');
@@ -316,7 +317,6 @@
                 if (lastWeatherData.hourly) document.getElementById('dailyScoreValue').innerText=calculateDailyScore(lastWeatherData.hourly)+" / 10";
                 renderHourly(); applyLayout();
                 document.getElementById('startPrompt').classList.add('hidden'); 
-                // FIX: Hier war der Fehler - dynamicContent wurde nicht angezeigt, aber der Code dachte, es sei weatherContent
                 document.getElementById('dynamicContent').classList.remove('hidden'); 
                 loadingIndicator.classList.add('hidden'); updateRadar();
                 if(isFirstLoad) { document.getElementById('splashScreen').classList.remove('splash-hidden'); isFirstLoad=false; }
@@ -337,21 +337,34 @@
             }
         }
 
+        // NEU: Robuste "Plan B" Logik für die Namenssuche
         function locateMe(silent=false) {
             if(!navigator.geolocation){if(!silent)alert("Kein GPS");return;} if(!silent){document.getElementById('loadingIndicator').classList.remove('hidden');initCompass();}
             navigator.geolocation.getCurrentPosition(async p=>{
                 currentLat=p.coords.latitude; currentLon=p.coords.longitude;
                 if(document.getElementById('splashCity')) document.getElementById('splashCity').innerText="Suche Ort...";
-                let n="Standort";
-                try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${currentLat}&longitude=${currentLon}&language=de&format=json`);const d=await r.json(); if(d.results&&d.results[0]) n=d.results[0].name||d.results[0].city||d.results[0].town||d.results[0].village;}catch(e){}
+                
+                let n=null;
+                // PLAN A: Open-Meteo Geocoding
+                try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${currentLat}&longitude=${currentLon}&language=de&format=json`);const d=await r.json(); if(d.results&&d.results[0]) n=d.results[0].name||d.results[0].city||d.results[0].town||d.results[0].village||d.results[0].suburb||d.results[0].hamlet;}catch(e){}
+                
+                // PLAN B: OpenStreetMap Nominatim (als Fallback)
+                if(!n) {
+                    try{
+                        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentLat}&lon=${currentLon}&format=json&accept-language=de`, {headers:{'User-Agent':'WetterApp/2.5'}});
+                        const d=await r.json();
+                        if(d.address) n=d.address.city||d.address.town||d.address.village||d.address.hamlet||d.address.suburb||d.address.neighbourhood||d.address.county;
+                    }catch(e){}
+                }
+
+                // FALLBACK: Koordinaten anzeigen, wenn kein Name gefunden wurde
+                if(!n) n = `${currentLat.toFixed(2)}, ${currentLon.toFixed(2)}`;
+                
                 fetchWeather(n,"");
             },()=>{
                 document.getElementById('loadingIndicator').classList.add('hidden'); 
                 if(!silent) alert("Standort verweigert"); 
-                else { 
-                   // FIX: Button statt Text wenn silent fail
-                   document.getElementById('gpsErrorPrompt').classList.remove('hidden');
-                }
+                else { document.getElementById('gpsErrorPrompt').classList.remove('hidden'); }
             }, {timeout:10000,enableHighAccuracy:true});
         }
 
