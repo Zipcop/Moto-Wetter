@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- HIER GEÄNDERT: Name für den Home-Screen -->
     <meta name="apple-mobile-web-app-title" content="Wetter">
-    <link rel="apple-touch-icon" href="https://www.google.com/imgres?q=Wetter%20app%20bild&imgurl=https%3A%2F%2Fstatic.bergzeit.com%2Fmaster%2Ficon-bergfex-1678371279.png&imgrefurl=https%3A%2F%2Fwww.bergzeit.de%2Fmagazin%2Fwetter-app-wetterinfo-smartphone-alpen%2F&docid=jRn4dpQj40ADDM&tbnid=8lX3MnnMV1cq_M&vet=12ahUKEwi12oGGjI6RAxVjxgIHHbCkEbw4ChAzegQIdxAA..i&w=240&h=240&hcb=2&ved=2ahUKEwi12oGGjI6RAxVjxgIHHbCkEbw4ChAzegQIdxAA">
-    <title>Wetter Live</title>
     
+    <!-- NEUES, STABILES ICON (Sonne & Wolke) -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1146/1146869.png">
+    
+    <!-- HIER GEÄNDERT: Browser Titel -->
+    <title>Wetter Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <style>
         html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
         body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; }
@@ -22,18 +25,16 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
-        
-        /* Radar Styles */
         .radar-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 50; background: #0f172a; border-radius: 0 !important; padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px) 0; margin: 0 !important; }
-        
+        .live-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .hour-card-active { background-color: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.8) !important; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .modal-overlay { cursor: pointer; }
         .modal-content { cursor: default; }
         #suggestionsList { z-index: 100 !important; }
         
+        /* Warn-Animation */
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .live-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body class="flex flex-col items-center">
@@ -42,6 +43,7 @@
         
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
+                <!-- HIER GEÄNDERT: Sichtbarer Name -->
                 <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="bike" size="16"></i> Wetter
                 </h1>
@@ -67,6 +69,7 @@
 
         <div id="loadingIndicator" class="hidden flex justify-center py-10"><div class="loader"></div></div>
 
+        <!-- WARN CONTAINER -->
         <div id="warningContainer" class="hidden w-full max-w-lg animate-fade-in"></div>
 
         <div id="weatherContent" class="hidden space-y-4 animate-fade-in">
@@ -101,7 +104,6 @@
                 </div>
             </div>
 
-            <!-- RADAR CARD (Wieder Original Windy) -->
             <div id="radarCard" class="glass-panel rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col">
                 <div class="bg-slate-800/80 p-3 flex justify-between items-center border-b border-slate-700 shrink-0">
                     <h3 class="text-sm font-semibold flex items-center gap-2">
@@ -268,7 +270,6 @@
         function renderHourly() { const container = document.getElementById('hourlyContainer'); container.innerHTML = ''; const hourly = lastWeatherData.hourly; const offsetMs = (lastWeatherData.utc_offset_seconds || 0) * 1000; const currentHourISO = new Date(Date.now() + offsetMs).toISOString().slice(0, 13); let startIndex = hourly.time.findIndex(t => t.startsWith(currentHourISO)); if(startIndex === -1) startIndex = 0; for (let i = startIndex; i < startIndex + 24; i++) { if(!hourly.time[i]) break; const hour = new Date(hourly.time[i]).getHours(); const temp = Math.round(hourly.temperature_2m[i]); const color = getScoreColor(calculateMotoScore(temp, hourly.wind_speed_10m[i], hourly.precipitation[i], hourly.is_day[i], hourly.weather_code[i]).score); const icon = getWeatherInfo(hourly.weather_code[i]).i; const activeClass = (i === startIndex) ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent"; container.innerHTML += `<div onclick="selectHour(${i})" class="hour-card cursor-pointer snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${activeClass} flex flex-col items-center justify-between h-32 hover:bg-slate-700 transition-all"><span class="text-xs text-slate-400 font-mono text-center leading-tight">${hour}:00</span><div class="text-blue-200"><i data-lucide="${icon}" size="20"></i></div><span class="text-sm font-bold">${temp}°</span><div class="w-full flex justify-center mt-1"><div class="h-1.5 w-8 rounded-full ${color.bg.replace('text-', 'bg-').split(' ')[1]}"></div></div></div>`; } lucide.createIcons(); }
         function getWeatherInfo(code) { const map = { 0:{t:"Klar",i:"sun"},1:{t:"Heiter",i:"sun"},2:{t:"Wolkig",i:"cloud-sun"},3:{t:"Bedeckt",i:"cloud"},45:{t:"Nebel",i:"cloud-fog"},48:{t:"Nebel",i:"cloud-fog"},51:{t:"Niesel",i:"cloud-drizzle"},53:{t:"Niesel",i:"cloud-drizzle"},55:{t:"Niesel",i:"cloud-drizzle"},56:{t:"Gefrier. Niesel",i:"cloud-drizzle"},57:{t:"Gefrier. Niesel",i:"cloud-drizzle"},61:{t:"Regen",i:"cloud-rain"},63:{t:"Regen",i:"cloud-rain"},65:{t:"Starkregen",i:"cloud-rain"},66:{t:"Gefrier. Regen",i:"cloud-hail"},67:{t:"Gefrier. Regen",i:"cloud-hail"},71:{t:"Schnee",i:"snowflake"},73:{t:"Schnee",i:"snowflake"},75:{t:"Schnee",i:"snowflake"},77:{t:"Schneegriesel",i:"snowflake"},80:{t:"Schauer",i:"cloud-rain-wind"},81:{t:"Schauer",i:"cloud-rain-wind"},82:{t:"Starkschauer",i:"cloud-rain-wind"},85:{t:"Schneeschauer",i:"snowflake"},86:{t:"Schneeschauer",i:"snowflake"},95:{t:"Gewitter",i:"cloud-lightning"},96:{t:"Gewitter",i:"cloud-lightning"},99:{t:"Gewitter",i:"cloud-lightning"} }; return map[code] || {t:"Unbekannt",i:"help-circle"}; }
 
-        // --- RADAR LOGIC (REVERTED TO WINDY) ---
         function selectLayer(type, title) {
             currentRadarType = type;
             document.getElementById('radarTitle').innerText = title;
@@ -309,5 +310,3 @@
     </script>
 </body>
 </html>
-
-
