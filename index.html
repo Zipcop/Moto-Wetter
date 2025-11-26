@@ -312,7 +312,6 @@
 
         function checkWarnings(c) { let w=null, col="bg-yellow-500/80 border-yellow-400", ic="alert-triangle"; 
         if(c.weather_code>=95){w="GEWITTER";col="bg-red-600/90 border-red-400";ic="cloud-lightning"}else if(c.wind_speed_10m>=75){w="STURM";col="bg-red-600/90 border-red-400";ic="wind"}else if(c.wind_speed_10m>=50){w="Windböen";col="bg-orange-500/80 border-orange-400";ic="wind"}else if(c.temperature_2m<=3){w="Glätte";col="bg-blue-600/80 border-blue-400";ic="snowflake"}else if(c.precipitation>=5){w="Starkregen";col="bg-blue-700/80 border-blue-400";ic="cloud-rain"}if(c.visibility<1000){w="Nebel";col="bg-gray-600/90 border-gray-400";ic="cloud-fog"}
-        if(w){warningContainer.innerHTML=`<div class="w-full ${col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-4 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${ic}" size="24"></i><span>${w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`;warningContainer.classList.remove('hidden');}else warningContainer.classList.add('hidden'); lucide.createIcons(); }
 
         function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
