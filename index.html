@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Wetter">
     
+    <!-- ZURÜCK ZUM ORIGINAL: Web-Icon (Achtung: Transparenter Hintergrund kann auf iOS schwarz erscheinen) -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     
@@ -101,6 +102,7 @@
 </head>
 <body class="flex flex-col items-center">
 
+    <!-- BACKGROUND EFFECTS (Z-0) -->
     <div id="splashEffects"></div>
 
     <div id="splashScreen" onclick="dismissSplash()">
@@ -145,7 +147,6 @@
         
         <div id="loadingIndicator" class="hidden flex justify-center py-10"><div class="loader"></div></div>
         <div id="gpsErrorPrompt" class="hidden text-center py-10 animate-fade-in"><div class="bg-slate-800/50 p-4 rounded-2xl inline-flex flex-col items-center gap-3 border border-slate-600/50"><i data-lucide="map-off" size="32" class="text-slate-400"></i><p class="text-sm text-slate-300">Standortzugriff verweigert</p><button onclick="locateMe()" class="glass-btn text-xs font-bold py-2 px-4 rounded-xl transition">Erneut versuchen</button></div></div>
-        
         <div id="warningContainer" class="hidden w-full max-w-lg animate-fade-in"></div>
 
         <div id="dynamicContent" class="hidden w-full max-w-lg space-y-4 animate-fade-in">
@@ -201,7 +202,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v3.9.1 (Fixed)</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v3.9 • n.w.</div>
     </main>
 
     <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layout" size="20"></i> Layout</h3><div class="space-y-4 text-sm"><div class="space-y-2" id="layoutList"></div><div class="pt-4 border-t border-slate-600/50"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Detail-Sichtbarkeit</h4><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg mt-2"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div></div><button onclick="resetLayout()" class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Standard</button></div></div></div>
@@ -231,15 +232,17 @@
         let currentHeading = 0;
         let isFirstLoad = true; 
         
-        // Layout Config
+        // Layout Config: Add rainChartSection & Migration logic
         let layoutConfig = { order: ['statusSection', 'rainChartSection', 'radarSection', 'forecast7DaySection', 'timelineSection'], visibility: { statusSection: true, rainChartSection: true, radarSection: true, timelineSection: true, sub_weather: true, sub_moto: true, forecast7DaySection: true } };
         try { 
             const s = localStorage.getItem('motoLayoutConfig_v4'); 
             if(s) { 
                 const p = JSON.parse(s); 
+                // Migration
                 if(!p.order.includes('rainChartSection')) p.order.splice(1,0,'rainChartSection');
                 if(!p.order.includes('forecast7DaySection')) p.order.push('forecast7DaySection');
                 layoutConfig = { ...layoutConfig, ...p, visibility: { ...layoutConfig.visibility, ...p.visibility } }; 
+                // Ensure new keys exist
                 layoutConfig.visibility.rainChartSection = layoutConfig.visibility.rainChartSection !== false;
                 layoutConfig.visibility.forecast7DaySection = layoutConfig.visibility.forecast7DaySection !== false;
             } 
@@ -253,6 +256,7 @@
         const offlineBanner = document.getElementById('offlineBanner');
         const splash = document.getElementById('splashScreen');
 
+        // --- SWIPE LOGIC REMOVED / TAP LOGIC ADDED ---
         function dismissSplash() { splash.classList.add('splash-hidden'); document.body.style.overflow = 'auto'; }
         function initSplash() { const hour = new Date().getHours(); const isDay = (hour >= 6 && hour < 20) ? 1 : 0; renderSplashEffects(0, isDay); }
         initSplash();
@@ -306,26 +310,9 @@
         function checkAndSendNotification(s) { if(Notification.permission==="granted"&&s>=8){const l=sessionStorage.getItem('lastNotificationTime'); if(!l||Date.now()-l>14400000){new Notification("Biker-Wetter!",{body:`Score: ${s}/10`,icon:"https://img.icons8.com/fluency/512/weather.png?v=2"});sessionStorage.setItem('lastNotificationTime',Date.now());}} }
         if ("Notification" in window && Notification.permission === "granted") document.getElementById('notifyBadge').classList.remove('hidden');
 
-        // --- WARNUNGSLOGIK KORRIGIERT ---
-        function checkWarnings(c) { 
-            let w=null, col="bg-yellow-500/80 border-yellow-400", ic="alert-triangle"; 
-            if(c.weather_code>=95){w="GEWITTER";col="bg-red-600/90 border-red-400";ic="cloud-lightning"}
-            else if(c.wind_speed_10m>=75){w="STURM";col="bg-red-600/90 border-red-400";ic="wind"}
-            else if(c.wind_speed_10m>=50){w="Windböen";col="bg-orange-500/80 border-orange-400";ic="wind"}
-            else if(c.temperature_2m<=3){w="Glätte";col="bg-blue-600/80 border-blue-400";ic="snowflake"}
-            else if(c.precipitation>=5){w="Starkregen";col="bg-blue-700/80 border-blue-400";ic="cloud-rain"}
-            
-            if(c.visibility<1000){w="Nebel";col="bg-gray-600/90 border-gray-400";ic="cloud-fog"}
-
-            const wc = document.getElementById('warningContainer');
-            if(w) {
-                // Hier wurde onclick entfernt und cursor-pointer
-                wc.innerHTML = `<div class="w-full ${col} p-4 rounded-xl flex items-center justify-between shadow-lg mb-4"><div class="flex items-center gap-3"><div class="bg-white/20 p-2 rounded-full"><i data-lucide="${ic}" class="text-white" size="24"></i></div><div><div class="text-xs font-bold uppercase tracking-wider text-white/80">Warnung</div><div class="text-lg font-black text-white leading-none">${w}</div></div></div></div>`;
-                wc.classList.remove('hidden');
-            } else {
-                wc.classList.add('hidden');
-            }
-        }
+        function checkWarnings(c) { let w=null, col="bg-yellow-500/80 border-yellow-400", ic="alert-triangle"; 
+        if(c.weather_code>=95){w="GEWITTER";col="bg-red-600/90 border-red-400";ic="cloud-lightning"}else if(c.wind_speed_10m>=75){w="STURM";col="bg-red-600/90 border-red-400";ic="wind"}else if(c.wind_speed_10m>=50){w="Windböen";col="bg-orange-500/80 border-orange-400";ic="wind"}else if(c.temperature_2m<=3){w="Glätte";col="bg-blue-600/80 border-blue-400";ic="snowflake"}else if(c.precipitation>=5){w="Starkregen";col="bg-blue-700/80 border-blue-400";ic="cloud-rain"}if(c.visibility<1000){w="Nebel";col="bg-gray-600/90 border-gray-400";ic="cloud-fog"}
+        if(w){warningContainer.innerHTML=`<div onclick="showMotoDetails()" class="w-full ${col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-4 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${ic}" size="24"></i><span>${w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`;warningContainer.classList.remove('hidden');}else warningContainer.classList.add('hidden'); lucide.createIcons(); }
 
         function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
@@ -399,6 +386,7 @@
             if (d === 1) {
                 // Tag: Sonne anzeigen, wenn es nicht regnet/schneit/nebelt
                 if (!isRain && !isSnow && !isFog) {
+                    // ID removed to avoid duplicates, using class .sun-orb only
                     h += `<div class="sun-orb" style="top: 100%; left: 0%;"></div>`;
                 }
             } else {
@@ -416,8 +404,8 @@
                 
                 // Zusatz-Wolken bei schlechtem Wetter (Bedeckt/Regen)
                 if (isHeavyCloud) {
-                      h += `<div class="cloud-shape" style="top:-10%; left:20%; width:150vw; height:50vh; animation-duration:60s; opacity:0.4;"></div>`;
-                      h += `<div class="cloud-shape" style="bottom:30%; left:-30%; width:150vw; height:60vh; animation-duration:70s; opacity:0.3;"></div>`;
+                     h += `<div class="cloud-shape" style="top:-10%; left:20%; width:150vw; height:50vh; animation-duration:60s; opacity:0.4;"></div>`;
+                     h += `<div class="cloud-shape" style="bottom:30%; left:-30%; width:150vw; height:60vh; animation-duration:70s; opacity:0.3;"></div>`;
                 }
             }
 
@@ -491,10 +479,12 @@
             catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
         }
 
+        // --- UPDATED LOCATEME FUNCTION ---
         function locateMe(silent=false) {
+            // Wenn der Browser gar kein GPS kann
             if(!navigator.geolocation){
                 console.log("Kein GPS Support");
-                fetchWeather("Berlin", ""); 
+                fetchWeather("Berlin", ""); // Fallback
                 return;
             } 
             
@@ -504,6 +494,7 @@
             }
 
             navigator.geolocation.getCurrentPosition(async p=>{
+                // ERFOLG
                 currentLat=p.coords.latitude; currentLon=p.coords.longitude;
                 if(document.getElementById('splashCity')) document.getElementById('splashCity').innerText="Suche Ort...";
                 let n=null;
@@ -512,11 +503,15 @@
                 if(!n) n = `${currentLat.toFixed(2)}, ${currentLon.toFixed(2)}`;
                 fetchWeather(n,"");
             },()=>{ 
+                // FEHLER (z.B. file:// Blockade)
                 document.getElementById('loadingIndicator').classList.add('hidden'); 
                 console.warn("Standort Zugriff blockiert oder abgebrochen.");
+                
+                // Statt Alert laden wir einfach Berlin als Standard
                 if(!silent) {
+                    // Optional: Zeige kurz eine Info im UI, aber kein nerviges Popup
                     document.getElementById('cityName').innerText = "Berlin (Demo)";
-                    currentLat = 52.52; currentLon = 13.41; 
+                    currentLat = 52.52; currentLon = 13.41; // Koordinaten Berlin
                     fetchWeather("Berlin", "");
                 } else { 
                     document.getElementById('gpsErrorPrompt').classList.remove('hidden'); 
@@ -529,7 +524,7 @@
             try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=10&language=de&format=json`);const d=await r.json(); if(!d.results)throw new Error(); const l=d.results[0]; currentLat=l.latitude; currentLon=l.longitude; fetchWeather(l.name,l.country);}catch(e){loadingIndicator.classList.add('hidden');errorMessage.classList.remove('hidden');setTimeout(()=>errorMessage.classList.add('hidden'),3000);}
         }
 
-        cityInput.addEventListener('input',e=>{clearTimeout(debounceTimer);const v=e.target.value.trim();if(v.length<2){suggestionsList.classList.add('hidden');return;};debounceTimer=setTimeout(async()=>{try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=5&language=de&format=json`);const d=await r.json();suggestionsList.innerHTML='';if(d.results){d.results.forEach(p=>{const el=document.createElement('div');el.className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50";el.innerHTML=`<span class="font-bold text-white text-sm">${p.name}</span><span class="text-xs text-slate-400 ml-2">${p.admin1||''}</span>`;el.onclick=()=>{cityInput.value=p.name;suggestionsList.classList.add('hidden');cityInput.blur();currentLat=p.latitude;currentLon=p.longitude;fetchWeather(p.name,p.country);};suggestionsList.appendChild(el);});suggestionsList.classList.remove('hidden');}else suggestionsList.classList.add('hidden');}catch(e){}},300);});
+        cityInput.addEventListener('input',e=>{clearTimeout(debounceTimer);const v=e.target.value.trim();if(v.length<2){suggestionsList.classList.add('hidden');return;}debounceTimer=setTimeout(async()=>{try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=5&language=de&format=json`);const d=await r.json();suggestionsList.innerHTML='';if(d.results){d.results.forEach(p=>{const el=document.createElement('div');el.className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50";el.innerHTML=`<span class="font-bold text-white text-sm">${p.name}</span><span class="text-xs text-slate-400 ml-2">${p.admin1||''}</span>`;el.onclick=()=>{cityInput.value=p.name;suggestionsList.classList.add('hidden');cityInput.blur();currentLat=p.latitude;currentLon=p.longitude;fetchWeather(p.name,p.country);};suggestionsList.appendChild(el);});suggestionsList.classList.remove('hidden');}else suggestionsList.classList.add('hidden');}catch(e){}},300);});
         document.addEventListener('click',e=>{if(!cityInput.contains(e.target)&&!suggestionsList.contains(e.target))suggestionsList.classList.add('hidden');});
         
         function selectHour(i){
@@ -560,6 +555,7 @@
         function selectLayer(t,l){currentRadarType=t;document.getElementById('radarTitle').innerText=l;toggleLayerMenu();updateRadar();}
         function updateRadar(){const h=isFullscreen?1000:384;const s=`https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C`;document.getElementById('radarFrame').src=s;}
         
+        // FIX: Hier stand vorher 'radarCard', was es nicht gab. Korrigiert auf 'radarSection'.
         function toggleFullscreen(){const c=document.getElementById('radarSection');isFullscreen=!isFullscreen;if(isFullscreen){c.classList.add('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');document.getElementById('radarOverlay').classList.add('hidden');document.body.style.overflow='hidden'}else{c.classList.remove('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');document.getElementById('radarOverlay').classList.remove('hidden');document.body.style.overflow=''}lucide.createIcons();updateRadar();}
         
         function startClock(){
