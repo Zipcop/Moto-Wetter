@@ -25,6 +25,7 @@
             background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px);
             transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.6s ease-out;
             display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2.5rem; overflow: hidden;
+            cursor: pointer; /* Zeigt an, dass es klickbar ist */
         }
         .splash-hidden { transform: translateY(-100%); opacity: 0; pointer-events: none; }
         #splashLocalEffects { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
@@ -38,7 +39,10 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
-        .radar-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 50; background: #0f172a; border-radius: 0 !important; padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px) 0; margin: 0 !important; }
+        
+        /* FIX: Radar Fullscreen Styles angepasst */
+        .radar-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 200 !important; background: #0f172a; border-radius: 0 !important; padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px) 0; margin: 0 !important; }
+        
         .live-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse-red 2s infinite; }
         
         .hour-card-active { background-color: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.8) !important; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
@@ -73,11 +77,9 @@
 </head>
 <body class="flex flex-col items-center">
 
-    <!-- BACKGROUND EFFECTS (Z-0) -->
     <div id="splashEffects"></div>
 
-    <!-- SPLASH SCREEN (Z-100) -->
-    <div id="splashScreen">
+    <div id="splashScreen" onclick="dismissSplash()">
         <div id="splashLocalEffects"></div>
         <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
             <div class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold"><i data-lucide="map-pin" size="14"></i> Aktueller Standort</div>
@@ -88,13 +90,12 @@
             <div class="text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
             <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
         </div>
-        <div class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content" onclick="dismissSplash()">
-            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten wischen</span>
+        <div class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content">
+            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
             <div class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition"><i data-lucide="chevron-up" class="text-white"></i></div>
         </div>
     </div>
 
-    <!-- MAIN CONTENT (Z-10) -->
     <main class="w-full max-w-lg space-y-4 pt-4 pb-10 relative z-10">
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
@@ -168,7 +169,6 @@
                 </div>
                 <div id="hourlyContainer" class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x"></div>
             </div>
-            <!-- 7-Day Forecast -->
             <div id="forecast7DaySection" class="glass-panel rounded-2xl p-4">
                 <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i data-lucide="calendar-days" size="16"></i> 7-Tage Trend</h3>
                 <div id="forecast7List" class="space-y-3"></div>
@@ -176,12 +176,10 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v3.8 • n.w.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v3.9 • n.w.</div>
     </main>
 
-    <!-- MODALS -->
     <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layout" size="20"></i> Layout</h3><div class="space-y-4 text-sm"><div class="space-y-2" id="layoutList"></div><div class="pt-4 border-t border-slate-600/50"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Detail-Sichtbarkeit</h4><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg mt-2"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div></div><button onclick="resetLayout()" class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Standard</button></div></div></div>
-    <!-- (Other Modals unchanged) -->
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-6 text-blue-100 flex items-center gap-2"><i data-lucide="calendar" size="20"></i> Tages-Infos</h3><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunrise" size="12"></i> Aufgang</div><div id="detailSunrise" class="font-bold">--:--</div></div><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sunset" size="12"></i> Untergang</div><div id="detailSunset" class="font-bold">--:--</div></div></div><div id="sunCountdownContainer" class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 mb-6 text-center"><div class="text-xs text-yellow-200 font-medium flex items-center justify-center gap-2"><i data-lucide="hourglass" size="12"></i> <span id="sunCountdownText">...</span></div></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="eye" size="12"></i> Sicht</div><div id="detailVisibility" class="font-bold">--</div></div><div class="bg-slate-800/50 p-3 rounded-xl text-center"><div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sun" size="12"></i> UV</div><div id="detailUV" class="font-bold">--</div></div></div><div class="mb-2"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Luftqualität</h4><div class="bg-slate-800/50 p-4 rounded-xl"><div class="flex justify-between items-center mb-2"><span class="text-sm text-slate-300">AQI</span><span id="detailAqiVal" class="font-bold text-white">--</span></div><div class="w-full bg-slate-700 rounded-full h-2 mb-3"><div id="detailAqiBar" class="bg-green-500 h-2 rounded-full" style="width:0%"></div></div><div id="detailAqiText" class="text-xs text-center text-slate-400 italic">Lade...</div></div></div></div></div>
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i data-lucide="bike" size="24" class="text-blue-400"></i> Moto Analyse</h3><p class="text-xs text-slate-400 mb-4">Details</p><div id="motoAnalysisList" class="space-y-3 mb-6"></div><h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3><div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3"><div id="gearIcon" class="text-2xl">🧥</div><div class="text-sm font-medium text-slate-200" id="gearText">...</div></div></div></div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><div class="text-center mb-4"><div id="modalTime" class="text-lg font-bold text-blue-200">--:--</div><div id="modalDesc" class="text-sm text-slate-400">--</div></div><div class="flex flex-col items-center justify-center mb-6"><div id="modalIcon" class="mb-2 transform scale-125"></div><div class="text-5xl font-bold tracking-tighter"><span id="modalTemp">--</span>°</div></div><div class="grid grid-cols-3 gap-2 mb-4 text-center"><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="wind" size="12" class="inline"></i> Wind</div><div id="modalWind" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="umbrella" size="12" class="inline"></i> Regen</div><div id="modalRain" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="droplets" size="12" class="inline"></i> Feuchte</div><div id="modalHum" class="font-bold text-sm">--</div></div></div><div id="modalScoreBg" class="rounded-xl p-3 border flex items-center justify-between"><span class="font-bold uppercase text-xs tracking-wider">Moto Index</span><div class="text-right"><span id="modalScoreVal" class="text-xl font-black">--</span><span class="text-xs opacity-80">/10</span></div></div></div></div>
@@ -223,10 +221,7 @@
         const offlineBanner = document.getElementById('offlineBanner');
         const splash = document.getElementById('splashScreen');
 
-        // --- SWIPE & SPLASH ---
-        let touchStartY = 0;
-        splash.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].screenY; });
-        splash.addEventListener('touchend', e => { if (touchStartY - e.changedTouches[0].screenY > 50) dismissSplash(); });
+        // --- SWIPE LOGIC REMOVED / TAP LOGIC ADDED ---
         function dismissSplash() { splash.classList.add('splash-hidden'); document.body.style.overflow = 'auto'; }
         function initSplash() { const hour = new Date().getHours(); const isDay = (hour >= 6 && hour < 20) ? 1 : 0; renderSplashEffects(0, isDay); }
         initSplash();
@@ -425,7 +420,10 @@
         function getWeatherInfo(c){const m={0:{t:"Klar",i:"sun"},1:{t:"Heiter",i:"sun"},2:{t:"Wolkig",i:"cloud-sun"},3:{t:"Bedeckt",i:"cloud"},45:{t:"Nebel",i:"cloud-fog"},48:{t:"Nebel",i:"cloud-fog"},51:{t:"Niesel",i:"cloud-drizzle"},53:{t:"Niesel",i:"cloud-drizzle"},55:{t:"Niesel",i:"cloud-drizzle"},56:{t:"Gefrier. Niesel",i:"cloud-drizzle"},57:{t:"Gefrier. Niesel",i:"cloud-drizzle"},61:{t:"Regen",i:"cloud-rain"},63:{t:"Regen",i:"cloud-rain"},65:{t:"Starkregen",i:"cloud-rain"},66:{t:"Gefrier. Regen",i:"cloud-hail"},67:{t:"Gefrier. Regen",i:"cloud-hail"},71:{t:"Schnee",i:"snowflake"},73:{t:"Schnee",i:"snowflake"},75:{t:"Schnee",i:"snowflake"},77:{t:"Schneegriesel",i:"snowflake"},80:{t:"Schauer",i:"cloud-rain-wind"},81:{t:"Schauer",i:"cloud-rain-wind"},82:{t:"Starkschauer",i:"cloud-rain-wind"},85:{t:"Schneeschauer",i:"snowflake"},86:{t:"Schneeschauer",i:"snowflake"},95:{t:"Gewitter",i:"cloud-lightning"},96:{t:"Gewitter",i:"cloud-lightning"},99:{t:"Gewitter",i:"cloud-lightning"}}; return m[c]||{t:"Unbekannt",i:"help-circle"};}
         function selectLayer(t,l){currentRadarType=t;document.getElementById('radarTitle').innerText=l;toggleLayerMenu();updateRadar();}
         function updateRadar(){const h=isFullscreen?1000:384;const s=`https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C`;document.getElementById('radarFrame').src=s;}
-        function toggleFullscreen(){const c=document.getElementById('radarCard');isFullscreen=!isFullscreen;if(isFullscreen){c.classList.add('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');document.getElementById('radarOverlay').classList.add('hidden');document.body.style.overflow='hidden'}else{c.classList.remove('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');document.getElementById('radarOverlay').classList.remove('hidden');document.body.style.overflow=''}lucide.createIcons();updateRadar();}
+        
+        // FIX: Hier stand vorher 'radarCard', was es nicht gab. Korrigiert auf 'radarSection'.
+        function toggleFullscreen(){const c=document.getElementById('radarSection');isFullscreen=!isFullscreen;if(isFullscreen){c.classList.add('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');document.getElementById('radarOverlay').classList.add('hidden');document.body.style.overflow='hidden'}else{c.classList.remove('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');document.getElementById('radarOverlay').classList.remove('hidden');document.body.style.overflow=''}lucide.createIcons();updateRadar();}
+        
         function startClock(){const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});if(clockInterval)clearInterval(clockInterval);clockInterval=setInterval(()=>{if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})},1000);}
         startClock(); document.addEventListener('DOMContentLoaded', ()=>locateMe(true));
     </script>
