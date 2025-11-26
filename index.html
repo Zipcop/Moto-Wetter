@@ -18,7 +18,7 @@
         html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; width: 100%; touch-action: pan-y; }
         body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; }
         
-        /* Z-INDEX LAYERING - KORRIGIERT: ID #splashEffects statt #globalEffects und overflow:hidden */
+        /* Z-INDEX LAYERING */
         #splashEffects { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
         main { position: relative; z-index: 10; }
         #splashScreen { 
@@ -26,7 +26,7 @@
             background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px);
             transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.6s ease-out;
             display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2.5rem; overflow: hidden;
-            cursor: pointer; /* Zeigt an, dass es klickbar ist */
+            cursor: pointer; 
         }
         .splash-hidden { transform: translateY(-100%); opacity: 0; pointer-events: none; }
         #splashLocalEffects { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
@@ -41,7 +41,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
         
-        /* FIX: Radar Fullscreen Styles angepasst */
         .radar-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 200 !important; background: #0f172a; border-radius: 0 !important; padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px) 0; margin: 0 !important; }
         
         .live-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse-red 2s infinite; }
@@ -63,16 +62,40 @@
         
         /* Splash FX */
         @keyframes rain-fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
-        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.3); top: -20px; animation: rain-fall 0.8s linear infinite; }
+        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.4); top: -20px; animation: rain-fall 0.8s linear infinite; }
+        
         @keyframes snow-fall { 0% { transform: translateY(-10vh) translateX(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(110vh) translateX(20px); opacity: 0.3; } }
         .snowflake { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: -10px; filter: blur(1px); animation: snow-fall 4s linear infinite; }
+        
         @keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; box-shadow: 0 0 6px rgba(255,255,255,0.9); }
+        
         @keyframes fog-drift { 0% { transform: translateX(-10%); opacity: 0.2; } 50% { transform: translateX(10%); opacity: 0.5; } 100% { transform: translateX(-10%); opacity: 0.2; } }
-        .fog-layer { position: absolute; left: -20%; right: -20%; height: 100px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent); filter: blur(20px); animation: fog-drift 8s infinite ease-in-out; }
+        .fog-layer { position: absolute; left: -20%; right: -20%; height: 100px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent); filter: blur(20px); animation: fog-drift 8s infinite ease-in-out; }
+        
         @keyframes cloud-drift { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
-        .cloud-shape { position: absolute; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); width: 800px; height: 300px; border-radius: 50%; filter: blur(35px); animation: cloud-drift 40s linear infinite; }
-        .sun-glow { position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(253, 224, 71, 0.4) 0%, transparent 70%); filter: blur(30px); animation: pulse 4s infinite; }
+        /* Verbessertes Cloud CSS: Mehr Sichtbarkeit */
+        .cloud-shape { 
+            position: absolute; 
+            background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, transparent 70%); 
+            border-radius: 50%; 
+            filter: blur(40px); 
+            animation: cloud-drift linear infinite; 
+        }
+        
+        /* Neue Sonne CSS - Dynamisch */
+        .sun-orb { 
+            position: absolute; 
+            width: 250px; height: 250px; 
+            background: radial-gradient(circle, rgba(253, 224, 71, 0.8) 0%, rgba(253, 224, 71, 0.3) 50%, transparent 70%); 
+            filter: blur(30px); 
+            animation: pulse-sun 6s infinite ease-in-out; 
+            z-index: -1; 
+            transform: translate(-50%, -50%); /* Zentriert die Sonne auf dem Koordinatenpunkt */
+            transition: top 1s linear, left 1s linear; /* Weiche Bewegung */
+        }
+        @keyframes pulse-sun { 0%,100%{transform: translate(-50%, -50%) scale(1); opacity: 0.8;} 50%{transform: translate(-50%, -50%) scale(1.1); opacity: 1;} }
+        
         .compass-active { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
     </style>
 </head>
@@ -309,17 +332,87 @@
             } catch (e) { console.error("UpdateMain Error", e); }
         }
 
-        function renderSplashEffects(c,d) {
-            const con=document.getElementById('splashEffects'); const loc=document.getElementById('splashLocalEffects'); let h='';
-            if([51,53,55,61,63,65,66,67,80,81,82,95,96,99].includes(c)) for(let i=0;i<20;i++) h+=`<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s; animation-duration:${0.5+Math.random()*0.5}s"></div>`;
-            else if([71,73,75,77,85,86].includes(c)) for(let i=0;i<20;i++) h+=`<div class="snowflake" style="left:${Math.random()*100}%; animation-delay:${Math.random()*2}s; animation-duration:${2+Math.random()*2}s; opacity:${Math.random()}"></div>`;
-            else if([45,48].includes(c)) { h+=`<div class="fog-layer" style="top:20%;height:20%"></div><div class="fog-layer" style="top:50%;height:30%;animation-delay:-2s"></div>`; }
-            else {
-                if(c>0) h+=`<div class="cloud-shape" style="top:5%;left:-20%;animation-duration:40s;width:120vw;height:40vh;opacity:0.7"></div><div class="cloud-shape" style="top:35%;right:-30%;animation-duration:50s;animation-direction:reverse;width:100vw;height:30vh;opacity:0.6"></div>`;
-                if(d===1) { if(c<=2) h+=`<div class="sun-glow"></div>`; } 
-                else { for(let i=0;i<120;i++) h+=`<div class="star" style="top:${Math.random()*80}%;left:${Math.random()*100}%;width:${1.5+Math.random()*3}px;height:${1.5+Math.random()*3}px;animation-delay:${Math.random()*2}s;opacity:${0.4+Math.random()*0.6}"></div>`; }
+        function updateSunVisuals() {
+            const sun = document.getElementById('sunOrb');
+            if (!sun || !lastWeatherData || !lastWeatherData.daily) return;
+            
+            const now = Date.now(); 
+            const sunrise = new Date(lastWeatherData.daily.sunrise[0]).getTime();
+            const sunset = new Date(lastWeatherData.daily.sunset[0]).getTime();
+            
+            if (now < sunrise || now > sunset) return; // Nachts keine Sonne berechnen
+            
+            // Prozentualer Fortschritt des Tages (0.0 = Aufgang, 1.0 = Untergang)
+            const pct = (now - sunrise) / (sunset - sunrise);
+            
+            // X-Position: Von Links (-10%) nach Rechts (110%)
+            const leftVal = (pct * 120) - 10;
+            
+            // Y-Position: Sinus-Kurve (0 -> 1 -> 0)
+            // Bei 0 (Aufgang) = 100% (unten), bei 0.5 (Mittag) = 10% (oben), bei 1 (Untergang) = 100% (unten)
+            const sinVal = Math.sin(pct * Math.PI);
+            const topVal = 100 - (sinVal * 90); 
+            
+            sun.style.left = `${leftVal}%`;
+            sun.style.top = `${topVal}%`;
+        }
+
+        function renderSplashEffects(c, d) {
+            const con = document.getElementById('splashEffects');
+            const loc = document.getElementById('splashLocalEffects');
+            let h = '';
+
+            // Wetter-Hilfsvariablen
+            const isRain = [51, 53, 55, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(c);
+            const isSnow = [71, 73, 75, 77, 85, 86].includes(c);
+            const isFog = [45, 48].includes(c);
+            const isCloudy = c > 0 || isRain || isSnow || isFog; // Fast immer bewölkt außer Code 0
+            const isHeavyCloud = c === 3 || isRain || isSnow || isFog; // Bedeckt oder Niederschlag
+
+            // 1. HIMMELSKÖRPER (Sonne/Sterne)
+            if (d === 1) {
+                // Tag: Sonne anzeigen, wenn es nicht regnet/schneit/nebelt
+                if (!isRain && !isSnow && !isFog) {
+                    // ID 'sunOrb' hinzugefügt für JS-Zugriff
+                    h += `<div id="sunOrb" class="sun-orb" style="top: 100%; left: 0%;"></div>`;
+                }
+            } else {
+                // Nacht: Sterne (nur wenn nicht komplett bedeckt)
+                if (!isHeavyCloud) {
+                    for (let i = 0; i < 100; i++) {
+                        h += `<div class="star" style="top:${Math.random()*60}%;left:${Math.random()*100}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;animation-delay:${Math.random()*2}s;opacity:${0.3+Math.random()*0.7}"></div>`;
+                    }
+                }
             }
-            if(con) con.innerHTML=h; if(loc) loc.innerHTML=h;
+
+            // 2. WOLKEN (Mehr & Besser sichtbar)
+            if (isCloudy) {
+                // Standard-Wolken (heller & sichtbarer)
+                h += `<div class="cloud-shape" style="top:10%; left:-10%; width:140vw; height:45vh; animation-duration:45s; opacity:0.6;"></div>`;
+                h += `<div class="cloud-shape" style="top:20%; right:-20%; width:120vw; height:40vh; animation-duration:55s; animation-direction:reverse; opacity:0.5;"></div>`;
+                
+                // Zusatz-Wolken bei schlechtem Wetter (Bedeckt/Regen)
+                if (isHeavyCloud) {
+                     h += `<div class="cloud-shape" style="top:-10%; left:20%; width:150vw; height:50vh; animation-duration:60s; opacity:0.4;"></div>`;
+                     h += `<div class="cloud-shape" style="bottom:30%; left:-30%; width:150vw; height:60vh; animation-duration:70s; opacity:0.3;"></div>`;
+                }
+            }
+
+            // 3. NIEDERSCHLAG (Regen/Schnee/Nebel)
+            if (isRain) {
+                for (let i = 0; i < 30; i++) {
+                    h += `<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s; animation-duration:${0.4+Math.random()*0.3}s"></div>`;
+                }
+            } else if (isSnow) {
+                for (let i = 0; i < 30; i++) {
+                    h += `<div class="snowflake" style="left:${Math.random()*100}%; animation-delay:${Math.random()*2}s; animation-duration:${3+Math.random()*2}s; opacity:${Math.random()}"></div>`;
+                }
+            } else if (isFog) {
+                h += `<div class="fog-layer" style="top:30%;height:40%"></div>`;
+            }
+
+            if (con) con.innerHTML = h;
+            if (loc) loc.innerHTML = h;
         }
         
         function renderRainChart(minutely15) {
@@ -355,6 +448,7 @@
                 document.getElementById('splashCity').innerText=name||"Unbekannt"; document.getElementById('splashTemp').innerText=Math.round(cur.temperature_2m);
                 const info=getWeatherInfo(cur.weather_code); document.getElementById('splashIcon').innerHTML=`<i data-lucide="${info.i}" class="w-24 h-24"></i>`; document.getElementById('splashDesc').innerText=info.t;
                 renderSplashEffects(cur.weather_code, cur.is_day);
+                updateSunVisuals(); // Initial update
                 updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, 0);
                 checkWarnings(cur); 
                 if(!fromCache) checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
@@ -453,7 +547,20 @@
         // FIX: Hier stand vorher 'radarCard', was es nicht gab. Korrigiert auf 'radarSection'.
         function toggleFullscreen(){const c=document.getElementById('radarSection');isFullscreen=!isFullscreen;if(isFullscreen){c.classList.add('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');document.getElementById('radarOverlay').classList.add('hidden');document.body.style.overflow='hidden'}else{c.classList.remove('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');document.getElementById('radarOverlay').classList.remove('hidden');document.body.style.overflow=''}lucide.createIcons();updateRadar();}
         
-        function startClock(){const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});if(clockInterval)clearInterval(clockInterval);clockInterval=setInterval(()=>{if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})},1000);}
+        function startClock(){
+            const c=document.getElementById('liveClock');
+            if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+            
+            // Regelmäßiges Update der Sonnenposition
+            updateSunVisuals();
+
+            if(clockInterval)clearInterval(clockInterval);
+            clockInterval=setInterval(()=>{
+                if(c)c.innerText=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+                // Jede Minute auch die Sonne updaten (für flüssige Bewegung über den Tag)
+                updateSunVisuals();
+            },1000);
+        }
         startClock(); document.addEventListener('DOMContentLoaded', ()=>locateMe(true));
     </script>
 </body>
