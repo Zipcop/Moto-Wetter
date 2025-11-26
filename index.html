@@ -14,11 +14,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; width: 100%; }
+        /* touch-action: pan-y verhindert horizontales Wischen auf Browserebene */
+        html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; width: 100%; touch-action: pan-y; }
         body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; }
         
-        /* Z-INDEX LAYERING */
-        #globalEffects { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        /* Z-INDEX LAYERING - KORRIGIERT: ID #splashEffects statt #globalEffects und overflow:hidden */
+        #splashEffects { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
         main { position: relative; z-index: 10; }
         #splashScreen { 
             position: fixed; inset: 0; z-index: 100; 
@@ -77,6 +78,7 @@
 </head>
 <body class="flex flex-col items-center">
 
+    <!-- BACKGROUND EFFECTS (Z-0) -->
     <div id="splashEffects"></div>
 
     <div id="splashScreen" onclick="dismissSplash()">
@@ -372,9 +374,22 @@
             catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
         }
 
+        // --- UPDATED LOCATEME FUNCTION ---
         function locateMe(silent=false) {
-            if(!navigator.geolocation){if(!silent)alert("Kein GPS");return;} if(!silent){document.getElementById('loadingIndicator').classList.remove('hidden');initCompass();}
+            // Wenn der Browser gar kein GPS kann
+            if(!navigator.geolocation){
+                console.log("Kein GPS Support");
+                fetchWeather("Berlin", ""); // Fallback
+                return;
+            } 
+            
+            if(!silent){
+                document.getElementById('loadingIndicator').classList.remove('hidden');
+                initCompass();
+            }
+
             navigator.geolocation.getCurrentPosition(async p=>{
+                // ERFOLG
                 currentLat=p.coords.latitude; currentLon=p.coords.longitude;
                 if(document.getElementById('splashCity')) document.getElementById('splashCity').innerText="Suche Ort...";
                 let n=null;
@@ -382,7 +397,21 @@
                 if(!n) { try{ const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentLat}&lon=${currentLon}&format=json&accept-language=de`, {headers:{'User-Agent':'WetterApp/2.5'}}); const d=await r.json(); if(d.address) n=d.address.city||d.address.town||d.address.village||d.address.hamlet||d.address.suburb||d.address.neighbourhood||d.address.county; }catch(e){} }
                 if(!n) n = `${currentLat.toFixed(2)}, ${currentLon.toFixed(2)}`;
                 fetchWeather(n,"");
-            },()=>{ document.getElementById('loadingIndicator').classList.add('hidden'); if(!silent) alert("Standort verweigert"); else { document.getElementById('gpsErrorPrompt').classList.remove('hidden'); } }, {timeout:10000,enableHighAccuracy:true});
+            },()=>{ 
+                // FEHLER (z.B. file:// Blockade)
+                document.getElementById('loadingIndicator').classList.add('hidden'); 
+                console.warn("Standort Zugriff blockiert oder abgebrochen.");
+                
+                // Statt Alert laden wir einfach Berlin als Standard
+                if(!silent) {
+                    // Optional: Zeige kurz eine Info im UI, aber kein nerviges Popup
+                    document.getElementById('cityName').innerText = "Berlin (Demo)";
+                    currentLat = 52.52; currentLon = 13.41; // Koordinaten Berlin
+                    fetchWeather("Berlin", "");
+                } else { 
+                    document.getElementById('gpsErrorPrompt').classList.remove('hidden'); 
+                } 
+            }, {timeout:10000,enableHighAccuracy:true});
         }
 
         async function searchCity() {
