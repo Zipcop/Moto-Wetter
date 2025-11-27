@@ -132,7 +132,8 @@
     <main class="w-full max-w-lg space-y-4 pt-4 pb-10 relative z-10">
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
-                <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform"><i data-lucide="bike" size="16"></i> Wetter</h1>
+                <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
+                <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation"><i data-lucide="bike" size="16"></i> Wetter</h1>
                 <div class="flex items-center gap-3">
                     <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Layout"><i data-lucide="settings-2" size="18"></i></button>
                     <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"><i data-lucide="bell" size="18"></i><span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span></button>
@@ -214,7 +215,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.4 • Daily Details • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.6 • Stability Fix • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -291,8 +292,42 @@
 
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i data-lucide="bike" size="24" class="text-blue-400"></i> Moto Analyse</h3><p class="text-xs text-slate-400 mb-4">Details</p><div id="motoAnalysisList" class="space-y-3 mb-6"></div><h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3><div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3"><div id="gearIcon" class="text-2xl">🧥</div><div class="text-sm font-medium text-slate-200" id="gearText">...</div></div></div></div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="closeHourlyModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><div class="text-center mb-4"><div id="modalTime" class="text-lg font-bold text-blue-200">--:--</div><div id="modalDesc" class="text-sm text-slate-400">--</div></div><div class="flex flex-col items-center justify-center mb-6"><div id="modalIcon" class="mb-2 transform scale-125"></div><div class="text-5xl font-bold tracking-tighter"><span id="modalTemp">--</span>°</div></div><div class="grid grid-cols-3 gap-2 mb-4 text-center"><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="wind" size="12" class="inline"></i> Wind</div><div id="modalWind" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="umbrella" size="12" class="inline"></i> Regen</div><div id="modalRain" class="font-bold text-sm">--</div></div><div class="bg-slate-800/50 rounded-lg p-2"><div class="text-slate-400 text-[10px] mb-1"><i data-lucide="droplets" size="12" class="inline"></i> Feuchte</div><div id="modalHum" class="font-bold text-sm">--</div></div></div><div id="modalScoreBg" class="rounded-xl p-3 border flex items-center justify-between"><span class="font-bold uppercase text-xs tracking-wider">Moto Index</span><div class="text-right"><span id="modalScoreVal" class="text-xl font-black">--</span><span class="text-xs opacity-80">/10</span></div></div></div></div>
-    <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content"><button onclick="toggleLegend()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-blue-100 flex items-center gap-2"><i data-lucide="cloud-sun" size="20"></i> Legende</h3><div class="grid grid-cols-1 gap-2 text-sm text-slate-300"><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="sun" class="text-yellow-400 w-6 h-6"></i> <span>Klar</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-sun" class="text-blue-200 w-6 h-6"></i> <span>Bewölkt</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-fog" class="text-gray-400 w-6 h-6"></i> <span>Nebel</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain" class="text-blue-400 w-6 h-6"></i> <span>Regen</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="snowflake" class="text-white w-6 h-6"></i> <span>Schnee</span></div><div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning" class="text-purple-400 w-6 h-6"></i> <span>Gewitter</span></div></div></div></div>
-    <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-red-500/30 modal-content"><button onclick="document.getElementById('devMenu').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-1 text-red-400 flex items-center gap-2"><i data-lucide="terminal" size="20"></i> Developer FX</h3><p class="text-xs text-slate-500 mb-4 font-mono">Effekte erzwingen (nur visuell)</p><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="forceEffect(0, 1)" class="dev-btn">☀️ Klar (Tag)</button><button onclick="forceEffect(0, 0)" class="dev-btn">🌙 Klar (Nacht)</button><button onclick="forceEffect(3, 1)" class="dev-btn">☁️ Wolkig</button><button onclick="forceEffect(61, 1)" class="dev-btn">🌧️ Regen</button><button onclick="forceEffect(71, 1)" class="dev-btn">❄️ Schnee</button><button onclick="forceEffect(45, 1)" class="dev-btn">🌫️ Nebel</button><button onclick="forceEffect(95, 1)" class="dev-btn">⚡ Gewitter</button><button onclick="forceEffect(3, 1, true)" class="dev-btn">🌥️ Bedeckt++</button></div><button onclick="resetEffects()" class="w-full bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"><i data-lucide="refresh-cw" size="16"></i> Reset zu Live</button></div></div>
+    <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content"><button onclick="toggleLegend()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-blue-100 flex items-center gap-2"><i data-lucide="cloud-sun" size="20"></i> Legende</h3>
+        <div class="grid grid-cols-1 gap-2 text-sm text-slate-300">
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="sun" class="text-yellow-400 w-6 h-6"></i> <span>Klar</span></div>
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-sun" class="text-blue-200 w-6 h-6"></i> <span>Bewölkt</span></div>
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-fog" class="text-gray-400 w-6 h-6"></i> <span>Nebel</span></div>
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain" class="text-blue-400 w-6 h-6"></i> <span>Regen</span></div>
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="snowflake" class="text-white w-6 h-6"></i> <span>Schnee</span></div>
+            <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning" class="text-purple-400 w-6 h-6"></i> <span>Gewitter</span></div>
+        </div>
+    </div></div>
+
+    <!-- DEV MENU MODAL -->
+    <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-red-500/30 modal-content">
+            <button onclick="document.getElementById('devMenu').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-1 text-red-400 flex items-center gap-2"><i data-lucide="terminal" size="20"></i> Developer FX</h3>
+            <p class="text-xs text-slate-500 mb-4 font-mono">Effekte erzwingen (nur visuell)</p>
+            
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="forceEffect(0, 1)" class="dev-btn">☀️ Klar (Tag)</button>
+                <button onclick="forceEffect(0, 0)" class="dev-btn">🌙 Klar (Nacht)</button>
+                <button onclick="forceEffect(3, 1)" class="dev-btn">☁️ Wolkig</button>
+                <button onclick="forceEffect(61, 1)" class="dev-btn">💧 Regen (Leicht)</button>
+                <button onclick="forceEffect(63, 1)" class="dev-btn">🌧️ Regen (Mittel)</button>
+                <button onclick="forceEffect(65, 1)" class="dev-btn">⛈️ Regen (Stark)</button>
+                <button onclick="forceEffect(71, 1)" class="dev-btn">❄️ Schnee</button>
+                <button onclick="forceEffect(45, 1)" class="dev-btn">🌫️ Nebel</button>
+                <button onclick="forceEffect(95, 1)" class="dev-btn">⚡ Gewitter</button>
+                <button onclick="forceEffect(3, 1, true)" class="dev-btn">🌥️ Bedeckt++</button>
+            </div>
+            
+            <button onclick="resetEffects()" class="w-full bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                <i data-lucide="refresh-cw" size="16"></i> Reset zu Live
+            </button>
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
@@ -314,6 +349,7 @@
         let radarAnimationInterval = null;
         let isRadarPlaying = false; 
         
+        // DEV TRIGGER VARIABLES
         let devTapCount = 0;
         let devTapTimer;
         
@@ -323,17 +359,35 @@
             if (el) el.innerText = text;
         }
 
+        // --- DEV MENU TRIGGER (ROBUST VERSION) ---
         function handleDevTrigger() {
+            // Timer resetten
             clearTimeout(devTapTimer);
+            
+            // Zähler erhöhen
             devTapCount++;
-            if (devTapCount >= 5) {
-                document.getElementById('devMenu').classList.remove('hidden');
-                devTapCount = 0;
-                lucide.createIcons();
+            
+            // 3 Taps reichen jetzt
+            if (devTapCount >= 3) {
+                try {
+                    const menu = document.getElementById('devMenu');
+                    if(menu) {
+                        menu.classList.remove('hidden');
+                        lucide.createIcons(); 
+                    }
+                } catch(e) {
+                    console.error("DevMenu Error", e);
+                }
+                devTapCount = 0; // Reset nach Öffnen
             } else {
-                devTapTimer = setTimeout(() => { devTapCount = 0; }, 400); 
+                // Timer neu starten (600ms Toleranz)
+                devTapTimer = setTimeout(() => { 
+                    devTapCount = 0; 
+                }, 600); 
             }
         }
+        // Force global scope
+        window.handleDevTrigger = handleDevTrigger;
         
         function forceEffect(code, isDay, heavyOverride = false) {
             renderSplashEffects(code, isDay);
@@ -441,90 +495,95 @@
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
         
         async function showDailyDetails(index = 0) { 
-            if(!lastWeatherData) return; 
-            const d = lastWeatherData.daily; 
-            const c = lastWeatherData.current; 
-            
-            // Basic data
-            const date = new Date(d.time[index]);
-            const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', {weekday: 'long'});
-            const dateStr = date.toLocaleDateString('de-DE', {day: 'numeric', month: 'long'});
-            
-            // Set Titles SAFELY
-            safeSetText('dailyDetailTitle', dayName);
-            safeSetText('dailyDetailDate', dateStr);
-
-            // Sunrise/Sunset
-            safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
-            safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
-            
-            // Precipitation
-            const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined && d.precipitation_sum[index] !== null) ? d.precipitation_sum[index] : 0;
-            const precipProb = d.precipitation_probability_max ? d.precipitation_probability_max[index] : 0;
-            
-            safeSetText('detailPrecipSum', precipSum.toFixed(1));
-            safeSetText('detailPrecipProb', precipProb);
-            const probBar = document.getElementById('detailPrecipProbBar');
-            if(probBar) probBar.style.width = precipProb + '%';
-            
-            // Wind & UV
-            const windMax = d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : '--';
-            safeSetText('detailWindMax', windMax);
-            
-            // UV is typically current, but maybe generic for daily? Using current for now or hidden
-            // Simplified: Showing current UV only if index is 0
-            const uvVal = (d.uv_index_max && d.uv_index_max[index]) ? d.uv_index_max[index] : '--';
-            safeSetText('detailUVMax', uvVal);
-
-            const extras = document.getElementById('currentDayExtras');
-            if(index === 0) {
-                // Visibility & UV Current
-                safeSetText('detailVisibility', c.visibility>9999?">10 km":(c.visibility/1000).toFixed(1)+" km");
-                safeSetText('detailUV', c.uv_index);
-                if(extras) extras.classList.remove('hidden');
+            try {
+                if(!lastWeatherData) return; 
+                const d = lastWeatherData.daily; 
+                const c = lastWeatherData.current; 
                 
-                // Countdown
-                const diff = new Date(d.sunset[0]) - new Date(); 
-                const cd = document.getElementById('sunCountdownText'); 
-                if(cd) {
-                    if(diff>0) cd.innerText=`Noch ${Math.floor(diff/36e5)}h ${Math.floor((diff%36e5)/6e4)}m Licht`;
-                    else cd.innerText="Dunkelheit";
+                // --- SAFELY ACCESS DATA ---
+                if(!d || !d.time || !d.time[index]) return;
+
+                // Basic data
+                const date = new Date(d.time[index]);
+                const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', {weekday: 'long'});
+                const dateStr = date.toLocaleDateString('de-DE', {day: 'numeric', month: 'long'});
+                
+                // Set Titles
+                safeSetText('dailyDetailTitle', dayName);
+                safeSetText('dailyDetailDate', dateStr);
+
+                // Sunrise/Sunset
+                if(d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
+                if(d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
+                
+                // Precipitation
+                const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
+                const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
+                
+                safeSetText('detailPrecipSum', precipSum.toFixed(1));
+                safeSetText('detailPrecipProb', precipProb);
+                const probBar = document.getElementById('detailPrecipProbBar');
+                if(probBar) probBar.style.width = precipProb + '%';
+                
+                // Wind & UV
+                const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
+                safeSetText('detailWindMax', windMax);
+                
+                const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
+                safeSetText('detailUVMax', uvVal);
+
+                const extras = document.getElementById('currentDayExtras');
+                if(index === 0) {
+                    safeSetText('detailVisibility', (c.visibility && c.visibility>9999)?">10 km":((c.visibility/1000).toFixed(1)+" km"));
+                    safeSetText('detailUV', c.uv_index || "--");
+                    if(extras) extras.classList.remove('hidden');
+                    
+                    // Countdown
+                    if(d.sunset && d.sunset[0]) {
+                        const diff = new Date(d.sunset[0]) - new Date(); 
+                        const cd = document.getElementById('sunCountdownText'); 
+                        if(cd) {
+                            if(diff>0) cd.innerText=`Noch ${Math.floor(diff/36e5)}h ${Math.floor((diff%36e5)/6e4)}m Licht`;
+                            else cd.innerText="Dunkelheit";
+                        }
+                    }
+                    
+                    // AQI fetch
+                    try {
+                        const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
+                        const ad=await r.json(); const v=ad.current.european_aqi;
+                        safeSetText('detailAqiVal', v);
+                        let cl="bg-green-500";
+                        if(v>40) cl="bg-yellow-400"; if(v>60) cl="bg-orange-500"; if(v>80) cl="bg-red-600";
+                        const aqiBar = document.getElementById('detailAqiBar');
+                        if(aqiBar) aqiBar.className=`w-2 h-2 rounded-full ${cl}`;
+                    } catch(e) {}
+                } else {
+                    if(extras) extras.classList.add('hidden');
                 }
                 
-                // AQI fetch only for today
-                try {
-                    const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
-                    const ad=await r.json(); const v=ad.current.european_aqi;
-                    safeSetText('detailAqiVal', v);
-                    // Colors
-                    let cl="bg-green-500";
-                    if(v>40) cl="bg-yellow-400"; if(v>60) cl="bg-orange-500"; if(v>80) cl="bg-red-600";
-                    const aqiBar = document.getElementById('detailAqiBar');
-                    if(aqiBar) aqiBar.className=`w-2 h-2 rounded-full ${cl}`;
-                } catch(e) {}
-            } else {
-                // Future days - just ensure elements exist before setting
-                // Move visibility/UV into the extras block in HTML to hide them cleanly?
-                // For now, if elements exist inside extras, they are hidden anyway.
-                if(extras) extras.classList.add('hidden');
-            }
-            
-            // Calculate Daily Moto Score
-            const score = calculateMotoScore(
-                d.temperature_2m_max[index], 
-                d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
-                precipSum,
-                1, // assume day
-                d.weather_code[index]
-            );
-            const col = getScoreColor(score.score);
-            const scoreEl = document.getElementById('dailyMotoScore');
-            if(scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
-            safeSetText('dailyScoreDetailVal', score.score + "/10");
+                // Calculate Daily Moto Score
+                const score = calculateMotoScore(
+                    d.temperature_2m_max[index] || 15, 
+                    d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
+                    precipSum,
+                    1, // assume day
+                    d.weather_code[index] || 0
+                );
+                const col = getScoreColor(score.score);
+                const scoreEl = document.getElementById('dailyMotoScore');
+                if(scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
+                safeSetText('dailyScoreDetailVal', score.score + "/10");
 
-            const modal = document.getElementById('dailyDetailsModal');
-            if(modal) modal.classList.remove('hidden'); 
-            lucide.createIcons(); 
+                const modal = document.getElementById('dailyDetailsModal');
+                if(modal) modal.classList.remove('hidden'); 
+                lucide.createIcons(); 
+            } catch(e) {
+                console.error("Detail Error", e);
+                // Fallback: Open modal anyway, maybe empty
+                const modal = document.getElementById('dailyDetailsModal');
+                if(modal) modal.classList.remove('hidden');
+            }
         }
         
         function getGearRecommendation(t,r) { let tx="Standard",ic="🧥"; if(t>26){tx="Sommer/Mesh";ic="👕"}else if(t<10){tx="Winter/Thermo";ic="🧣"}else if(t<18){tx="Futter rein";ic="🧥"} if(r>0.5){tx+=" + Regen!";ic="☔"} return {text:tx,icon:ic}; }
@@ -586,6 +645,8 @@
             const isHeavyCloud = c === 3 || isRain || isSnow || isFog; 
             if (isStorm) { triggerLightningLoop(); }
             if (d === 1) { if (!isRain && !isSnow && !isFog) { h += `<div class="sun-orb" style="top: 100%; left: 0%;"></div>`; } } else { for (let i = 0; i < 100; i++) { h += `<div class="star" style="top:${Math.random()*60}%;left:${Math.random()*100}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;animation-delay:${Math.random()*2}s;opacity:${0.3+Math.random()*0.7}"></div>`; } }
+            
+            // WOLKEN (Mehr & Besser sichtbar)
             if (isCloudy && !isFog) {
                 h += `<div class="cloud-shape" style="top:10%; left:-5%; width:100vw; height:35vh; animation-duration:22s; opacity:0.6;"></div>`;
                 h += `<div class="cloud-shape" style="top:25%; right:-15%; width:90vw; height:30vh; animation-duration:28s; animation-direction:reverse; opacity:0.5;"></div>`;
@@ -594,7 +655,37 @@
                       h += `<div class="cloud-shape" style="bottom:35%; left:-20%; width:110vw; height:45vh; animation-duration:38s; opacity:0.3;"></div>`;
                 }
             }
-            if (isRain) { for (let i = 0; i < 30; i++) { h += `<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s; animation-duration:${0.4+Math.random()*0.3}s"></div>`; } } else if (isSnow) { for (let i = 0; i < 30; i++) { h += `<div class="snowflake" style="left:${Math.random()*100}%; animation-delay:${Math.random()*2}s; animation-duration:${3+Math.random()*2}s; opacity:${Math.random()}"></div>`; } } else if (isFog) { h += `<div class="fog-layer"></div>`; }
+
+            // NIEDERSCHLAG (Regen/Schnee/Nebel)
+            if (isRain) {
+                // Dynamische Menge je nach Stärke
+                let count = 30; // Basis (Leicht)
+                let speedBase = 0.8; // Basis-Dauer (Sekunden) - je höher desto langsamer
+
+                // Mäßiger Regen
+                if ([53, 63, 81].includes(c)) { 
+                    count = 80; 
+                    speedBase = 0.7; // Etwas schneller wirkend da mehr Tropfen
+                }
+                
+                // Starker Regen / Gewitter
+                if ([55, 65, 66, 67, 82, 95, 96, 99].includes(c)) { 
+                    count = 150; 
+                    speedBase = 0.6; // Schnellerer Fall bei Starkregen
+                }
+
+                for (let i = 0; i < count; i++) {
+                    const speed = speedBase + Math.random() * 0.5;
+                    h += `<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s; animation-duration:${speed}s"></div>`;
+                }
+            } else if (isSnow) {
+                for (let i = 0; i < 30; i++) {
+                    h += `<div class="snowflake" style="left:${Math.random()*100}%; animation-delay:${Math.random()*2}s; animation-duration:${3+Math.random()*2}s; opacity:${Math.random()}"></div>`;
+                }
+            } else if (isFog) {
+                h += `<div class="fog-layer"></div>`;
+            }
+
             if (con) con.innerHTML = h; if (loc) loc.innerHTML = h;
         }
         
@@ -733,7 +824,7 @@
         async function fetchWeather(name, country) {
             loadingIndicator.classList.remove('hidden'); offlineBanner.classList.add('hidden');
             // Added precipitation_sum, precipitation_probability_max, wind_speed_10m_max to daily fetch
-            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
+            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r=await fetch(url); if(!r.ok)throw new Error(); lastWeatherData=await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
             catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
         }
