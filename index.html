@@ -163,6 +163,7 @@
                     <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i data-lucide="maximize-2" size="12"></i></div>
                     <div id="weatherIconContainer" class="mb-1 text-blue-300"><i data-lucide="cloud" size="40"></i></div>
                     <div class="text-4xl font-bold mb-1"><span id="temperature">--</span>°</div>
+                    <div class="text-sm font-semibold text-blue-200 mb-2">Gefühlt <span id="feelsLike">--</span>°</div>
                     <div id="weatherDesc" class="text-xs text-slate-300">--</div>
                     <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2"><span class="flex items-center"><i data-lucide="arrow-up" size="14" class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span><span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span></div>
                     <div class="flex gap-3 mt-1 text-xs text-slate-400"><span class="flex items-center gap-1"><div class="bg-slate-700 border border-slate-600 rounded-full p-1 transform transition-transform duration-700" id="windDirArrow"><i data-lucide="arrow-up" size="12" class="text-blue-200"></i></div><span id="windSpeed">--</span></span><span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span></div>
@@ -215,7 +216,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.8 • Stability Fix • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.9 • Windchill • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -676,9 +677,13 @@
         function calculateDailyScore(h) { const off=(lastWeatherData.utc_offset_seconds||0)*1000; let ts=0,c=0; for(let i=0;i<h.time.length;i++){ if(new Date(new Date(h.time[i]).getTime()+off).toISOString().slice(0,10)!==new Date(Date.now()+off).toISOString().slice(0,10)) continue; if(h.is_day[i]){ ts+=calculateMotoScore(h.temperature_2m[i],h.wind_speed_10m[i],h.precipitation[i],h.is_day[i],h.weather_code[i]).score; c++; } } return c===0?"--":Math.round((ts/c)*10)/10; }
         function getScoreColor(s) { if(s>=8)return{bg:"border-emerald-500 text-emerald-400",hex:"#10b981"}; if(s>=5)return{bg:"border-yellow-500 text-yellow-400",hex:"#eab308"}; if(s>=3)return{bg:"border-orange-500 text-orange-400",hex:"#f97316"}; return{bg:"border-red-500 text-red-400",hex:"#ef4444"}; }
         
-        function updateMainValues(t,w,h,r,c,d,txt,idx=0) {
+        function updateMainValues(t, app_t, w, h, r, c, d, txt, idx=0) {
             try {
-                document.getElementById('temperature').innerText=Math.round(t); document.getElementById('windSpeed').innerText=w+" km/h"; document.getElementById('humidity').innerText=h+"%";
+                document.getElementById('temperature').innerText=Math.round(t); 
+                // NEW: Update Feels Like
+                safeSetText('feelsLike', Math.round(app_t));
+                
+                document.getElementById('windSpeed').innerText=w+" km/h"; document.getElementById('humidity').innerText=h+"%";
                 const i=getWeatherInfo(c); document.getElementById('weatherDesc').innerText=i.t; document.getElementById('weatherIconContainer').innerHTML=`<i data-lucide="${i.i}" class="w-12 h-12"></i>`;
                 const sc=calculateMotoScore(t,w,r,d,c); const col=getScoreColor(sc.score);
                 const el=document.getElementById('motoScoreCircle'); el.className=`w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${col.bg}`;
@@ -880,7 +885,17 @@
                 const info=getWeatherInfo(cur.weather_code); document.getElementById('splashIcon').innerHTML=`<i data-lucide="${info.i}" class="w-24 h-24"></i>`; document.getElementById('splashDesc').innerText=info.t;
                 renderSplashEffects(cur.weather_code, cur.is_day);
                 updateSunVisuals(); 
-                updateMainValues(cur.temperature_2m, cur.wind_speed_10m, cur.relative_humidity_2m, cur.precipitation, cur.weather_code, cur.is_day, 0);
+                // PASS NEW PARAMETER
+                updateMainValues(
+                    cur.temperature_2m, 
+                    cur.apparent_temperature, // NEW
+                    cur.wind_speed_10m, 
+                    cur.relative_humidity_2m, 
+                    cur.precipitation, 
+                    cur.weather_code, 
+                    cur.is_day, 
+                    0
+                );
                 checkWarnings(cur); 
                 if(!fromCache) checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
                 if (lastWeatherData.hourly) document.getElementById('dailyScoreValue').innerText=calculateDailyScore(lastWeatherData.hourly)+" / 10";
@@ -894,7 +909,8 @@
 
         async function fetchWeather(name, country) {
             loadingIndicator.classList.remove('hidden'); offlineBanner.classList.add('hidden');
-            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
+            // Added apparent_temperature to current fetch
+            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r=await fetch(url); if(!r.ok)throw new Error(); lastWeatherData=await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
             catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
         }
