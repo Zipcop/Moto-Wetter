@@ -135,7 +135,7 @@
                 <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
                 <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation"><i data-lucide="bike" size="16"></i> Wetter</h1>
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Layout"><i data-lucide="settings-2" size="18"></i></button>
+                    <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
                     <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"><i data-lucide="bell" size="18"></i><span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span></button>
                 </div>
             </div>
@@ -215,11 +215,54 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.6 • Stability Fix • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.8 • Stability Fix • N.W.</div>
     </main>
 
     <!-- MODALS -->
-    <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layout" size="20"></i> Layout</h3><div class="space-y-4 text-sm"><div class="space-y-2" id="layoutList"></div><div class="pt-4 border-t border-slate-600/50"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Detail-Sichtbarkeit</h4><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg mt-2"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div></div><button onclick="resetLayout()" class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Standard</button></div></div></div>
+    <!-- SETTINGS MODAL (Updated with Moto Profile) -->
+    <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
+            <button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="settings-2" size="20"></i> Einstellungen</h3>
+            <div class="space-y-4 text-sm max-h-[70vh] overflow-y-auto custom-scrollbar">
+                
+                <!-- Moto Profile Section -->
+                <div class="p-3 bg-slate-800/50 rounded-xl border border-blue-500/30">
+                    <h4 class="text-xs font-bold uppercase text-blue-300 mb-3 flex items-center gap-2"><i data-lucide="user-cog" size="14"></i> Biker Profil</h4>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Min. Temp (Wohlfühl)</span><span id="dispMinTemp" class="font-bold text-white">10°C</span></div>
+                        <input type="range" min="0" max="25" step="1" id="inputMinTemp" oninput="updateMotoProfile('minTemp', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>0°</span><span>25°</span></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Max. Wind (Böen)</span><span id="dispMaxWind" class="font-bold text-white">40 km/h</span></div>
+                        <input type="range" min="20" max="100" step="5" id="inputMaxWind" oninput="updateMotoProfile('maxWind', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>20</span><span>100</span></div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs text-slate-300">Regen-Empfindlichkeit</span>
+                        <button id="btnRainTol" onclick="toggleRainTolerance()" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500">Streng</button>
+                    </div>
+                    <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!</div>
+                </div>
+
+                <!-- Layout Section -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Layout & Sichtbarkeit</h4>
+                    <div class="space-y-2" id="layoutList"></div>
+                    <div class="pt-2 mt-2 border-t border-slate-600/50">
+                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg mb-2"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                    </div>
+                </div>
+                
+                <button onclick="resetLayout()" class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Reset App</button>
+            </div>
+        </div>
+    </div>
     
     <!-- DAILY DETAILS MODAL (Updated) -->
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
@@ -340,6 +383,13 @@
         let isFirstLoad = true; 
         let lightningTimeout;
         
+        // MOTO PROFILE STATE
+        let motoProfile = { minTemp: 10, maxWind: 40, strictRain: true };
+        try {
+            const saved = localStorage.getItem('motoProfile_v1');
+            if(saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
+        } catch(e){}
+
         // RADAR VARIABLES
         let radarMap = null;
         let radarMarker = null;
@@ -349,7 +399,6 @@
         let radarAnimationInterval = null;
         let isRadarPlaying = false; 
         
-        // DEV TRIGGER VARIABLES
         let devTapCount = 0;
         let devTapTimer;
         
@@ -359,15 +408,64 @@
             if (el) el.innerText = text;
         }
 
+        // --- MOTO PROFILE FUNCTIONS ---
+        function updateMotoProfile(key, value) {
+            if(key === 'minTemp') {
+                motoProfile.minTemp = parseInt(value);
+                safeSetText('dispMinTemp', motoProfile.minTemp + "°C");
+            } else if(key === 'maxWind') {
+                motoProfile.maxWind = parseInt(value);
+                safeSetText('dispMaxWind', motoProfile.maxWind + " km/h");
+            }
+            saveMotoProfile();
+        }
+
+        function toggleRainTolerance() {
+            motoProfile.strictRain = !motoProfile.strictRain;
+            renderMotoSettingsUI(); // Update texts/colors
+            saveMotoProfile();
+        }
+        
+        function toggleStrictRain() { // Alias for compatibility if needed
+            toggleRainTolerance();
+        }
+
+        function saveMotoProfile() {
+            localStorage.setItem('motoProfile_v1', JSON.stringify(motoProfile));
+            if(lastWeatherData) updateUI(null, true); // Recalculate scores live
+        }
+
+        function renderMotoSettingsUI() {
+            // Update Inputs
+            const inTemp = document.getElementById('inputMinTemp');
+            const inWind = document.getElementById('inputMaxWind');
+            if(inTemp) inTemp.value = motoProfile.minTemp;
+            if(inWind) inWind.value = motoProfile.maxWind;
+            
+            // Update Texts
+            safeSetText('dispMinTemp', motoProfile.minTemp + "°C");
+            safeSetText('dispMaxWind', motoProfile.maxWind + " km/h");
+            
+            // Update Button
+            const btn = document.getElementById('btnRainTol');
+            const desc = document.getElementById('rainTolDesc');
+            if(btn) {
+                if(motoProfile.strictRain) {
+                    btn.innerText = "Streng";
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500";
+                    safeSetText('rainTolDesc', "Kein Tropfen erlaubt!");
+                } else {
+                    btn.innerText = "Locker";
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-600 text-slate-300 border border-slate-500";
+                    safeSetText('rainTolDesc', "Leichter Regen okay.");
+                }
+            }
+        }
+
         // --- DEV MENU TRIGGER (ROBUST VERSION) ---
         function handleDevTrigger() {
-            // Timer resetten
             clearTimeout(devTapTimer);
-            
-            // Zähler erhöhen
             devTapCount++;
-            
-            // 3 Taps reichen jetzt
             if (devTapCount >= 3) {
                 try {
                     const menu = document.getElementById('devMenu');
@@ -375,18 +473,12 @@
                         menu.classList.remove('hidden');
                         lucide.createIcons(); 
                     }
-                } catch(e) {
-                    console.error("DevMenu Error", e);
-                }
-                devTapCount = 0; // Reset nach Öffnen
+                } catch(e) { console.error("DevMenu Error", e); }
+                devTapCount = 0; 
             } else {
-                // Timer neu starten (600ms Toleranz)
-                devTapTimer = setTimeout(() => { 
-                    devTapCount = 0; 
-                }, 600); 
+                devTapTimer = setTimeout(() => { devTapCount = 0; }, 600); 
             }
         }
-        // Force global scope
         window.handleDevTrigger = handleDevTrigger;
         
         function forceEffect(code, isDay, heavyOverride = false) {
@@ -458,7 +550,14 @@
             lucide.createIcons();
             setTimeout(() => { if(radarMap) radarMap.invalidateSize(); }, 200);
         }
-        function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); if(!document.getElementById('settingsModal').classList.contains('hidden')) renderSettingsList(); }
+        function toggleSettings() { 
+            const m = document.getElementById('settingsModal');
+            m.classList.toggle('hidden'); 
+            if(!m.classList.contains('hidden')) {
+                renderSettingsList(); 
+                renderMotoSettingsUI(); // NEW: Render moto settings when opening
+            }
+        }
         function renderSettingsList() {
             const l=document.getElementById('layoutList'); l.innerHTML='';
             const n={statusSection:'Übersicht', rainChartSection: 'Niederschlag (1h)', radarSection:'Radar (Live)',timelineSection:'Vorhersage', forecast7DaySection:'7-Tage Trend'};
@@ -474,7 +573,7 @@
         function moveItem(id, d) { const i=layoutConfig.order.indexOf(id); if(i<0||i+d<0||i+d>=layoutConfig.order.length)return; [layoutConfig.order[i],layoutConfig.order[i+d]]=[layoutConfig.order[i+d],layoutConfig.order[i]]; saveLayout(); renderSettingsList(); applyLayout(); }
         function toggleVisibility(id) { layoutConfig.visibility[id]=!layoutConfig.visibility[id]; saveLayout(); renderSettingsList(); applyLayout(); }
         function toggleSubVisibility(k) { layoutConfig.visibility['sub_'+k]=!layoutConfig.visibility['sub_'+k]; saveLayout(); renderSettingsList(); applyLayout(); }
-        function resetLayout() { localStorage.removeItem('motoLayoutConfig_v4'); location.reload(); }
+        function resetLayout() { localStorage.removeItem('motoLayoutConfig_v4'); localStorage.removeItem('motoProfile_v1'); location.reload(); }
         function saveLayout() { localStorage.setItem('motoLayoutConfig_v4', JSON.stringify(layoutConfig)); }
 
         function initCompass() { if (typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function') { DeviceOrientationEvent.requestPermission().then(r=>{if(r==='granted')window.addEventListener('deviceorientation',handleOrientation,true)}).catch(console.error); } else if (window.addEventListener) window.addEventListener('deviceorientation', handleOrientation, true); }
@@ -499,24 +598,18 @@
                 if(!lastWeatherData) return; 
                 const d = lastWeatherData.daily; 
                 const c = lastWeatherData.current; 
-                
-                // --- SAFELY ACCESS DATA ---
                 if(!d || !d.time || !d.time[index]) return;
 
-                // Basic data
                 const date = new Date(d.time[index]);
                 const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', {weekday: 'long'});
                 const dateStr = date.toLocaleDateString('de-DE', {day: 'numeric', month: 'long'});
                 
-                // Set Titles
                 safeSetText('dailyDetailTitle', dayName);
                 safeSetText('dailyDetailDate', dateStr);
 
-                // Sunrise/Sunset
                 if(d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
                 if(d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})); 
                 
-                // Precipitation
                 const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
                 const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
                 
@@ -525,10 +618,8 @@
                 const probBar = document.getElementById('detailPrecipProbBar');
                 if(probBar) probBar.style.width = precipProb + '%';
                 
-                // Wind & UV
                 const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
                 safeSetText('detailWindMax', windMax);
-                
                 const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
                 safeSetText('detailUVMax', uvVal);
 
@@ -537,8 +628,6 @@
                     safeSetText('detailVisibility', (c.visibility && c.visibility>9999)?">10 km":((c.visibility/1000).toFixed(1)+" km"));
                     safeSetText('detailUV', c.uv_index || "--");
                     if(extras) extras.classList.remove('hidden');
-                    
-                    // Countdown
                     if(d.sunset && d.sunset[0]) {
                         const diff = new Date(d.sunset[0]) - new Date(); 
                         const cd = document.getElementById('sunCountdownText'); 
@@ -547,27 +636,22 @@
                             else cd.innerText="Dunkelheit";
                         }
                     }
-                    
-                    // AQI fetch
                     try {
                         const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
                         const ad=await r.json(); const v=ad.current.european_aqi;
                         safeSetText('detailAqiVal', v);
-                        let cl="bg-green-500";
-                        if(v>40) cl="bg-yellow-400"; if(v>60) cl="bg-orange-500"; if(v>80) cl="bg-red-600";
-                        const aqiBar = document.getElementById('detailAqiBar');
-                        if(aqiBar) aqiBar.className=`w-2 h-2 rounded-full ${cl}`;
+                        let cl="bg-green-500"; if(v>40) cl="bg-yellow-400"; if(v>60) cl="bg-orange-500"; if(v>80) cl="bg-red-600";
+                        const aqiBar = document.getElementById('detailAqiBar'); if(aqiBar) aqiBar.className=`w-2 h-2 rounded-full ${cl}`;
                     } catch(e) {}
                 } else {
                     if(extras) extras.classList.add('hidden');
                 }
                 
-                // Calculate Daily Moto Score
                 const score = calculateMotoScore(
                     d.temperature_2m_max[index] || 15, 
                     d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
                     precipSum,
-                    1, // assume day
+                    1, 
                     d.weather_code[index] || 0
                 );
                 const col = getScoreColor(score.score);
@@ -580,7 +664,6 @@
                 lucide.createIcons(); 
             } catch(e) {
                 console.error("Detail Error", e);
-                // Fallback: Open modal anyway, maybe empty
                 const modal = document.getElementById('dailyDetailsModal');
                 if(modal) modal.classList.remove('hidden');
             }
@@ -658,22 +741,10 @@
 
             // NIEDERSCHLAG (Regen/Schnee/Nebel)
             if (isRain) {
-                // Dynamische Menge je nach Stärke
                 let count = 30; // Basis (Leicht)
-                let speedBase = 0.8; // Basis-Dauer (Sekunden) - je höher desto langsamer
-
-                // Mäßiger Regen
-                if ([53, 63, 81].includes(c)) { 
-                    count = 80; 
-                    speedBase = 0.7; // Etwas schneller wirkend da mehr Tropfen
-                }
-                
-                // Starker Regen / Gewitter
-                if ([55, 65, 66, 67, 82, 95, 96, 99].includes(c)) { 
-                    count = 150; 
-                    speedBase = 0.6; // Schnellerer Fall bei Starkregen
-                }
-
+                let speedBase = 0.8; 
+                if ([53, 63, 81].includes(c)) { count = 80; speedBase = 0.7; }
+                if ([55, 65, 66, 67, 82, 95, 96, 99].includes(c)) { count = 150; speedBase = 0.6; }
                 for (let i = 0; i < count; i++) {
                     const speed = speedBase + Math.random() * 0.5;
                     h += `<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s; animation-duration:${speed}s"></div>`;
@@ -823,12 +894,12 @@
 
         async function fetchWeather(name, country) {
             loadingIndicator.classList.remove('hidden'); offlineBanner.classList.add('hidden');
-            // Added precipitation_sum, precipitation_probability_max, wind_speed_10m_max to daily fetch
             const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r=await fetch(url); if(!r.ok)throw new Error(); lastWeatherData=await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
             catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
         }
 
+        // --- LOCATEME DEFINITION MOVED HERE ---
         function locateMe(silent=false) {
             if(!navigator.geolocation){ console.log("Kein GPS Support"); fetchWeather("Berlin", ""); return; } 
             if(!silent){ document.getElementById('loadingIndicator').classList.remove('hidden'); initCompass(); }
@@ -846,6 +917,7 @@
                 if(!silent) { document.getElementById('cityName').innerText = "Berlin (Demo)"; currentLat = 52.52; currentLon = 13.41; fetchWeather("Berlin", ""); } else { document.getElementById('gpsErrorPrompt').classList.remove('hidden'); } 
             }, {timeout:10000,enableHighAccuracy:true});
         }
+        window.locateMe = locateMe; // Expose globally
 
         async function searchCity() {
             const v=cityInput.value.trim(); if(!v)return; suggestionsList.classList.add('hidden'); errorMessage.classList.add('hidden'); loadingIndicator.classList.remove('hidden');
@@ -892,7 +964,7 @@
                 updateSunVisuals();
             },1000);
         }
-        startClock(); document.addEventListener('DOMContentLoaded', ()=>locateMe(true));
+        startClock(); document.addEventListener('DOMContentLoaded', ()=>{ if(typeof locateMe === 'function') locateMe(true); });
     </script>
 </body>
 </html>
