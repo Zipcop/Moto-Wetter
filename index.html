@@ -252,7 +252,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.12 • Z-Index Fix • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.13 • Auto-Refresh (5m) • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -421,6 +421,9 @@
         let currentHeading = 0;
         let isFirstLoad = true; 
         let lightningTimeout;
+        let refreshTimer = null; // NEW: Timer for auto-refresh
+        let currentCityName = "Standort"; // NEW: Store name for refresh
+        let currentCountry = ""; // NEW: Store country for refresh
         
         // MOTO PROFILE STATE
         let motoProfile = { minTemp: 10, maxWind: 40, strictRain: true };
@@ -991,12 +994,30 @@
             } catch (e) { console.error("UpdateUI Error", e); loadingIndicator.classList.add('hidden'); }
         }
 
-        async function fetchWeather(name, country) {
-            loadingIndicator.classList.remove('hidden'); offlineBanner.classList.add('hidden');
+        async function fetchWeather(name, country, isBackground = false) { // UPDATED: Background flag
+            if(!isBackground) { loadingIndicator.classList.remove('hidden'); offlineBanner.classList.add('hidden'); }
+            
+            // Store for auto-refresh
+            currentCityName = name; 
+            currentCountry = country;
+
+            // Reset refresh timer to align with manual fetches
+            if(refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                if(!document.hidden) {
+                    console.log("Auto-refreshing weather...");
+                    fetchWeather(currentCityName, currentCountry, true);
+                }
+            }, 300000); // 5 Minutes (300,000 ms)
+
             // Added apparent_temperature to current fetch
             const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r=await fetch(url); if(!r.ok)throw new Error(); lastWeatherData=await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
-            catch(e) { const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } }
+            catch(e) { 
+                if(!isBackground) { // Only show errors if user initiated
+                    const c=loadFromCache(); if(c){ lastWeatherData=c.data; offlineBanner.innerText="Offline"; offlineBanner.classList.remove('hidden'); updateUI(c.name,true); } else { document.getElementById('errorMessage').classList.remove('hidden'); loadingIndicator.classList.add('hidden'); } 
+                }
+            }
         }
 
         // --- LOCATEME DEFINITION MOVED HERE ---
