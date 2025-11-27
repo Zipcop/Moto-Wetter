@@ -7,13 +7,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Wetter">
     
-    <!-- ZURÜCK ZUM ORIGINAL: Web-Icon (Achtung: Transparenter Hintergrund kann auf iOS schwarz erscheinen) -->
+    <!-- ZURÜCK ZUM ORIGINAL: Web-Icon -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     
     <title>Wetter Live</title>
+    
+    <!-- LEAFLET CSS (Für das RainViewer Radar) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <style>
         /* touch-action: pan-y verhindert horizontales Wischen auf Browserebene */
         html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; width: 100%; touch-action: pan-y; }
@@ -54,6 +62,45 @@
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         .rain-bar { transition: height 0.5s ease-out; }
 
+        /* DEV MENU STYLES */
+        #devMenu { z-index: 9999; }
+        .dev-btn { @apply bg-slate-700 hover:bg-slate-600 text-white text-xs font-mono py-2 px-3 rounded border border-slate-600 transition-colors; }
+        .dev-btn-active { @apply bg-blue-600 border-blue-400; }
+
+        /* LEAFLET CUSTOM STYLES */
+        .leaflet-container { background: #0f172a !important; font-family: inherit !important; }
+        .leaflet-control-attribution { background: rgba(15, 23, 42, 0.8) !important; color: #64748b !important; }
+        .leaflet-control-attribution a { color: #94a3b8 !important; }
+        .leaflet-control-zoom { border: none !important; margin-right: 12px !important; margin-top: 50px !important; }
+        .leaflet-bar a { background-color: rgba(30, 41, 59, 0.9) !important; color: white !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
+        .leaflet-bar a:hover { background-color: #3b82f6 !important; }
+
+        /* TIMELINE SLIDER STYLES */
+        input[type=range] {
+            -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+            background: transparent; /* Otherwise white in Chrome */
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -4px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 1);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+
         /* Animations */
         @keyframes floatUp { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
         .animate-float-up { animation: floatUp 0.8s ease-out forwards; }
@@ -62,7 +109,11 @@
         .animate-bounce-slow { animation: bounce-slow 2s infinite; }
         
         /* Splash FX */
-        @keyframes rain-fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+        /* ÄNDERUNG: Regen fällt jetzt schräg (15 Grad Neigung + seitliche Bewegung) */
+        @keyframes rain-fall { 
+            0% { transform: translateY(-10vh) translateX(-5vh) rotate(15deg); } 
+            100% { transform: translateY(110vh) translateX(10vh) rotate(15deg); } 
+        }
         .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.4); top: -20px; animation: rain-fall 0.8s linear infinite; }
         
         @keyframes snow-fall { 0% { transform: translateY(-10vh) translateX(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(110vh) translateX(20px); opacity: 0.3; } }
@@ -71,16 +122,16 @@
         @keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; box-shadow: 0 0 6px rgba(255,255,255,0.9); }
         
-        @keyframes fog-drift { 0% { transform: translateX(-10%); opacity: 0.2; } 50% { transform: translateX(10%); opacity: 0.5; } 100% { transform: translateX(-10%); opacity: 0.2; } }
-        .fog-layer { position: absolute; left: -20%; right: -20%; height: 100px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent); filter: blur(20px); animation: fog-drift 8s infinite ease-in-out; }
+        @keyframes fog-drift { 0% { transform: translateX(-10%); opacity: 0.4; } 50% { transform: translateX(10%); opacity: 0.7; } 100% { transform: translateX(-10%); opacity: 0.4; } }
+        .fog-layer { position: absolute; left: -20%; right: -20%; top: 20%; height: 60%; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent); filter: blur(25px); animation: fog-drift 10s infinite ease-in-out; }
         
         @keyframes cloud-drift { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
         /* Verbessertes Cloud CSS: Mehr Sichtbarkeit */
         .cloud-shape { 
             position: absolute; 
-            background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, transparent 70%); 
+            background: radial-gradient(circle, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 60%, transparent 70%); 
             border-radius: 50%; 
-            filter: blur(40px); 
+            filter: blur(25px); 
             animation: cloud-drift linear infinite; 
         }
         
@@ -98,12 +149,25 @@
         @keyframes pulse-sun { 0%,100%{transform: translate(-50%, -50%) scale(1); opacity: 0.8;} 50%{transform: translate(-50%, -50%) scale(1.1); opacity: 1;} }
         
         .compass-active { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+
+        /* NEU: BLITZ CSS */
+        #lightningLayer { position: fixed; inset: 0; z-index: 5; background: white; opacity: 0; pointer-events: none; mix-blend-mode: overlay; }
+        @keyframes lightning-flash { 
+            0% { opacity: 0; } 
+            2% { opacity: 0.6; } 
+            4% { opacity: 0; } 
+            6% { opacity: 0.8; } 
+            8% { opacity: 0; } 
+            100% { opacity: 0; } 
+        }
     </style>
 </head>
 <body class="flex flex-col items-center">
 
     <!-- BACKGROUND EFFECTS (Z-0) -->
     <div id="splashEffects"></div>
+    <!-- NEU: BLITZ LAYER -->
+    <div id="lightningLayer"></div>
 
     <div id="splashScreen" onclick="dismissSplash()">
         <div id="splashLocalEffects"></div>
@@ -125,7 +189,8 @@
     <main class="w-full max-w-lg space-y-4 pt-4 pb-10 relative z-10">
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
-                <h1 class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2"><i data-lucide="bike" size="16"></i> Wetter</h1>
+                <!-- TRIGGER FÜR DEV MENU: 5x Tappen -->
+                <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform"><i data-lucide="bike" size="16"></i> Wetter</h1>
                 <div class="flex items-center gap-3">
                     <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Layout"><i data-lucide="settings-2" size="18"></i></button>
                     <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"><i data-lucide="bell" size="18"></i><span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span></button>
@@ -174,20 +239,31 @@
                 <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1"><span>Jetzt</span><span>15m</span><span>30m</span><span>45m</span></div>
             </div>
 
+            <!-- RADAR SECTION (RAINVIEWER + LEAFLET) -->
             <div id="radarSection" class="glass-panel rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col">
                 <div class="bg-slate-800/80 p-3 flex justify-between items-center border-b border-slate-700 shrink-0">
-                    <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="map" size="16" class="text-blue-400"></i><span id="radarTitle">Regen (Vorschau)</span></h3>
+                    <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="map" size="16" class="text-blue-400"></i><span id="radarTitle">Niederschlag (Live)</span></h3>
                     <div class="flex items-center gap-2">
-                        <button onclick="toggleLayerMenu()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation flex items-center gap-2"><i data-lucide="layers" size="16"></i></button>
                         <button onclick="toggleFullscreen()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation"><i id="fullscreenIcon" data-lucide="maximize-2" size="16"></i></button>
                     </div>
                 </div>
                 <div id="radarFrameContainer" class="relative w-full h-96 bg-slate-900 transition-all duration-300 grow">
-                    <iframe id="radarFrame" class="w-full h-full border-none" src=""></iframe>
-                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-10"><div class="live-dot"></div><span class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider">Live</span><span id="liveClock" class="text-xs font-mono font-bold text-white tracking-wider">--:--</span></div>
-                    <div id="radarOverlay" class="absolute inset-0 pointer-events-none border border-slate-700/20"></div>
+                    <!-- LEAFLET MAP CONTAINER -->
+                    <div id="radarMap" class="w-full h-full z-0 outline-none"></div>
+                    
+                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-[400]"><div class="live-dot"></div><span class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider">Radar</span></div>
+                    
+                    <!-- NEW RADAR CONTROLS (Play/Pause & Timeline) -->
+                    <div class="absolute bottom-6 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
+                        <button onclick="toggleRadarPlayback()" id="radarPlayBtn" class="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition shadow-lg shrink-0 touch-manipulation">
+                            <i data-lucide="pause" size="16"></i> 
+                        </button>
+                        <input type="range" id="radarTimeline" min="0" value="0" step="1" oninput="handleRadarScrub(this.value)" class="flex-grow h-1 bg-slate-600 rounded-lg cursor-pointer touch-manipulation">
+                        <span id="radarTimeLabel" class="text-xs font-mono font-bold text-white min-w-[40px] text-right">--:--</span>
+                    </div>
                 </div>
             </div>
+            
             <div id="timelineSection" class="glass-panel rounded-2xl p-4 transition-all duration-300">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300"><i data-lucide="clock" size="16"></i> Vorhersage</h3>
@@ -202,7 +278,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v3.9 • n.w.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.3 • Bugfix Niederschlag • N.W.</div>
     </main>
 
     <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layout" size="20"></i> Layout</h3><div class="space-y-4 text-sm"><div class="space-y-2" id="layoutList"></div><div class="pt-4 border-t border-slate-600/50"><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Detail-Sichtbarkeit</h4><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div><div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg mt-2"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div></div><button onclick="resetLayout()" class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Standard</button></div></div></div>
@@ -219,30 +295,121 @@
             <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning" class="text-purple-400 w-6 h-6"></i> <span>Gewitter</span></div>
         </div>
     </div></div>
-    <div id="layerMenuModal" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay"><div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content"><button onclick="toggleLayerMenu()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button><h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="layers" size="20"></i> Karten</h3><div class="grid grid-cols-2 gap-3"><button onclick="selectLayer('rain', 'Regen')" class="p-4 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700"><i data-lucide="cloud-rain" class="mx-auto mb-1 text-blue-300"></i><span class="text-xs block text-center">Regen</span></button><button onclick="selectLayer('wind', 'Wind')" class="p-4 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700"><i data-lucide="wind" class="mx-auto mb-1 text-teal-300"></i><span class="text-xs block text-center">Wind</span></button><button onclick="selectLayer('clouds', 'Wolken')" class="p-4 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700"><i data-lucide="cloud" class="mx-auto mb-1 text-gray-300"></i><span class="text-xs block text-center">Wolken</span></button><button onclick="selectLayer('temp', 'Temp')" class="p-4 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700"><i data-lucide="thermometer" class="mx-auto mb-1 text-red-400"></i><span class="text-xs block text-center">Temp</span></button></div></div></div>
+
+    <!-- DEV MENU MODAL -->
+    <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')" class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-red-500/30 modal-content">
+            <button onclick="document.getElementById('devMenu').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-1 text-red-400 flex items-center gap-2"><i data-lucide="terminal" size="20"></i> Developer FX</h3>
+            <p class="text-xs text-slate-500 mb-4 font-mono">Effekte erzwingen (nur visuell)</p>
+            
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="forceEffect(0, 1)" class="dev-btn">☀️ Klar (Tag)</button>
+                <button onclick="forceEffect(0, 0)" class="dev-btn">🌙 Klar (Nacht)</button>
+                <button onclick="forceEffect(3, 1)" class="dev-btn">☁️ Wolkig</button>
+                <button onclick="forceEffect(61, 1)" class="dev-btn">🌧️ Regen</button>
+                <button onclick="forceEffect(71, 1)" class="dev-btn">❄️ Schnee</button>
+                <button onclick="forceEffect(45, 1)" class="dev-btn">🌫️ Nebel</button>
+                <button onclick="forceEffect(95, 1)" class="dev-btn">⚡ Gewitter</button>
+                <button onclick="forceEffect(3, 1, true)" class="dev-btn">🌥️ Bedeckt++</button>
+            </div>
+            
+            <button onclick="resetEffects()" class="w-full bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                <i data-lucide="refresh-cw" size="16"></i> Reset zu Live
+            </button>
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
 
         // State
         let currentLat = 51.1657; let currentLon = 10.4515;
-        let currentRadarType = 'rain'; let currentRadarTitle = 'Regen (Vorschau)'; 
         let lastWeatherData = null;
         let isFullscreen = false; let debounceTimer; let clockInterval;
         let currentHeading = 0;
         let isFirstLoad = true; 
+        // NEU: Variable für den Blitz-Timer
+        let lightningTimeout;
         
-        // Layout Config: Add rainChartSection & Migration logic
+        // RADAR VARIABLES (LEAFLET + RAINVIEWER)
+        let radarMap = null;
+        let radarMarker = null;
+        let radarTimestamps = [];
+        let radarLayers = {}; // Store layers by timestamp
+        let currentRadarIndex = 0;
+        let radarAnimationInterval = null;
+        let isRadarPlaying = true; // Control play state
+        
+        // DEV MENU LOGIC
+        let devTapCount = 0;
+        let devTapTimer;
+        
+        function handleDevTrigger() {
+            clearTimeout(devTapTimer);
+            devTapCount++;
+            if (devTapCount >= 5) {
+                document.getElementById('devMenu').classList.remove('hidden');
+                devTapCount = 0;
+                lucide.createIcons();
+            } else {
+                devTapTimer = setTimeout(() => { devTapCount = 0; }, 400); // Reset count if tapping stops
+            }
+        }
+        
+        function forceEffect(code, isDay, heavyOverride = false) {
+            // Override the render logic temporarily
+            renderSplashEffects(code, isDay);
+            updateSunVisualsDev(isDay); // Custom handling for Sun in Dev Mode
+            
+            // Optional: Update Text to show we are in Dev Mode
+            const info = getWeatherInfo(code);
+            document.getElementById('weatherDesc').innerHTML = `<span class="text-red-400 font-mono">[DEV] ${info.t}</span>`;
+            document.getElementById('weatherIconContainer').innerHTML=`<i data-lucide="${info.i}" class="w-12 h-12 text-red-300"></i>`;
+            document.getElementById('devMenu').classList.add('hidden');
+            lucide.createIcons();
+            
+            // Hack for "Heavy" clouds manually
+            if(heavyOverride) {
+                 const con = document.getElementById('splashEffects');
+                 // Append extra clouds manually on top of existing ones - REDUZIERTE GRÖSSE & MEHR TRANSPARENZ
+                 con.innerHTML += `<div class="cloud-shape" style="top:-5%; left:20%; width:110vw; height:40vh; animation-duration:32s; opacity:0.4;"></div>`;
+                 con.innerHTML += `<div class="cloud-shape" style="bottom:35%; left:-20%; width:110vw; height:45vh; animation-duration:38s; opacity:0.3;"></div>`;
+            }
+        }
+        
+        function updateSunVisualsDev(isDay) {
+            // Helper to force sun/moon position in dev mode without messing up real data
+            const suns = document.querySelectorAll('.sun-orb');
+            suns.forEach(s => s.remove()); // Remove old
+            
+            if(isDay === 1) {
+                // Add fake sun
+                const con = document.getElementById('splashEffects');
+                const div = document.createElement('div');
+                div.className = 'sun-orb';
+                div.style.left = '50%';
+                div.style.top = '20%'; // High noon position
+                con.appendChild(div);
+            }
+        }
+
+        function resetEffects() {
+            if(lastWeatherData) {
+                updateUI(null, true); // Reload UI from last data
+            }
+            document.getElementById('devMenu').classList.add('hidden');
+        }
+
+        // Layout Config
         let layoutConfig = { order: ['statusSection', 'rainChartSection', 'radarSection', 'forecast7DaySection', 'timelineSection'], visibility: { statusSection: true, rainChartSection: true, radarSection: true, timelineSection: true, sub_weather: true, sub_moto: true, forecast7DaySection: true } };
         try { 
             const s = localStorage.getItem('motoLayoutConfig_v4'); 
             if(s) { 
                 const p = JSON.parse(s); 
-                // Migration
                 if(!p.order.includes('rainChartSection')) p.order.splice(1,0,'rainChartSection');
                 if(!p.order.includes('forecast7DaySection')) p.order.push('forecast7DaySection');
                 layoutConfig = { ...layoutConfig, ...p, visibility: { ...layoutConfig.visibility, ...p.visibility } }; 
-                // Ensure new keys exist
                 layoutConfig.visibility.rainChartSection = layoutConfig.visibility.rainChartSection !== false;
                 layoutConfig.visibility.forecast7DaySection = layoutConfig.visibility.forecast7DaySection !== false;
             } 
@@ -278,11 +445,14 @@
             if(layoutConfig.visibility.sub_weather && !layoutConfig.visibility.sub_moto) wc.classList.add('col-span-2');
             if(!layoutConfig.visibility.sub_weather && layoutConfig.visibility.sub_moto) mc.classList.add('col-span-2');
             lucide.createIcons();
+            
+            // Radar Reflow Hack (Leaflet needs size check after layout change)
+            setTimeout(() => { if(radarMap) radarMap.invalidateSize(); }, 200);
         }
         function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); if(!document.getElementById('settingsModal').classList.contains('hidden')) renderSettingsList(); }
         function renderSettingsList() {
             const l=document.getElementById('layoutList'); l.innerHTML='';
-            const n={statusSection:'Übersicht', rainChartSection: 'Niederschlag (1h)', radarSection:'Radar',timelineSection:'Vorhersage', forecast7DaySection:'7-Tage Trend'};
+            const n={statusSection:'Übersicht', rainChartSection: 'Niederschlag (1h)', radarSection:'Radar (Live)',timelineSection:'Vorhersage', forecast7DaySection:'7-Tage Trend'};
             layoutConfig.order.forEach((id,i)=>{
                 l.innerHTML+=`<div class="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="flex items-center gap-3"><span class="text-slate-400 font-mono text-xs">${i+1}</span><span class="font-bold text-white">${n[id]}</span></div><div class="flex items-center gap-2"><button onclick="moveItem('${id}',-1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-up" size="16"></i></button><button onclick="moveItem('${id}',1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-down" size="16"></i></button><div class="w-px h-4 bg-slate-600 mx-1"></div><button onclick="toggleVisibility('${id}')" class="${layoutConfig.visibility[id]?'text-green-400':'text-slate-500'} p-1 hover:bg-slate-700 rounded"><i data-lucide="${layoutConfig.visibility[id]?'eye':'eye-off'}" size="18"></i></button></div></div>`;
             });
@@ -316,7 +486,6 @@
 
         function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
-        function toggleLayerMenu() { document.getElementById('layerMenuModal').classList.toggle('hidden'); lucide.createIcons(); }
         async function showDailyDetails() { if(!lastWeatherData)return; const d=lastWeatherData.daily, c=lastWeatherData.current; 
         document.getElementById('detailSunrise').innerText=new Date(d.sunrise[0]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); document.getElementById('detailSunset').innerText=new Date(d.sunset[0]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); document.getElementById('detailVisibility').innerText=c.visibility>9999?">10 km":(c.visibility/1000).toFixed(1)+" km"; document.getElementById('detailUV').innerText=c.uv_index;
         const diff=new Date(d.sunset[0])-new Date(); const cd=document.getElementById('sunCountdownText'); if(diff>0)cd.innerText=`Noch ${Math.floor(diff/36e5)}h ${Math.floor((diff%36e5)/6e4)}m Licht`;else cd.innerText="Dunkelheit";
@@ -369,18 +538,49 @@
                 sun.style.top = `${topVal}%`;
             });
         }
+        
+        // NEU: Funktion um Blitze auszulösen
+        function triggerLightningLoop() {
+            const layer = document.getElementById('lightningLayer');
+            if(!layer) return;
+            
+            // Zufällige Zeit bis zum nächsten Blitz (zwischen 2000ms und 8000ms)
+            const nextStrike = Math.random() * 6000 + 2000;
+            
+            lightningTimeout = setTimeout(() => {
+                // Animation resetten (Reflow Trick)
+                layer.style.animation = 'none';
+                layer.offsetHeight; /* trigger reflow */
+                layer.style.animation = 'lightning-flash 0.6s linear';
+                
+                // Loop fortsetzen
+                triggerLightningLoop();
+            }, nextStrike);
+        }
 
         function renderSplashEffects(c, d) {
             const con = document.getElementById('splashEffects');
             const loc = document.getElementById('splashLocalEffects');
+            
+            // Alten Blitz-Timer stoppen, damit sie sich nicht stapeln
+            clearTimeout(lightningTimeout);
+            
             let h = '';
 
             // Wetter-Hilfsvariablen
             const isRain = [51, 53, 55, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(c);
             const isSnow = [71, 73, 75, 77, 85, 86].includes(c);
             const isFog = [45, 48].includes(c);
+            // NEU: Check für Gewitter
+            const isStorm = [95, 96, 99].includes(c);
+            
             const isCloudy = c > 0 || isRain || isSnow || isFog; // Fast immer bewölkt außer Code 0
             const isHeavyCloud = c === 3 || isRain || isSnow || isFog; // Bedeckt oder Niederschlag
+
+            // NEU: Blitz-Loop starten wenn Gewitter
+            if (isStorm) {
+                triggerLightningLoop();
+            }
 
             // 1. HIMMELSKÖRPER (Sonne/Sterne)
             if (d === 1) {
@@ -391,21 +591,23 @@
                 }
             } else {
                 // Nacht: Sterne immer anzeigen (auch bei Bewölkung, für die Optik)
+                // Sterne immer anzeigen (auch bei Bewölkung, für die Optik)
                 for (let i = 0; i < 100; i++) {
                     h += `<div class="star" style="top:${Math.random()*60}%;left:${Math.random()*100}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;animation-delay:${Math.random()*2}s;opacity:${0.3+Math.random()*0.7}"></div>`;
                 }
             }
 
             // 2. WOLKEN (Mehr & Besser sichtbar)
-            if (isCloudy) {
-                // Standard-Wolken (heller & sichtbarer)
-                h += `<div class="cloud-shape" style="top:10%; left:-10%; width:140vw; height:45vh; animation-duration:45s; opacity:0.6;"></div>`;
-                h += `<div class="cloud-shape" style="top:20%; right:-20%; width:120vw; height:40vh; animation-duration:55s; animation-direction:reverse; opacity:0.5;"></div>`;
+            // ÄNDERUNG: Wolken nur anzeigen, wenn KEIN Nebel ist
+            if (isCloudy && !isFog) {
+                // Standard-Wolken (heller & sichtbarer & schneller) - REDUZIERTE GRÖSSE & MEHR TRANSPARENZ
+                h += `<div class="cloud-shape" style="top:10%; left:-5%; width:100vw; height:35vh; animation-duration:22s; opacity:0.6;"></div>`;
+                h += `<div class="cloud-shape" style="top:25%; right:-15%; width:90vw; height:30vh; animation-duration:28s; animation-direction:reverse; opacity:0.5;"></div>`;
                 
-                // Zusatz-Wolken bei schlechtem Wetter (Bedeckt/Regen)
+                // Zusatz-Wolken bei schlechtem Wetter (Bedeckt/Regen) - REDUZIERTE GRÖSSE & MEHR TRANSPARENZ
                 if (isHeavyCloud) {
-                     h += `<div class="cloud-shape" style="top:-10%; left:20%; width:150vw; height:50vh; animation-duration:60s; opacity:0.4;"></div>`;
-                     h += `<div class="cloud-shape" style="bottom:30%; left:-30%; width:150vw; height:60vh; animation-duration:70s; opacity:0.3;"></div>`;
+                      h += `<div class="cloud-shape" style="top:-5%; left:20%; width:110vw; height:40vh; animation-duration:32s; opacity:0.4;"></div>`;
+                      h += `<div class="cloud-shape" style="bottom:35%; left:-20%; width:110vw; height:45vh; animation-duration:38s; opacity:0.3;"></div>`;
                 }
             }
 
@@ -419,7 +621,7 @@
                     h += `<div class="snowflake" style="left:${Math.random()*100}%; animation-delay:${Math.random()*2}s; animation-duration:${3+Math.random()*2}s; opacity:${Math.random()}"></div>`;
                 }
             } else if (isFog) {
-                h += `<div class="fog-layer" style="top:30%;height:40%"></div>`;
+                h += `<div class="fog-layer"></div>`;
             }
 
             if (con) con.innerHTML = h;
@@ -430,8 +632,27 @@
             const container = document.getElementById('rainBarsContainer');
             if (!minutely15 || !minutely15.precipitation || minutely15.precipitation.length < 4) { container.innerHTML = '<div class="text-xs text-slate-500 w-full text-center flex items-center justify-center">Keine Daten</div>'; return; }
             container.innerHTML = '';
+            
+            // FIX: Find the correct start index based on current time
+            let startIndex = 0;
+            const now = Date.now();
+            
+            if(minutely15.time) {
+                for(let j=0; j<minutely15.time.length; j++) {
+                    // Check if this time slot is in the future (or very close to now)
+                    // The time array contains ISO strings usually. Open-Meteo handles timezones well.
+                    if(new Date(minutely15.time[j]).getTime() >= now - 15*60*1000) { // fuzzy match: show current 15m slot
+                        startIndex = j;
+                        break;
+                    }
+                }
+            }
+
             for(let i=0; i<4; i++) {
-                const val = minutely15.precipitation[i];
+                const dataIndex = startIndex + i;
+                if (dataIndex >= minutely15.precipitation.length) break;
+                
+                const val = minutely15.precipitation[dataIndex];
                 const height = Math.min(100, (val / 2.0) * 100); 
                 const color = val > 1.0 ? "bg-blue-500" : "bg-blue-300/70";
                 container.innerHTML += `<div class="w-1/4 h-full flex flex-col justify-end items-center gap-1"><div class="w-full rounded-t-md ${color} rain-bar" style="height: ${Math.max(5, height)}%"></div><span class="text-[9px] text-slate-400">${val > 0 ? val.toFixed(1) : '0'}</span></div>`;
@@ -452,7 +673,207 @@
             }
             lucide.createIcons();
         }
+        
+        // --- RADAR INITIALIZATION (LEAFLET + RAINVIEWER ANIMATION) ---
+        function initRadarMap() {
+            const container = document.getElementById('radarMap');
+            if(!container) return;
+            
+            // Wenn Karte schon existiert, nur View updaten
+            if (radarMap) {
+                radarMap.setView([currentLat, currentLon], 8);
+                updateMarker();
+                return;
+            }
 
+            // Karte erstellen (Leaflet)
+            radarMap = L.map('radarMap', {
+                zoomControl: false, 
+                attributionControl: true
+            }).setView([currentLat, currentLon], 8);
+
+            // 1. Basis-Layer (CartoDB Dark Matter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OSM &copy; CARTO &copy; RainViewer',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(radarMap);
+
+            updateMarker();
+            
+            // Start Animation Loop fetch
+            fetchRadarData();
+        }
+        
+        function updateMarker() {
+            if(!radarMap) return;
+            if(radarMarker) radarMap.removeLayer(radarMarker);
+            
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#ef4444; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #ef4444;'></div>",
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+
+            radarMarker = L.marker([currentLat, currentLon], {icon: icon}).addTo(radarMap);
+        }
+
+        async function fetchRadarData() {
+            try {
+                // RainViewer API (Aggregiert DWD und andere)
+                const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+                const data = await response.json();
+                
+                // Wir nehmen die letzten Frames (past) und vielleicht 1 forecast
+                // Format: data.radar.past = [ { time: unix, path: string }, ... ]
+                
+                if (data.radar && data.radar.past) {
+                    radarTimestamps = data.radar.past;
+                    // Optional: Nowcast dazu
+                    if (data.radar.nowcast) {
+                        radarTimestamps = radarTimestamps.concat(data.radar.nowcast);
+                    }
+                    
+                    // SLIDER SETUP: Max wert setzen
+                    const timeline = document.getElementById('radarTimeline');
+                    if(timeline) {
+                        timeline.max = radarTimestamps.length - 1;
+                        timeline.value = 0;
+                    }
+                    
+                    startRadarAnimation();
+                }
+            } catch (e) {
+                console.error("Radar fetch failed", e);
+                document.getElementById('radarTimeLabel').innerText = "Offline";
+            }
+        }
+
+        function startRadarAnimation() {
+            // Cleanup old layers logic simplified
+            
+            if (radarAnimationInterval) clearInterval(radarAnimationInterval);
+            
+            // Ensure UI shows playing state
+            isRadarPlaying = true;
+            updatePlayButtonIcon();
+            
+            // Start Loop if not already running
+            if (!radarAnimationInterval) {
+                 radarAnimationInterval = setInterval(() => {
+                    // Loop
+                    currentRadarIndex = (currentRadarIndex + 1) % radarTimestamps.length;
+                    showRadarFrame(currentRadarIndex);
+                }, 800); // 800ms pro Frame
+            }
+        }
+        
+        function stopRadarAnimation() {
+            if (radarAnimationInterval) {
+                clearInterval(radarAnimationInterval);
+                radarAnimationInterval = null;
+            }
+            isRadarPlaying = false;
+            updatePlayButtonIcon();
+        }
+        
+        function toggleRadarPlayback() {
+            if (isRadarPlaying) {
+                stopRadarAnimation();
+            } else {
+                startRadarAnimation();
+            }
+        }
+        
+        function updatePlayButtonIcon() {
+            const btn = document.getElementById('radarPlayBtn');
+            if(btn) {
+                // Change icon based on state
+                btn.innerHTML = isRadarPlaying ? '<i data-lucide="pause" size="16"></i>' : '<i data-lucide="play" size="16"></i>';
+                lucide.createIcons();
+            }
+        }
+        
+        function handleRadarScrub(val) {
+            // User interact with slider
+            stopRadarAnimation(); // Auto-pause when scrubbing
+            currentRadarIndex = parseInt(val);
+            showRadarFrame(currentRadarIndex);
+        }
+
+        function showRadarFrame(index) {
+            if (!radarMap || !radarTimestamps[index]) return;
+            
+            const tsObj = radarTimestamps[index];
+            const time = new Date(tsObj.time * 1000);
+            
+            // 1. Label Update
+            const hours = time.getHours().toString().padStart(2, '0');
+            const minutes = time.getMinutes().toString().padStart(2, '0');
+            document.getElementById('radarTimeLabel').innerText = `${hours}:${minutes}`;
+            
+            // 2. Timeline Slider Update (Sync)
+            // Nur updaten wenn nicht gerade gescrubbed wird? 
+            // In diesem Fall updaten wir immer, da scrubbing eh pausiert.
+            const timeline = document.getElementById('radarTimeline');
+            if(timeline && isRadarPlaying) {
+                timeline.value = index;
+            }
+
+            // 3. Layer Management
+            const layerUrl = `https://tilecache.rainviewer.com${tsObj.path}/256/{z}/{x}/{y}/2/1_1.png`;
+            
+            // Add new layer
+            const newLayer = L.tileLayer(layerUrl, {
+                opacity: 0.7,
+                zIndex: 100
+            });
+            
+            newLayer.addTo(radarMap);
+            
+            // Add to tracking array
+            radarLayers[tsObj.time] = newLayer;
+            
+            // Remove previous layers (Keep only current)
+            Object.keys(radarLayers).forEach(key => {
+                if (parseInt(key) !== tsObj.time) {
+                    if (radarMap.hasLayer(radarLayers[key])) {
+                        radarMap.removeLayer(radarLayers[key]);
+                    }
+                    delete radarLayers[key];
+                }
+            });
+        }
+
+        function updateRadar(){
+            // Check if Leaflet is loaded
+            if(typeof L !== 'undefined') {
+                initRadarMap();
+            }
+        }
+        
+        function toggleFullscreen(){
+            const c=document.getElementById('radarSection');
+            isFullscreen=!isFullscreen;
+            if(isFullscreen){
+                c.classList.add('radar-fullscreen');
+                document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');
+                // Overlay Logic not needed in this version as overlay is removed
+                document.body.style.overflow='hidden';
+            }else{
+                c.classList.remove('radar-fullscreen');
+                document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');
+                document.body.style.overflow='';
+            }
+            lucide.createIcons();
+            
+            // WICHTIG: Leaflet sagen, dass sich die Größe geändert hat
+            setTimeout(() => {
+                if(radarMap) radarMap.invalidateSize();
+            }, 300); // Warten auf CSS Transition
+        }
+        
         function updateUI(name, fromCache=false) {
             try {
                 if(name) document.getElementById('cityName').innerText=name; const cur=lastWeatherData.current;
@@ -524,7 +945,7 @@
             try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=10&language=de&format=json`);const d=await r.json(); if(!d.results)throw new Error(); const l=d.results[0]; currentLat=l.latitude; currentLon=l.longitude; fetchWeather(l.name,l.country);}catch(e){loadingIndicator.classList.add('hidden');errorMessage.classList.remove('hidden');setTimeout(()=>errorMessage.classList.add('hidden'),3000);}
         }
 
-        cityInput.addEventListener('input',e=>{clearTimeout(debounceTimer);const v=e.target.value.trim();if(v.length<2){suggestionsList.classList.add('hidden');return;}debounceTimer=setTimeout(async()=>{try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=5&language=de&format=json`);const d=await r.json();suggestionsList.innerHTML='';if(d.results){d.results.forEach(p=>{const el=document.createElement('div');el.className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50";el.innerHTML=`<span class="font-bold text-white text-sm">${p.name}</span><span class="text-xs text-slate-400 ml-2">${p.admin1||''}</span>`;el.onclick=()=>{cityInput.value=p.name;suggestionsList.classList.add('hidden');cityInput.blur();currentLat=p.latitude;currentLon=p.longitude;fetchWeather(p.name,p.country);};suggestionsList.appendChild(el);});suggestionsList.classList.remove('hidden');}else suggestionsList.classList.add('hidden');}catch(e){}},300);});
+        cityInput.addEventListener('input',e=>{clearTimeout(debounceTimer);const v=e.target.value.trim();if(v.length<2){suggestionsList.classList.add('hidden');return;	debounceTimer=setTimeout(async()=>{try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=5&language=de&format=json`);const d=await r.json();suggestionsList.innerHTML='';if(d.results){d.results.forEach(p=>{const el=document.createElement('div');el.className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50";el.innerHTML=`<span class="font-bold text-white text-sm">${p.name}</span><span class="text-xs text-slate-400 ml-2">${p.admin1||''}</span>`;el.onclick=()=>{cityInput.value=p.name;suggestionsList.classList.add('hidden');cityInput.blur();currentLat=p.latitude;currentLon=p.longitude;fetchWeather(p.name,p.country);};suggestionsList.appendChild(el);});suggestionsList.classList.remove('hidden');}else suggestionsList.classList.add('hidden');}catch(e){}},300);}});
         document.addEventListener('click',e=>{if(!cityInput.contains(e.target)&&!suggestionsList.contains(e.target))suggestionsList.classList.add('hidden');});
         
         function selectHour(i){
@@ -552,11 +973,9 @@
         }
 
         function getWeatherInfo(c){const m={0:{t:"Klar",i:"sun"},1:{t:"Heiter",i:"sun"},2:{t:"Wolkig",i:"cloud-sun"},3:{t:"Bedeckt",i:"cloud"},45:{t:"Nebel",i:"cloud-fog"},48:{t:"Nebel",i:"cloud-fog"},51:{t:"Niesel",i:"cloud-drizzle"},53:{t:"Niesel",i:"cloud-drizzle"},55:{t:"Niesel",i:"cloud-drizzle"},56:{t:"Gefrier. Niesel",i:"cloud-drizzle"},57:{t:"Gefrier. Niesel",i:"cloud-drizzle"},61:{t:"Regen",i:"cloud-rain"},63:{t:"Regen",i:"cloud-rain"},65:{t:"Starkregen",i:"cloud-rain"},66:{t:"Gefrier. Regen",i:"cloud-hail"},67:{t:"Gefrier. Regen",i:"cloud-hail"},71:{t:"Schnee",i:"snowflake"},73:{t:"Schnee",i:"snowflake"},75:{t:"Schnee",i:"snowflake"},77:{t:"Schneegriesel",i:"snowflake"},80:{t:"Schauer",i:"cloud-rain-wind"},81:{t:"Schauer",i:"cloud-rain-wind"},82:{t:"Starkschauer",i:"cloud-rain-wind"},85:{t:"Schneeschauer",i:"snowflake"},86:{t:"Schneeschauer",i:"snowflake"},95:{t:"Gewitter",i:"cloud-lightning"},96:{t:"Gewitter",i:"cloud-lightning"},99:{t:"Gewitter",i:"cloud-lightning"}}; return m[c]||{t:"Unbekannt",i:"help-circle"};}
-        function selectLayer(t,l){currentRadarType=t;document.getElementById('radarTitle').innerText=l;toggleLayerMenu();updateRadar();}
-        function updateRadar(){const h=isFullscreen?1000:384;const s=`https://embed.windy.com/embed2.html?lat=${currentLat}&lon=${currentLon}&detailLat=${currentLat}&detailLon=${currentLon}&width=650&height=${h}&zoom=8&level=surface&overlay=${currentRadarType}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C`;document.getElementById('radarFrame').src=s;}
         
-        // FIX: Hier stand vorher 'radarCard', was es nicht gab. Korrigiert auf 'radarSection'.
-        function toggleFullscreen(){const c=document.getElementById('radarSection');isFullscreen=!isFullscreen;if(isFullscreen){c.classList.add('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','x');document.getElementById('radarOverlay').classList.add('hidden');document.body.style.overflow='hidden'}else{c.classList.remove('radar-fullscreen');document.getElementById('fullscreenIcon').setAttribute('data-lucide','maximize-2');document.getElementById('radarOverlay').classList.remove('hidden');document.body.style.overflow=''}lucide.createIcons();updateRadar();}
+        // --- DWD RADAR HELPER FUNCTIONS ---
+        // (Wird oben in initDWDRadar und updateRadar verwendet)
         
         function startClock(){
             const c=document.getElementById('liveClock');
