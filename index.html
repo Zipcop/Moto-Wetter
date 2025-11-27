@@ -252,7 +252,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.13 • Auto-Refresh (5m) • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.14 • Suche mit Flaggen • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -1040,13 +1040,73 @@
         }
         window.locateMe = locateMe; // Expose globally
 
-        async function searchCity() {
-            const v=cityInput.value.trim(); if(!v)return; suggestionsList.classList.add('hidden'); errorMessage.classList.add('hidden'); loadingIndicator.classList.remove('hidden');
-            try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=10&language=de&format=json`);const d=await r.json(); if(!d.results)throw new Error(); const l=d.results[0]; currentLat=l.latitude; currentLon=l.longitude; fetchWeather(l.name,l.country);}catch(e){loadingIndicator.classList.add('hidden');errorMessage.classList.remove('hidden');setTimeout(()=>errorMessage.classList.add('hidden'),3000);}
-        }
+        // Search Suggestions Logic
+        cityInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const value = e.target.value.trim();
+            
+            if (value.length < 2) {
+                suggestionsList.classList.add('hidden');
+                return;
+            }
 
-        cityInput.addEventListener('input',e=>{clearTimeout(debounceTimer);const v=e.target.value.trim();if(v.length<2){suggestionsList.classList.add('hidden');return;	debounceTimer=setTimeout(async()=>{try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v)}&count=5&language=de&format=json`);const d=await r.json();suggestionsList.innerHTML='';if(d.results){d.results.forEach(p=>{const el=document.createElement('div');el.className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50";el.innerHTML=`<span class="font-bold text-white text-sm">${p.name}</span><span class="text-xs text-slate-400 ml-2">${p.admin1||''}</span>`;el.onclick=()=>{cityInput.value=p.name;suggestionsList.classList.add('hidden');cityInput.blur();currentLat=p.latitude;currentLon=p.longitude;fetchWeather(p.name,p.country);};suggestionsList.appendChild(el);});suggestionsList.classList.remove('hidden');}else suggestionsList.classList.add('hidden');}catch(e){}},300);}});
-        document.addEventListener('click',e=>{if(!cityInput.contains(e.target)&&!suggestionsList.contains(e.target))suggestionsList.classList.add('hidden');});
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(value)}&count=5&language=de&format=json`);
+                    const data = await response.json();
+                    
+                    suggestionsList.innerHTML = '';
+                    
+                    if (data.results && data.results.length > 0) {
+                        suggestionsList.classList.remove('hidden');
+                        data.results.forEach(city => {
+                            const countryCode = city.country_code ? city.country_code.toLowerCase() : '';
+                            const flagUrl = countryCode ? `https://flagcdn.com/24x18/${countryCode}.png` : '';
+                            
+                            const div = document.createElement('div');
+                            div.className = "p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 flex items-center justify-between transition-colors";
+                            
+                            // Left side: Name + Region
+                            const infoDiv = document.createElement('div');
+                            infoDiv.innerHTML = `<span class="font-bold text-white text-sm block">${city.name}</span><span class="text-xs text-slate-400">${city.admin1 || city.country || ''}</span>`;
+                            
+                            // Right side: Flag
+                            if(flagUrl) {
+                                const img = document.createElement('img');
+                                img.src = flagUrl;
+                                img.className = "w-6 h-4 opacity-80 rounded-sm";
+                                div.appendChild(infoDiv);
+                                div.appendChild(img);
+                            } else {
+                                div.appendChild(infoDiv);
+                            }
+
+                            div.onclick = () => {
+                                cityInput.value = city.name;
+                                suggestionsList.classList.add('hidden');
+                                currentLat = city.latitude;
+                                currentLon = city.longitude;
+                                fetchWeather(city.name, city.country); 
+                            };
+                            
+                            suggestionsList.appendChild(div);
+                        });
+                    } else {
+                        suggestionsList.classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.error("Search error:", error);
+                    suggestionsList.classList.add('hidden');
+                }
+            }, 300);
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                suggestionsList.classList.add('hidden');
+            }
+        });
         
         function selectHour(i){
             const h=lastWeatherData.hourly; const t=Math.round(h.temperature_2m[i]); const c=h.weather_code[i]; const d=new Date(h.time[i]);
