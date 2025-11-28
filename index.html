@@ -59,8 +59,13 @@
         
         .radar-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 200 !important; background: #0f172a; border-radius: 0 !important; padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px) 0; margin: 0 !important; }
         
-        .live-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse-red 2s infinite; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .dot-live { background-color: #ef4444; animation: pulse-red 2s infinite; }
+        .dot-forecast { background-color: #a855f7; animation: pulse-purple 2s infinite; }
         
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes pulse-purple { 0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(168, 85, 247, 0); } 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); } }
+
         .hour-card-active { background-color: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.8) !important; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .hour-card-night { background-color: rgba(10, 15, 30, 0.9) !important; border-color: rgba(255,255,255,0.05) !important; } 
         .modal-overlay { cursor: pointer; }
@@ -84,8 +89,8 @@
 
         /* TIMELINE SLIDER STYLES */
         input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -4px; box-shadow: 0 0 0 2px rgba(15, 23, 42, 1); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -4px; box-shadow: 0 0 0 2px rgba(15, 23, 42, 1); border: 2px solid white; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: linear-gradient(to right, rgba(255,255,255,0.2) var(--past-pct, 100%), rgba(168, 85, 247, 0.6) var(--past-pct, 100%)); border-radius: 2px; }
         input[type=range]:focus { outline: none; }
 
         /* Animations */
@@ -229,7 +234,10 @@
                 </div>
                 <div id="radarFrameContainer" class="relative w-full h-96 bg-slate-900 transition-all duration-300 grow">
                     <div id="radarMap" class="w-full h-full z-0 outline-none"></div>
-                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-[400]"><div class="live-dot"></div><span class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider">Radar</span></div>
+                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-[400]">
+                        <div class="live-dot dot-live" id="radarLiveDot"></div>
+                        <span id="radarStatusText" class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider font-bold">Live</span>
+                    </div>
                     <div class="absolute bottom-6 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
                         <button onclick="toggleRadarPlayback()" id="radarPlayBtn" class="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition shadow-lg shrink-0 touch-manipulation"><i data-lucide="pause" size="16"></i></button>
                         <input type="range" id="radarTimeline" min="0" value="0" step="1" oninput="handleRadarScrub(this.value)" class="flex-grow h-1 bg-slate-600 rounded-lg cursor-pointer touch-manipulation">
@@ -252,7 +260,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.14 • Suche mit Flaggen • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.15 • Radar-Prognose • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -424,6 +432,7 @@
         let refreshTimer = null; // NEW: Timer for auto-refresh
         let currentCityName = "Standort"; // NEW: Store name for refresh
         let currentCountry = ""; // NEW: Store country for refresh
+        let lastPastIndex = 0; // NEW: Store index where history ends
         
         // MOTO PROFILE STATE
         let motoProfile = { minTemp: 10, maxWind: 40, strictRain: true };
@@ -913,10 +922,22 @@
                 const data = await response.json();
                 if (data.radar && data.radar.past) {
                     radarTimestamps = data.radar.past;
-                    const nowIndex = radarTimestamps.length - 1;
+                    lastPastIndex = radarTimestamps.length - 1; // GLOBAL: Store boundary index
+                    
+                    const nowIndex = lastPastIndex;
                     if (data.radar.nowcast) { radarTimestamps = radarTimestamps.concat(data.radar.nowcast); }
+                    
                     const timeline = document.getElementById('radarTimeline');
-                    if(timeline) { timeline.max = radarTimestamps.length - 1; timeline.value = nowIndex; }
+                    if(timeline) { 
+                        timeline.max = radarTimestamps.length - 1; 
+                        timeline.value = nowIndex; 
+                        
+                        // Set CSS Variable for visual slider separation
+                        const total = radarTimestamps.length;
+                        const pct = (lastPastIndex / (total - 1)) * 100;
+                        timeline.style.setProperty('--past-pct', pct + '%');
+                    }
+                    
                     currentRadarIndex = nowIndex;
                     showRadarFrame(currentRadarIndex);
                     updatePlayButtonIcon(); 
@@ -953,8 +974,27 @@
             const hours = time.getHours().toString().padStart(2, '0');
             const minutes = time.getMinutes().toString().padStart(2, '0');
             document.getElementById('radarTimeLabel').innerText = `${hours}:${minutes}`;
+            
+            // UI: Handle Future vs Live
+            const isFuture = index > lastPastIndex;
+            const liveDot = document.getElementById('radarLiveDot');
+            const statusText = document.getElementById('radarStatusText');
+            
+            if (liveDot && statusText) {
+                if (isFuture) {
+                    liveDot.className = "live-dot dot-forecast";
+                    statusText.innerText = "Prognose";
+                    statusText.className = "text-[10px] text-purple-400 mr-2 uppercase tracking-wider font-bold transition-colors duration-300";
+                } else {
+                    liveDot.className = "live-dot dot-live";
+                    statusText.innerText = "Live";
+                    statusText.className = "text-[10px] text-slate-400 mr-2 uppercase tracking-wider font-bold transition-colors duration-300";
+                }
+            }
+
             const timeline = document.getElementById('radarTimeline');
             if(timeline && isRadarPlaying) { timeline.value = index; }
+            
             const layerUrl = `https://tilecache.rainviewer.com${tsObj.path}/256/{z}/{x}/{y}/2/1_1.png`;
             const newLayer = L.tileLayer(layerUrl, { opacity: 0.7, zIndex: 100 });
             newLayer.addTo(radarMap);
@@ -1149,3 +1189,5 @@
     </script>
 </body>
 </html>
+
+
