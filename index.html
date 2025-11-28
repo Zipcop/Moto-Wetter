@@ -207,7 +207,7 @@
                     <div class="text-sm font-semibold text-blue-200 mb-2">Gefühlt <span id="feelsLike">--</span>°</div>
                     <div id="weatherDesc" class="text-xs text-slate-300">--</div>
                     <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2"><span class="flex items-center"><i data-lucide="arrow-up" size="14" class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span><span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span></div>
-                    <div class="flex gap-3 mt-1 text-xs text-slate-400"><span class="flex items-center gap-1"><div class="bg-slate-700 border border-slate-600 rounded-full p-1 transform transition-transform duration-700" id="windDirArrow"><i data-lucide="arrow-up" size="12" class="text-blue-200"></i></div><span id="windSpeed">--</span></span><span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span></div>
+                    <div class="flex gap-3 mt-1 text-xs text-slate-400"><span class="flex items-center gap-1"><div class="bg-slate-700 border border-slate-600 rounded-full p-1 transition-transform duration-200" id="windDirArrow"><i data-lucide="arrow-up" size="12" class="text-blue-200"></i></div><span id="windSpeed">--</span></span><span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span></div>
                 </div>
                 <div id="card-moto" onclick="showMotoDetails()" class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 group">
                     <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i data-lucide="info" size="12"></i></div>
@@ -260,7 +260,7 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.16 • Radar Proxy Fix • N.W.</div>
+        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.17 • Compass Fix • N.W.</div>
     </main>
 
     <!-- MODALS -->
@@ -427,6 +427,8 @@
         let lastWeatherData = null;
         let isFullscreen = false; let debounceTimer; let clockInterval;
         let currentHeading = 0;
+        let currentRotation = 0; // NEW: Track rotation for smooth wrapping
+        let compassTicking = false; // NEW: For animation frame
         let isFirstLoad = true; 
         let lightningTimeout;
         let refreshTimer = null; // NEW: Timer for auto-refresh
@@ -635,9 +637,71 @@
         function resetLayout() { localStorage.removeItem('motoLayoutConfig_v4'); localStorage.removeItem('motoProfile_v1'); location.reload(); }
         function saveLayout() { localStorage.setItem('motoLayoutConfig_v4', JSON.stringify(layoutConfig)); }
 
-        function initCompass() { if (typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function') { DeviceOrientationEvent.requestPermission().then(r=>{if(r==='granted')window.addEventListener('deviceorientation',handleOrientation,true)}).catch(console.error); } else if (window.addEventListener) window.addEventListener('deviceorientation', handleOrientation, true); }
-        function handleOrientation(e) { if (e.webkitCompassHeading) currentHeading=e.webkitCompassHeading; else if (e.alpha!==null) currentHeading=360-e.alpha; if(lastWeatherData) updateWindArrow(); }
-        function updateWindArrow() { if(!lastWeatherData?.current?.wind_direction_10m)return; const a=document.getElementById('windDirArrow'); if(a) a.style.transform=`rotate(${lastWeatherData.current.wind_direction_10m+180-currentHeading}deg)`; }
+        function initCompass() { 
+            // Handle both standard and absolute orientation events
+            if (window.DeviceOrientationEvent) {
+                // Check if absolute orientation is supported (Modern Android/Chrome)
+                if ('ondeviceorientationabsolute' in window) {
+                    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+                } else if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    // iOS Permission
+                    DeviceOrientationEvent.requestPermission().then(r => {
+                        if (r === 'granted') window.addEventListener('deviceorientation', handleOrientation, true);
+                    }).catch(console.error);
+                } else {
+                    // Standard fallback
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            }
+        }
+
+        function handleOrientation(e) {
+            let heading = 0;
+            
+            if (e.webkitCompassHeading) {
+                // iOS
+                heading = e.webkitCompassHeading;
+            } else if (e.alpha !== null) {
+                // Android (try to use absolute if available)
+                if (e.absolute) {
+                    heading = 360 - e.alpha;
+                } else {
+                    // Fallback for relative alpha
+                    heading = 360 - e.alpha;
+                }
+            }
+            
+            currentHeading = heading;
+            
+            if (!compassTicking) {
+                window.requestAnimationFrame(updateWindArrow);
+                compassTicking = true;
+            }
+        }
+
+        function updateWindArrow() {
+            compassTicking = false;
+            if (!lastWeatherData?.current?.wind_direction_10m) return;
+            
+            const windDir = lastWeatherData.current.wind_direction_10m;
+            // Target rotation: wind direction relative to north + 180 (arrow points FROM wind) - compass heading
+            const targetRotation = windDir + 180 - currentHeading;
+            
+            // Calculate shortest rotation path to prevent spinning
+            let delta = targetRotation - currentRotation;
+            
+            // Normalize delta to be between -180 and 180
+            while (delta > 180) delta -= 360;
+            while (delta < -180) delta += 360;
+            
+            // Apply shortest step
+            currentRotation += delta;
+            
+            const a = document.getElementById('windDirArrow');
+            if (a) {
+                a.style.transform = `rotate(${currentRotation}deg)`;
+            }
+        }
 
         function saveToCache(n, d) { try{localStorage.setItem('motoWeather_cache_v3_8', JSON.stringify({name:n,data:d,timestamp:Date.now()}));}catch(e){} }
         function loadFromCache() { try{return JSON.parse(localStorage.getItem('motoWeather_cache_v3_8'));}catch(e){return null;} }
@@ -1206,5 +1270,3 @@
     </script>
 </body>
 </html>
-
-
