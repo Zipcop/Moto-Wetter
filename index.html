@@ -213,24 +213,43 @@
                     <div id="weatherDesc" class="text-xs text-slate-300">--</div>
                     <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2"><span class="flex items-center"><i data-lucide="arrow-up" size="14" class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span><span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span></div>
                     
-                    <!-- FEATURE 5: WIND COMPASS (UPDATED) -->
-                    <div class="flex gap-3 mt-1 text-xs text-slate-400 items-center">
-                        <div class="flex flex-col items-center justify-center gap-1">
-                            <div class="relative w-12 h-12 rounded-full border border-slate-600 flex items-center justify-center bg-slate-800 shadow-inner">
-                                <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] text-slate-500 font-bold leading-none">N</span>
-                                <span class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-slate-500 font-bold leading-none">S</span>
-                                <span class="absolute left-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-500 font-bold leading-none">W</span>
-                                <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-500 font-bold leading-none">O</span>
-                                <!-- Rotated Arrow -->
-                                <div id="windDirArrow" class="transition-transform duration-500 origin-center w-full h-full flex items-center justify-center">
-                                    <div class="w-1 h-3 bg-red-500 rounded-full absolute top-2"></div>
-                                    <div class="w-1 h-3 bg-slate-500 rounded-full absolute bottom-2"></div>
-                                    <div class="w-2 h-2 bg-white rounded-full z-10 border-2 border-slate-800"></div>
-                                </div>
+                    <!-- FEATURE 5: WIND COMPASS (UPDATED v2) -->
+                    <!-- Geändert: von py-2 zu p-4 für eine größere Box -->
+                    <div class="flex gap-4 mt-2 text-xs text-slate-400 items-center justify-center bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
+                        <!-- Compass Circle -->
+                        <div class="relative w-14 h-14 shrink-0">
+                            <!-- Static Bezel (Phone orientation relative) -->
+                            <div class="absolute inset-0 rounded-full border-2 border-slate-600 bg-slate-900 shadow-inner flex items-center justify-center">
+                                <span class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-500 font-bold">N</span>
+                                <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-600 font-bold">S</span>
+                                <span class="absolute left-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">W</span>
+                                <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">O</span>
                             </div>
-                            <span id="windSpeed">--</span>
+                            
+                            <!-- Rotating Arrow Container -->
+                            <div id="windDirArrow" class="absolute inset-0 transition-transform duration-500 ease-out will-change-transform flex items-center justify-center">
+                                <!-- Red Arrow Head (Pointing Up/North relative to container) -->
+                                <div class="absolute top-2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[14px] border-b-red-500 drop-shadow-[0_0_2px_rgba(239,68,68,0.8)]"></div>
+                                <!-- Tail -->
+                                <div class="absolute bottom-3 w-1 h-5 bg-slate-600 rounded-full"></div>
+                                <!-- Center Point -->
+                                <div class="w-2 h-2 bg-slate-300 rounded-full border border-slate-900 z-10"></div>
+                            </div>
                         </div>
-                        <span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span>
+
+                        <!-- Text Info -->
+                        <div class="flex flex-col items-start gap-0.5">
+                            <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Wind</span>
+                            <div class="flex items-baseline gap-1">
+                                <span id="windSpeed" class="text-xl font-bold text-white leading-none">--</span>
+                                <span class="text-xs text-slate-400">km/h</span>
+                            </div>
+                            <span id="windDirText" class="text-xs font-bold text-blue-400">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center gap-2 mt-2 text-xs text-slate-400">
+                        <i data-lucide="droplets" size="12"></i> <span id="humidity">--</span>% Feuchte
                     </div>
                 </div>
                 <div id="card-moto" onclick="showMotoDetails()" class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 group">
@@ -793,23 +812,31 @@
             if (!lastWeatherData?.current?.wind_direction_10m) return;
             
             const windDir = lastWeatherData.current.wind_direction_10m;
-            // Target rotation: wind direction relative to north + 180 (arrow points FROM wind) - compass heading
-            const targetRotation = windDir + 180 - currentHeading;
             
-            // Calculate shortest rotation path to prevent spinning
+            // --- ÄNDERUNG: Wehrichtung (Wohin der Wind weht) ---
+            // WindDir (API) = Woher er kommt (0 = Nord).
+            // Wehrichtung = WindDir + 180.
+            // Ziel-Rotation = (WindDir + 180) - Handy-Ausrichtung (Heading)
+            const targetRotation = (windDir + 180) - currentHeading;
+            
+            // Normalize delta
             let delta = targetRotation - currentRotation;
-            
-            // Normalize delta to be between -180 and 180
             while (delta > 180) delta -= 360;
             while (delta < -180) delta += 360;
-            
-            // Apply shortest step
             currentRotation += delta;
             
             const a = document.getElementById('windDirArrow');
             if (a) {
                 a.style.transform = `rotate(${currentRotation}deg)`;
             }
+
+            // Update Text Direction (Zeige Zielrichtung an)
+            const sectors = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
+            // Berechne Index basierend auf Zielrichtung (WindDir + 180)
+            const targetDir = (windDir + 180) % 360;
+            const idx = Math.round(targetDir / 45) % 8;
+            const txt = document.getElementById('windDirText');
+            if(txt) txt.innerText = `Nach ${sectors[idx]}`;
         }
 
         function saveToCache(n, d) { try{localStorage.setItem('motoWeather_cache_v3_8', JSON.stringify({name:n,data:d,timestamp:Date.now()}));}catch(e){} }
@@ -911,10 +938,10 @@
         function updateMainValues(t, app_t, w, h, r, c, d, txt, idx=0) {
             try {
                 document.getElementById('temperature').innerText=Math.round(t); 
-                // NEW: Update Feels Like
                 safeSetText('feelsLike', Math.round(app_t));
                 
-                document.getElementById('windSpeed').innerText=w+" km/h"; document.getElementById('humidity').innerText=h+"%";
+                document.getElementById('windSpeed').innerText=w; // Updated: removed "km/h" here, handled in HTML
+                document.getElementById('humidity').innerText=h;
                 const i=getWeatherInfo(c); document.getElementById('weatherDesc').innerText=i.t; document.getElementById('weatherIconContainer').innerHTML=`<i data-lucide="${i.i}" class="w-12 h-12"></i>`;
                 const sc=calculateMotoScore(t,w,r,d,c); const col=getScoreColor(sc.score);
                 const el=document.getElementById('motoScoreCircle'); el.className=`w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${col.bg}`;
