@@ -188,8 +188,12 @@
     <main class="w-full max-w-lg space-y-4 pt-4 pb-10 relative z-10">
         <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
             <div class="flex justify-between items-center mb-3">
-                <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
-                <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation"><i data-lucide="bike" size="16"></i> Wetter</h1>
+                <div class="flex items-center gap-2">
+                    <!-- NEU: Zurück Button -->
+                    <button onclick="showSplash()" class="text-slate-400 hover:text-white transition p-1 rounded-full hover:bg-slate-700/50" title="Zurück zur Vorschau"><i data-lucide="arrow-left" size="18"></i></button>
+                    <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
+                    <h1 onclick="handleDevTrigger()" class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation"><i data-lucide="bike" size="16"></i> Wetter</h1>
+                </div>
                 <div class="flex items-center gap-3">
                     <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
                     <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"><i data-lucide="bell" size="18"></i><span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span></button>
@@ -718,6 +722,13 @@
         const splash = document.getElementById('splashScreen');
 
         function dismissSplash() { splash.classList.add('splash-hidden'); document.body.style.overflow = 'auto'; }
+        
+        // NEU: Funktion um Splash Screen wieder anzuzeigen
+        function showSplash() { 
+            splash.classList.remove('splash-hidden'); 
+            document.body.style.overflow = 'hidden'; 
+        }
+
         function initSplash() { const hour = new Date().getHours(); const isDay = (hour >= 6 && hour < 20) ? 1 : 0; renderSplashEffects(0, isDay); }
         initSplash();
 
