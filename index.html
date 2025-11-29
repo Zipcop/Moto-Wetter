@@ -27,15 +27,18 @@
         html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; width: 100%; touch-action: pan-y; }
         
         /* ZURÜCKGESETZT: Originaler blauer Hintergrund ohne Bild */
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: 1rem; padding-right: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: white; transition: background 0.5s ease, color 0.5s ease; }
         
         /* Z-INDEX LAYERING (Repariert) */
         /* Layer 1: Wetter-Effekte (Regen, Wolken, Vögel) */
-        #splashEffects { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        #splashEffects { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; transition: transform 0.1s linear; }
         
         /* Layer 50: Hauptinhalt (App UI) - Muss höher sein als Effekte, damit klickbar */
         main { position: relative; z-index: 50; }
         
+        /* Layer 90: Rain on Glass Overlay (Feature 7) */
+        #rainGlassCanvas { position: fixed; inset: 0; z-index: 90; pointer-events: none; opacity: 0; transition: opacity 1s ease; mix-blend-mode: overlay; }
+
         /* Layer 100: Ladescreen */
         #splashScreen { 
             position: fixed; inset: 0; z-index: 100; 
@@ -48,8 +51,8 @@
         #splashLocalEffects { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
         .splash-content { position: relative; z-index: 10; }
 
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glass-btn { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(12px); border: 1px solid rgba(71, 85, 105, 1); color: white; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: background 0.3s, border-color 0.3s; }
+        .glass-btn { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(12px); border: 1px solid rgba(71, 85, 105, 1); color: white; transition: all 0.3s; }
         .loader { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid #3b82f6; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
@@ -152,6 +155,8 @@
     <!-- BACKGROUND EFFECTS -->
     <div id="splashEffects"></div>
     <div id="lightningLayer"></div>
+    <!-- FEATURE 7: Rain on Glass Canvas -->
+    <canvas id="rainGlassCanvas"></canvas>
 
     <div id="splashScreen" onclick="dismissSplash()">
         <div id="splashLocalEffects"></div>
@@ -207,7 +212,26 @@
                     <div class="text-sm font-semibold text-blue-200 mb-2">Gefühlt <span id="feelsLike">--</span>°</div>
                     <div id="weatherDesc" class="text-xs text-slate-300">--</div>
                     <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2"><span class="flex items-center"><i data-lucide="arrow-up" size="14" class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span><span class="flex items-center"><i data-lucide="arrow-down" size="14" class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span></div>
-                    <div class="flex gap-3 mt-1 text-xs text-slate-400"><span class="flex items-center gap-1"><div class="bg-slate-700 border border-slate-600 rounded-full p-1 transition-transform duration-200" id="windDirArrow"><i data-lucide="arrow-up" size="12" class="text-blue-200"></i></div><span id="windSpeed">--</span></span><span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span></div>
+                    
+                    <!-- FEATURE 5: WIND COMPASS (UPDATED) -->
+                    <div class="flex gap-3 mt-1 text-xs text-slate-400 items-center">
+                        <div class="flex flex-col items-center justify-center gap-1">
+                            <div class="relative w-12 h-12 rounded-full border border-slate-600 flex items-center justify-center bg-slate-800 shadow-inner">
+                                <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] text-slate-500 font-bold leading-none">N</span>
+                                <span class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-slate-500 font-bold leading-none">S</span>
+                                <span class="absolute left-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-500 font-bold leading-none">W</span>
+                                <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-500 font-bold leading-none">O</span>
+                                <!-- Rotated Arrow -->
+                                <div id="windDirArrow" class="transition-transform duration-500 origin-center w-full h-full flex items-center justify-center">
+                                    <div class="w-1 h-3 bg-red-500 rounded-full absolute top-2"></div>
+                                    <div class="w-1 h-3 bg-slate-500 rounded-full absolute bottom-2"></div>
+                                    <div class="w-2 h-2 bg-white rounded-full z-10 border-2 border-slate-800"></div>
+                                </div>
+                            </div>
+                            <span id="windSpeed">--</span>
+                        </div>
+                        <span class="flex items-center gap-1"><i data-lucide="droplets" size="12"></i> <span id="humidity">--</span></span>
+                    </div>
                 </div>
                 <div id="card-moto" onclick="showMotoDetails()" class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 group">
                     <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i data-lucide="info" size="12"></i></div>
@@ -436,6 +460,75 @@
         let currentCountry = ""; // NEW: Store country for refresh
         let lastPastIndex = 0; // NEW: Store index where history ends
         
+        // --- FEATURE 7: RAIN GLASS EFFECT CLASS ---
+        class RainGlass {
+            constructor() {
+                this.canvas = document.getElementById('rainGlassCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.drops = [];
+                this.active = false;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.animate = this.animate.bind(this);
+            }
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            start() {
+                if(this.active) return;
+                this.active = true;
+                this.canvas.style.opacity = 1;
+                this.animate();
+            }
+            stop() {
+                this.active = false;
+                this.canvas.style.opacity = 0;
+                setTimeout(() => this.drops = [], 1000);
+            }
+            addDrop() {
+                this.drops.push({
+                    x: Math.random() * this.canvas.width,
+                    y: Math.random() * this.canvas.height,
+                    r: Math.random() * 2 + 1,
+                    vel: Math.random() * 0.5 + 0.1,
+                    life: 100 + Math.random() * 100
+                });
+            }
+            animate() {
+                if(!this.active) return;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                if(Math.random() > 0.8) this.addDrop();
+                
+                this.ctx.fillStyle = 'rgba(200, 220, 255, 0.4)'; // Drop body
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; // Highlight
+                
+                for(let i = 0; i < this.drops.length; i++) {
+                    const d = this.drops[i];
+                    d.y += d.vel;
+                    d.life--;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+                    this.ctx.fill();
+                    
+                    // Small highlight to look like glass refraction
+                    this.ctx.beginPath();
+                    this.ctx.arc(d.x - d.r/3, d.y - d.r/3, d.r/3, 0, Math.PI*2);
+                    this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    this.ctx.fill();
+                    this.ctx.fillStyle = 'rgba(200, 220, 255, 0.4)'; // Reset
+                    
+                    if(d.life <= 0 || d.y > this.canvas.height) {
+                        this.drops.splice(i, 1);
+                        i--;
+                    }
+                }
+                requestAnimationFrame(this.animate);
+            }
+        }
+        const rainGlass = new RainGlass();
+
         // MOTO PROFILE STATE
         let motoProfile = { minTemp: 10, maxWind: 40, strictRain: true };
         try {
@@ -657,6 +750,8 @@
 
         function handleOrientation(e) {
             let heading = 0;
+            let tiltX = 0;
+            let tiltY = 0;
             
             if (e.webkitCompassHeading) {
                 // iOS
@@ -672,6 +767,20 @@
             }
             
             currentHeading = heading;
+            
+            // --- FEATURE 6: PARALLAX LOGIC ---
+            if(e.gamma && e.beta) {
+                // Gamma is left/right tilt (-90 to 90)
+                // Beta is front/back tilt (-180 to 180)
+                const limit = 20; // Max pixels to move
+                const x = Math.max(-limit, Math.min(limit, e.gamma / 2));
+                const y = Math.max(-limit, Math.min(limit, (e.beta - 45) / 2)); // 45deg is normal holding angle
+                
+                const bg = document.getElementById('splashEffects');
+                if(bg) {
+                    bg.style.transform = `translate(${x}px, ${y}px)`;
+                }
+            }
             
             if (!compassTicking) {
                 window.requestAnimationFrame(updateWindArrow);
@@ -855,6 +964,9 @@
             const isHeavyCloud = c === 3 || isRain || isSnow || isFog; 
             
             const isClear = (c === 0 || c === 1);
+
+            // --- FEATURE 7: TRIGGER RAIN GLASS ---
+            if(isRain || isStorm) rainGlass.start(); else rainGlass.stop();
 
             if (isStorm) { triggerLightningLoop(); }
             if (d === 1) { 
