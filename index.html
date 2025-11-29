@@ -7,6 +7,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Wetter">
     
+    <!-- PWA MANIFEST (Ermöglicht Installation als App) -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Moto Wetter","short_name":"MotoWetter","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://img.icons8.com/fluency/512/weather.png?v=2","sizes":"512x512","type":"image/png"}]}'>
+    
     <!-- ZURÜCK ZUM ORIGINAL: Web-Icon -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/weather.png?v=2">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/weather.png?v=2">
@@ -152,9 +155,6 @@
         /* --- FEATURE 4: LIGHT MODE OVERRIDES --- */
         body.light-mode .rain-drop { background: rgba(59, 130, 246, 0.6); }
         body.light-mode .cloud-shape { background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 60%, transparent 70%); }
-
-        /* FEATURE 6 EXTENSION: Parallax Text Items */
-        .parallax-item { transition: transform 0.1s linear; will-change: transform; }
     </style>
 </head>
 <body class="flex flex-col items-center">
@@ -168,20 +168,20 @@
     <div id="splashScreen" onclick="dismissSplash()">
         <div id="splashLocalEffects"></div>
         <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
-            <div class="parallax-item flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold"><i data-lucide="map-pin" size="14"></i> Aktueller Standort</div>
-            <h1 id="splashCity" class="parallax-item text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
+            <div class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold"><i data-lucide="map-pin" size="14"></i> Aktueller Standort</div>
+            <h1 id="splashCity" class="text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
         </div>
         <div class="flex flex-col items-center justify-center opacity-0 animate-float-up delay-100 splash-content">
-            <!-- Icon Wrapper for Parallax without conflicting with Scale -->
-            <div class="parallax-item mb-4">
+            <!-- Icon Wrapper -->
+            <div class="mb-4">
                 <div id="splashIcon" class="transform scale-150 drop-shadow-2xl text-blue-200"><div class="loader border-t-white/50"></div></div>
             </div>
-            <div class="parallax-item text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
-            <div id="splashDesc" class="parallax-item text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
+            <div class="text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
+            <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
         </div>
         <div class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content">
-            <span class="parallax-item text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
-            <div class="parallax-item bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition"><i data-lucide="chevron-up" class="text-white"></i></div>
+            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
+            <div class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition"><i data-lucide="chevron-up" class="text-white"></i></div>
         </div>
     </div>
 
@@ -196,7 +196,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative" title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
-                    <button onclick="enableNotifications()" id="notifyBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"><i data-lucide="bell" size="18"></i><span id="notifyBadge" class="hidden absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span></button>
+                    <!-- Benachrichtigungs-Button ENTFERNT -->
                 </div>
             </div>
             <form onsubmit="event.preventDefault(); searchCity();" class="flex gap-2 relative">
@@ -271,7 +271,11 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
                     <div id="motoScoreCircle" class="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner"><span id="motoScoreValue" class="text-2xl font-black">--</span></div>
                     <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
-                    <div class="border-t border-slate-600/50 w-full pt-2 mt-1"><div class="flex justify-between items-center px-1 text-xs"><span class="text-slate-400">Heute Ø</span><span id="dailyScoreValue" class="font-bold text-blue-100">--</span></div></div>
+                    
+                    <!-- NEU: Dynamisches 6er Grid -->
+                    <div id="motoDynamicGrid" class="grid grid-cols-2 gap-2 w-full mb-2 px-1"></div>
+
+                    <div class="border-t border-slate-600/50 w-full pt-2 mt-auto"><div class="flex justify-between items-center px-1 text-xs"><span class="text-slate-400">Heute Ø</span><span id="dailyScoreValue" class="font-bold text-blue-100">--</span></div></div>
                 </div>
             </div>
             
@@ -317,7 +321,10 @@
         </div>
         
         <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike" class="mx-auto mb-4 h-16 w-16 opacity-30"></i><p>Standort wird ermittelt...</p></div>
-        <div class="text-center text-[10px] text-slate-600 mt-4 pb-2 opacity-50">v4.17 • Compass Fix • N.W.</div>
+        <!-- FOOTER ANGEPASST -->
+        <div class="text-center text-[10px] text-slate-500 mt-6 pb-4 font-medium tracking-wide opacity-60">
+            MOTO WETTER v5.0 • RIDE SAFE • N.W.
+        </div>
     </main>
 
     <!-- MODALS -->
@@ -326,38 +333,61 @@
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="toggleSettings()" class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="settings-2" size="20"></i> Einstellungen</h3>
-            <div class="space-y-4 text-sm max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div class="space-y-3 text-sm max-h-[70vh] overflow-y-auto custom-scrollbar pb-2">
                 
-                <!-- Moto Profile Section -->
-                <div class="p-3 bg-slate-800/50 rounded-xl border border-blue-500/30">
-                    <h4 class="text-xs font-bold uppercase text-blue-300 mb-3 flex items-center gap-2"><i data-lucide="user-cog" size="14"></i> Biker Profil</h4>
-                    
-                    <div class="mb-4">
-                        <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Min. Temp (Wohlfühl)</span><span id="dispMinTemp" class="font-bold text-white">10°C</span></div>
-                        <input type="range" min="0" max="25" step="1" id="inputMinTemp" oninput="updateMotoProfile('minTemp', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
-                        <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>0°</span><span>25°</span></div>
-                    </div>
+                <!-- Moto Profile Section (Collapsible) -->
+                <div class="bg-slate-800/50 rounded-xl border border-blue-500/30 overflow-hidden">
+                    <button onclick="toggleSettingsSection('profile')" class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <h4 class="text-xs font-bold uppercase text-blue-300 flex items-center gap-2"><i data-lucide="user-cog" size="14"></i> Biker Profil</h4>
+                        <i id="icon-profile" data-lucide="chevron-right" class="text-slate-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="content-profile" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                        <div class="mb-4 mt-2">
+                            <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Min. Temp (Wohlfühl)</span><span id="dispMinTemp" class="font-bold text-white">10°C</span></div>
+                            <input type="range" min="0" max="25" step="1" id="inputMinTemp" oninput="updateMotoProfile('minTemp', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>0°</span><span>25°</span></div>
+                        </div>
 
-                    <div class="mb-4">
-                        <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Max. Wind (Böen)</span><span id="dispMaxWind" class="font-bold text-white">40 km/h</span></div>
-                        <input type="range" min="20" max="100" step="5" id="inputMaxWind" oninput="updateMotoProfile('maxWind', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
-                        <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>20</span><span>100</span></div>
-                    </div>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Max. Wind (Böen)</span><span id="dispMaxWind" class="font-bold text-white">40 km/h</span></div>
+                            <input type="range" min="20" max="100" step="5" id="inputMaxWind" oninput="updateMotoProfile('maxWind', this.value)" class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>20</span><span>100</span></div>
+                        </div>
 
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-xs text-slate-300">Regen-Empfindlichkeit</span>
-                        <button id="btnRainTol" onclick="toggleRainTolerance()" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500">Streng</button>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs text-slate-300">Regen-Empfindlichkeit</span>
+                            <button id="btnRainTol" onclick="toggleRainTolerance()" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500">Streng</button>
+                        </div>
+                        <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!</div>
                     </div>
-                    <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!</div>
                 </div>
 
-                <!-- Layout Section -->
-                <div>
-                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Layout & Sichtbarkeit</h4>
-                    <div class="space-y-2" id="layoutList"></div>
-                    <div class="pt-2 mt-2 border-t border-slate-600/50">
-                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg mb-2"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
-                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                <!-- Grid Config Section (Collapsible) -->
+                <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
+                    <button onclick="toggleSettingsSection('grid')" class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <!-- UMBENANNT: Info-Kacheln -> MOTO INDEX INFOS -->
+                        <h4 class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2"><i data-lucide="layout-grid" size="14"></i> MOTO INDEX INFOS</h4>
+                        <i id="icon-grid" data-lucide="chevron-right" class="text-slate-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="content-grid" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                        <div id="gridConfigList" class="space-y-1 mb-2 mt-2"></div>
+                        <div class="text-[10px] text-slate-500 text-right">Maximal 6 Infos</div>
+                        <div id="gridAvailableList" class="space-y-1 mt-3 pt-3 border-t border-slate-700/50"></div>
+                    </div>
+                </div>
+
+                <!-- Layout Section (Collapsible) -->
+                <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
+                    <button onclick="toggleSettingsSection('layout')" class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <h4 class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2"><i data-lucide="eye" size="14"></i> Layout</h4>
+                        <i id="icon-layout" data-lucide="chevron-right" class="text-slate-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="content-layout" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                        <div class="space-y-2 mt-2" id="layoutList"></div>
+                        <div class="pt-2 mt-2 border-t border-slate-600/50">
+                            <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg mb-2"><span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')" id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                            <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg"><span>Moto Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -569,6 +599,27 @@
             if(saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
         } catch(e){}
 
+        // --- MOTO GRID CONFIG (CUSTOMIZABLE) ---
+        // Definition der verfügbaren Metriken
+        const metricDefinitions = {
+            grip: { label: 'Grip', id:'grip' },
+            gear: { label: 'Gear', id:'gear' },
+            vis: { label: 'Sicht', id:'vis' },
+            rain: { label: 'Regen in', id:'rain' },
+            sun: { label: 'Sunset', id:'sun' },
+            wind: { label: 'Wind', id:'wind' },
+            uv: { label: 'UV', id:'uv' },
+            clouds: { label: 'Wolken', id:'clouds' },
+            hum: { label: 'Feuchte', id:'hum' },
+            press: { label: 'Druck', id:'press' }
+        };
+        
+        let motoGridConfig = ['grip', 'gear', 'vis', 'rain', 'sun', 'wind']; // Default 6
+        try {
+            const savedGrid = localStorage.getItem('motoGridConfig_v1');
+            if(savedGrid) motoGridConfig = JSON.parse(savedGrid);
+        } catch(e){}
+
         // RADAR VARIABLES
         let radarMap = null;
         let radarMarker = null;
@@ -612,6 +663,65 @@
         function saveMotoProfile() {
             localStorage.setItem('motoProfile_v1', JSON.stringify(motoProfile));
             if(lastWeatherData) updateUI(null, true); // Recalculate scores live
+        }
+
+        // --- GRID CONFIG FUNCTIONS ---
+        function toggleGridItem(id) {
+            const idx = motoGridConfig.indexOf(id);
+            if(idx > -1) {
+                // Remove
+                motoGridConfig.splice(idx, 1);
+            } else {
+                // Add if < 6
+                if(motoGridConfig.length < 6) {
+                    motoGridConfig.push(id);
+                } else {
+                    // Optional: alert or replace last? Just do nothing for now.
+                    alert("Maximal 6 Infos erlaubt!");
+                    return;
+                }
+            }
+            saveGridConfig();
+            renderSettingsList(); // Update UI
+            if(lastWeatherData) updateMainValues(...[0,0,0,0,0,0,0,0]); // Trigger redraw (hacky way to call update without args, main values will fetch from lastWeatherData inside)
+        }
+        
+        function moveGridItem(id, direction) {
+            const idx = motoGridConfig.indexOf(id);
+            if(idx < 0) return;
+            const newIdx = idx + direction;
+            if(newIdx >= 0 && newIdx < motoGridConfig.length) {
+                [motoGridConfig[idx], motoGridConfig[newIdx]] = [motoGridConfig[newIdx], motoGridConfig[idx]];
+                saveGridConfig();
+                renderSettingsList();
+                if(lastWeatherData) updateMainValues(...[0,0,0,0,0,0,0,0]);
+            }
+        }
+
+        function saveGridConfig() {
+            localStorage.setItem('motoGridConfig_v1', JSON.stringify(motoGridConfig));
+        }
+
+        // --- NEW: TOGGLE SETTINGS SECTIONS ---
+        function toggleSettingsSection(id) {
+            const content = document.getElementById('content-' + id);
+            const icon = document.getElementById('icon-' + id);
+            
+            // Close others (optional - for accordion feel)
+            // ['profile', 'grid', 'layout'].forEach(key => {
+            //     if(key !== id) {
+            //         document.getElementById('content-'+key).classList.add('hidden');
+            //         document.getElementById('icon-'+key).classList.remove('rotate-90');
+            //     }
+            // });
+
+            if(content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-90');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-90');
+            }
         }
 
         function renderMotoSettingsUI() {
@@ -753,6 +863,7 @@
             }
         }
         function renderSettingsList() {
+            // Render App Layout Settings
             const l=document.getElementById('layoutList'); l.innerHTML='';
             const n={statusSection:'Übersicht', rainChartSection: 'Niederschlag (1h)', radarSection:'Radar (Live)',timelineSection:'Vorhersage', forecast7DaySection:'7-Tage Trend'};
             layoutConfig.order.forEach((id,i)=>{
@@ -762,12 +873,29 @@
             document.getElementById('vis-weather-btn').innerHTML = `<i data-lucide="${layoutConfig.visibility.sub_weather?'eye':'eye-off'}" size="18"></i>`;
             document.getElementById('vis-moto-btn').className = layoutConfig.visibility.sub_moto ? 'text-green-400' : 'text-slate-500';
             document.getElementById('vis-moto-btn').innerHTML = `<i data-lucide="${layoutConfig.visibility.sub_moto?'eye':'eye-off'}" size="18"></i>`;
+
+            // Render Moto Grid Settings
+            const gl = document.getElementById('gridConfigList'); gl.innerHTML = '';
+            motoGridConfig.forEach((id, i) => {
+                const def = metricDefinitions[id];
+                if(def) {
+                    gl.innerHTML += `<div class="flex items-center justify-between bg-slate-900/50 p-2 rounded-lg border border-slate-700/50"><div class="text-xs text-white font-bold">${def.label}</div><div class="flex gap-1"><button onclick="moveGridItem('${id}', -1)" class="p-1 hover:bg-slate-700 rounded text-slate-400"><i data-lucide="arrow-up" size="14"></i></button><button onclick="moveGridItem('${id}', 1)" class="p-1 hover:bg-slate-700 rounded text-slate-400"><i data-lucide="arrow-down" size="14"></i></button><button onclick="toggleGridItem('${id}')" class="ml-2 p-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded"><i data-lucide="x" size="14"></i></button></div></div>`;
+                }
+            });
+
+            const ga = document.getElementById('gridAvailableList'); ga.innerHTML = '';
+            Object.values(metricDefinitions).forEach(def => {
+                if(!motoGridConfig.includes(def.id)) {
+                    ga.innerHTML += `<div class="flex items-center justify-between p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer group" onclick="toggleGridItem('${def.id}')"><span class="text-xs text-slate-400 group-hover:text-white">${def.label}</span><i data-lucide="plus" size="14" class="text-green-500"></i></div>`;
+                }
+            });
+
             lucide.createIcons();
         }
         function moveItem(id, d) { const i=layoutConfig.order.indexOf(id); if(i<0||i+d<0||i+d>=layoutConfig.order.length)return; [layoutConfig.order[i],layoutConfig.order[i+d]]=[layoutConfig.order[i+d],layoutConfig.order[i]]; saveLayout(); renderSettingsList(); applyLayout(); }
         function toggleVisibility(id) { layoutConfig.visibility[id]=!layoutConfig.visibility[id]; saveLayout(); renderSettingsList(); applyLayout(); }
         function toggleSubVisibility(k) { layoutConfig.visibility['sub_'+k]=!layoutConfig.visibility['sub_'+k]; saveLayout(); renderSettingsList(); applyLayout(); }
-        function resetLayout() { localStorage.removeItem('motoLayoutConfig_v4'); localStorage.removeItem('motoProfile_v1'); location.reload(); }
+        function resetLayout() { localStorage.removeItem('motoLayoutConfig_v4'); localStorage.removeItem('motoProfile_v1'); localStorage.removeItem('motoGridConfig_v1'); location.reload(); }
         function saveLayout() { localStorage.setItem('motoLayoutConfig_v4', JSON.stringify(layoutConfig)); }
 
         function initCompass() { 
@@ -790,8 +918,6 @@
 
         function handleOrientation(e) {
             let heading = 0;
-            let tiltX = 0;
-            let tiltY = 0;
             
             if (e.webkitCompassHeading) {
                 // iOS
@@ -808,27 +934,7 @@
             
             currentHeading = heading;
             
-            // --- FEATURE 6: PARALLAX LOGIC (Enhanced with Text) ---
-            if(e.gamma && e.beta) {
-                // Gamma is left/right tilt (-90 to 90)
-                // Beta is front/back tilt (-180 to 180)
-                const limit = 20; // Max pixels to move
-                const x = Math.max(-limit, Math.min(limit, e.gamma / 2));
-                const y = Math.max(-limit, Math.min(limit, (e.beta - 45) / 2)); // 45deg is normal holding angle
-                
-                // 1. Move Background (Deep Layer)
-                const bg = document.getElementById('splashEffects');
-                if(bg) {
-                    bg.style.transform = `translate(${x}px, ${y}px)`;
-                }
-
-                // 2. Move Text Content (Foreground Layer - moves MORE than bg for 3D depth)
-                const items = document.querySelectorAll('.parallax-item');
-                items.forEach(item => {
-                    const depth = 1.8; // Foreground factor
-                    item.style.transform = `translate(${x * depth}px, ${y * depth}px)`;
-                });
-            }
+            // --- PARALLAX REMOVED ---
             
             if (!compassTicking) {
                 window.requestAnimationFrame(updateWindArrow);
@@ -870,9 +976,8 @@
 
         function saveToCache(n, d) { try{localStorage.setItem('motoWeather_cache_v3_8', JSON.stringify({name:n,data:d,timestamp:Date.now()}));}catch(e){} }
         function loadFromCache() { try{return JSON.parse(localStorage.getItem('motoWeather_cache_v3_8'));}catch(e){return null;} }
-        async function enableNotifications() { if(!("Notification" in window))return alert("N/A"); if(Notification.permission==="granted"){alert("Aktiv!");checkAndSendNotification(10);} else if(Notification.permission!=="denied"){const p=await Notification.requestPermission();if(p==="granted")document.getElementById('notifyBadge').classList.remove('hidden');} else alert("Blockiert"); }
-        function checkAndSendNotification(s) { if(Notification.permission==="granted"&&s>=8){const l=sessionStorage.getItem('lastNotificationTime'); if(!l||Date.now()-l>14400000){new Notification("Biker-Wetter!",{body:`Score: ${s}/10`,icon:"https://img.icons8.com/fluency/512/weather.png?v=2"});sessionStorage.setItem('lastNotificationTime',Date.now());}} }
-        if ("Notification" in window && Notification.permission === "granted") document.getElementById('notifyBadge').classList.remove('hidden');
+        
+        // Benachrichtigungs-Funktionen ENTFERNT (enableNotifications, checkAndSendNotification)
 
         function checkWarnings(c) { let w=null, col="bg-yellow-500/80 border-yellow-400", ic="alert-triangle"; 
         if(c.weather_code>=95){w="GEWITTER";col="bg-red-600/90 border-red-400";ic="cloud-lightning"}else if(c.wind_speed_10m>=75){w="STURM";col="bg-red-600/90 border-red-400";ic="wind"}else if(c.wind_speed_10m>=50){w="Windböen";col="bg-orange-500/80 border-orange-400";ic="wind"}else if(c.temperature_2m<=3){w="Glätte";col="bg-blue-600/80 border-blue-400";ic="snowflake"}else if(c.precipitation>=5){w="Starkregen";col="bg-blue-700/80 border-blue-400";ic="cloud-rain"}if(c.visibility<1000){w="Nebel";col="bg-gray-600/90 border-gray-400";ic="cloud-fog"}
@@ -966,6 +1071,9 @@
         
         function updateMainValues(t, app_t, w, h, r, c, d, txt, idx=0) {
             try {
+                if(!lastWeatherData || !lastWeatherData.current) return;
+                const cur = lastWeatherData.current; // Safe access to full data
+
                 document.getElementById('temperature').innerText=Math.round(t); 
                 safeSetText('feelsLike', Math.round(app_t));
                 
@@ -975,6 +1083,100 @@
                 const sc=calculateMotoScore(t,w,r,d,c); const col=getScoreColor(sc.score);
                 const el=document.getElementById('motoScoreCircle'); el.className=`w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${col.bg}`;
                 document.getElementById('motoScoreValue').innerText=sc.score; document.getElementById('motoScoreText').innerText=sc.reason;
+                
+                // --- RENDER DYNAMIC MOTO GRID ---
+                const gridContainer = document.getElementById('motoDynamicGrid');
+                if(gridContainer) {
+                    gridContainer.innerHTML = '';
+                    motoGridConfig.slice(0, 6).forEach(metricId => {
+                        const def = metricDefinitions[metricId];
+                        if(!def) return;
+                        
+                        let valTxt = "--";
+                        let valCls = "text-slate-200";
+
+                        // Calculation Logic for each metric
+                        if(metricId === 'grip') {
+                            valTxt = "Trocken"; valCls = "text-emerald-400";
+                            if(t <= 4) { valTxt = "Eisig!"; valCls = "text-red-400 animate-pulse"; }
+                            else if(r > 0.1 || [51,53,55,61,63,65,80,81,82].includes(c)) { valTxt = "Nass"; valCls = "text-orange-400"; }
+                        }
+                        else if(metricId === 'gear') {
+                            valTxt = "Standard"; valCls = "text-blue-200";
+                            if(t > 26) valTxt = "Mesh/Air";
+                            else if(t < 10) valTxt = "Thermo";
+                            else if(t < 18) valTxt = "Leder+";
+                            else if(r > 0.5) valTxt = "Regen";
+                        }
+                        else if(metricId === 'vis') {
+                            const v = cur.visibility; 
+                            if(v !== undefined) {
+                                if(v >= 10000) { valTxt = ">10 km"; valCls = "text-emerald-400"; }
+                                else if(v >= 5000) { valTxt = (v/1000).toFixed(1)+" km"; valCls = "text-blue-200"; }
+                                else { valTxt = (v < 1000 ? v+" m" : (v/1000).toFixed(1)+" km"); valCls = "text-red-400 font-black"; }
+                            }
+                        }
+                        else if(metricId === 'rain') { // Next Rain
+                            valTxt = "Keiner"; valCls = "text-emerald-400";
+                            if (r > 0) { 
+                                valTxt = "Jetzt!"; valCls = "text-red-400 animate-pulse";
+                            } else if (lastWeatherData.hourly && lastWeatherData.hourly.precipitation) {
+                                const h = lastWeatherData.hourly;
+                                const now = Date.now();
+                                for(let j=0; j<h.time.length; j++) {
+                                    const tTime = new Date(h.time[j]).getTime();
+                                    if (tTime > now && h.precipitation[j] > 0.1) {
+                                        const diffHours = (tTime - now) / (1000 * 60 * 60);
+                                        valTxt = (diffHours < 1) ? "Gleich" : Math.round(diffHours) + " Std";
+                                        valCls = "text-blue-300";
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if(metricId === 'sun') {
+                            if(lastWeatherData.daily && lastWeatherData.daily.sunset && lastWeatherData.daily.sunset[0]) {
+                                valTxt = new Date(lastWeatherData.daily.sunset[0]).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+                            }
+                        }
+                        else if(metricId === 'wind') { // Gusts
+                            const g = cur.wind_gusts_10m;
+                            if(g !== undefined) {
+                                valTxt = Math.round(g) + " km/h";
+                                if(g >= 60) valCls = "text-red-400 animate-pulse";
+                                else if(g >= 40) valCls = "text-orange-400";
+                                else valCls = "text-emerald-400";
+                            }
+                        }
+                        else if(metricId === 'uv') {
+                            const u = cur.uv_index;
+                            if(u !== undefined) {
+                                valTxt = u.toFixed(1);
+                                if(u >= 6) valCls = "text-red-400";
+                                else if(u >= 3) valCls = "text-yellow-400";
+                                else valCls = "text-emerald-400";
+                            }
+                        }
+                        else if(metricId === 'clouds') {
+                            if(cur.cloud_cover !== undefined) valTxt = cur.cloud_cover + "%";
+                        }
+                        else if(metricId === 'hum') {
+                            if(cur.relative_humidity_2m !== undefined) valTxt = cur.relative_humidity_2m + "%";
+                        }
+                        else if(metricId === 'press') {
+                            if(cur.surface_pressure !== undefined) valTxt = Math.round(cur.surface_pressure) + " hPa";
+                        }
+
+                        // Generate HTML
+                        gridContainer.innerHTML += `
+                        <div class="bg-slate-800/40 rounded-lg p-1.5 flex flex-col items-center border border-slate-700/30">
+                            <span class="text-[9px] text-slate-500 uppercase tracking-wide">${def.label}</span>
+                            <span class="text-[10px] font-bold ${valCls}">${valTxt}</span>
+                        </div>`;
+                    });
+                }
+                // --------------------------
+
                 document.getElementById('timeLabel').innerText="Aktuell"; document.getElementById('timeLabel').classList.remove('opacity-0');
                 if(lastWeatherData.daily && lastWeatherData.daily.temperature_2m_max[idx]!==undefined) { document.getElementById('tempMax').innerText=Math.round(lastWeatherData.daily.temperature_2m_max[idx]); document.getElementById('tempMin').innerText=Math.round(lastWeatherData.daily.temperature_2m_min[idx]); }
                 updateWindArrow(); lucide.createIcons();
@@ -1273,7 +1475,7 @@
                     0
                 );
                 checkWarnings(cur); 
-                if(!fromCache) checkAndSendNotification(calculateMotoScore(cur.temperature_2m, cur.wind_speed_10m, cur.precipitation, cur.is_day, cur.weather_code).score);
+                // checkAndSendNotification AUFRUF ENTFERNT
                 if (lastWeatherData.hourly) document.getElementById('dailyScoreValue').innerText=calculateDailyScore(lastWeatherData.hourly)+" / 10";
                 renderRainChart(lastWeatherData.minutely_15); renderHourly(); render7Day(); applyLayout();
                 document.getElementById('startPrompt').classList.add('hidden'); 
@@ -1300,7 +1502,9 @@
             }, 300000); // 5 Minutes (300,000 ms)
 
             // Added apparent_temperature to current fetch
-            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
+            // NEU: cloud_cover und wind_gusts_10m hinzugefügt
+            // NEU: surface_pressure hinzugefügt
+            const url=`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index,cloud_cover,wind_gusts_10m,surface_pressure&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r=await fetch(url); if(!r.ok)throw new Error(); lastWeatherData=await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
             catch(e) { 
                 if(!isBackground) { // Only show errors if user initiated
