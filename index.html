@@ -148,6 +148,13 @@
             0% { transform: rotate(-45deg) skew(10deg) scaleY(0.7); } 
             100% { transform: rotate(-45deg) skew(10deg) scaleY(1.3); } 
         }
+
+        /* --- FEATURE 4: LIGHT MODE OVERRIDES --- */
+        body.light-mode .rain-drop { background: rgba(59, 130, 246, 0.6); }
+        body.light-mode .cloud-shape { background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 60%, transparent 70%); }
+
+        /* FEATURE 6 EXTENSION: Parallax Text Items */
+        .parallax-item { transition: transform 0.1s linear; will-change: transform; }
     </style>
 </head>
 <body class="flex flex-col items-center">
@@ -161,17 +168,20 @@
     <div id="splashScreen" onclick="dismissSplash()">
         <div id="splashLocalEffects"></div>
         <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
-            <div class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold"><i data-lucide="map-pin" size="14"></i> Aktueller Standort</div>
-            <h1 id="splashCity" class="text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
+            <div class="parallax-item flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold"><i data-lucide="map-pin" size="14"></i> Aktueller Standort</div>
+            <h1 id="splashCity" class="parallax-item text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
         </div>
         <div class="flex flex-col items-center justify-center opacity-0 animate-float-up delay-100 splash-content">
-            <div id="splashIcon" class="mb-4 transform scale-150 drop-shadow-2xl text-blue-200"><div class="loader border-t-white/50"></div></div>
-            <div class="text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
-            <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
+            <!-- Icon Wrapper for Parallax without conflicting with Scale -->
+            <div class="parallax-item mb-4">
+                <div id="splashIcon" class="transform scale-150 drop-shadow-2xl text-blue-200"><div class="loader border-t-white/50"></div></div>
+            </div>
+            <div class="parallax-item text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
+            <div id="splashDesc" class="parallax-item text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
         </div>
         <div class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content">
-            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
-            <div class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition"><i data-lucide="chevron-up" class="text-white"></i></div>
+            <span class="parallax-item text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
+            <div class="parallax-item bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition"><i data-lucide="chevron-up" class="text-white"></i></div>
         </div>
     </div>
 
@@ -787,7 +797,7 @@
             
             currentHeading = heading;
             
-            // --- FEATURE 6: PARALLAX LOGIC ---
+            // --- FEATURE 6: PARALLAX LOGIC (Enhanced with Text) ---
             if(e.gamma && e.beta) {
                 // Gamma is left/right tilt (-90 to 90)
                 // Beta is front/back tilt (-180 to 180)
@@ -795,10 +805,18 @@
                 const x = Math.max(-limit, Math.min(limit, e.gamma / 2));
                 const y = Math.max(-limit, Math.min(limit, (e.beta - 45) / 2)); // 45deg is normal holding angle
                 
+                // 1. Move Background (Deep Layer)
                 const bg = document.getElementById('splashEffects');
                 if(bg) {
                     bg.style.transform = `translate(${x}px, ${y}px)`;
                 }
+
+                // 2. Move Text Content (Foreground Layer - moves MORE than bg for 3D depth)
+                const items = document.querySelectorAll('.parallax-item');
+                items.forEach(item => {
+                    const depth = 1.8; // Foreground factor
+                    item.style.transform = `translate(${x * depth}px, ${y * depth}px)`;
+                });
             }
             
             if (!compassTicking) {
