@@ -1273,9 +1273,12 @@
             <div id="motoAnalysisList" class="space-y-3 mb-6"></div>
             <h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i
                     data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3>
-            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3">
-                <div id="gearIcon" class="text-2xl">🧥</div>
-                <div class="text-sm font-medium text-slate-200" id="gearText">...</div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-600/50 flex items-start gap-4">
+                <div id="gearIcon" class="text-3xl bg-slate-700/50 p-2 rounded-lg flex-shrink-0">🧥</div>
+                <div>
+                    <div class="text-sm font-bold text-white mb-1" id="gearTitle">Lade...</div>
+                    <div class="text-xs text-slate-300 leading-relaxed" id="gearDesc">...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1983,8 +1986,51 @@
             }
         }
 
-        function getGearRecommendation(t, r) { let tx = "Standard", ic = "🧥"; if (t > 26) { tx = "Sommer/Mesh"; ic = "👕" } else if (t < 10) { tx = "Winter/Thermo"; ic = "🧣" } else if (t < 18) { tx = "Futter rein"; ic = "🧥" } if (r > 0.5) { tx += " + Regen!"; ic = "☔" } return { text: tx, icon: ic }; }
-        function showMotoDetails() { if (!lastWeatherData) return; const c = lastWeatherData.current; const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code); const l = document.getElementById('motoAnalysisList'); l.innerHTML = ""; ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`); ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`); if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`; const g = getGearRecommendation(c.temperature_2m, c.precipitation); document.getElementById('gearText').innerText = g.text; document.getElementById('gearIcon').innerText = g.icon; document.getElementById('motoDetailsModal').classList.remove('hidden'); lucide.createIcons(); }
+        function getGearRecommendation(t, r) {
+            let title = "Standard-Outfit", desc = "Lederkombi oder Textil-Set passt perfekt.", ic = "🧥";
+
+            if (t > 26) {
+                title = "Sommer-Outfit";
+                desc = "Mesh-Jacke, Kevlar-Jeans & leichte Handschuhe. Bleib luftig!";
+                ic = "👕";
+            }
+            else if (t < 10) {
+                title = "Winter-Outfit";
+                desc = "Thermo-Futter, Winterhandschuhe & Halstuch essenziell.";
+                ic = "🧣";
+            }
+            else if (t < 18) {
+                title = "Übergangs-Outfit";
+                desc = "Textil mit Futter oder Leder mit Hoodie drunter.";
+                ic = "🧥";
+            }
+
+            if (r > 0.5) {
+                desc += " <span class='text-blue-300 font-bold block mt-1'>⚠️ Regenkombi einpacken!</span>";
+                ic = "☔";
+            }
+
+            return { title, desc, icon: ic };
+        }
+
+        function showMotoDetails() {
+            if (!lastWeatherData) return;
+            const c = lastWeatherData.current;
+            const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
+            const l = document.getElementById('motoAnalysisList');
+            l.innerHTML = "";
+            ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
+            ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
+            if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
+
+            const g = getGearRecommendation(c.temperature_2m, c.precipitation);
+            document.getElementById('gearTitle').innerText = g.title;
+            document.getElementById('gearDesc').innerHTML = g.desc; // innerHTML for styling
+            document.getElementById('gearIcon').innerText = g.icon;
+
+            document.getElementById('motoDetailsModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
         function calculateMotoAnalysis(t, w, r, d, c) { let p = [], n = []; if (t >= 15 && t <= 28) p.push("Top Temp"); else if (t < 5) n.push("Glätte (<5°)"); else if (t < 10) n.push("Kalt (<10°)"); else if (t > 30) n.push("Hitze (>30°)"); if (w < 15) p.push("Wenig Wind"); else if (w > 40) n.push("Böen (>40kmh)"); if (r > 0) n.push("Nass"); if (c < 3) p.push("Gute Sicht"); if (d === 0) n.push("Nacht"); else p.push("Tag"); return { pros: p, cons: n }; }
         function calculateMotoScore(t, w, r, d, c) { let s = 10, rs = "Top"; if (t < 0) { s -= 10; rs = "Eis" } else if (t < 5) { s -= 8; rs = "Kalt" } else if (t < 10) { s -= 5; rs = "Frisch" } else if (t > 35) { s -= 4; rs = "Hitze" } if (c >= 95) { s -= 10; rs = "Gewitter" } else if (c >= 66 || c == 71 || c == 73 || c == 75) { s -= 9; rs = "Schnee" } else if (c >= 61) { s -= 7; rs = "Regen" } else if (c >= 51) { s -= 4; rs = "Niesel" } if (r > 0.5) { s -= 5; rs = "Nass" } if (w > 60) { s -= 9; rs = "Sturm" } else if (w > 40) { s -= 5; rs = "Windig" } if (d === 0) { s -= 2; if (rs === "Top") rs = "Nacht" } return { score: Math.max(0, Math.min(10, s)), reason: rs }; }
         function calculateDailyScore(h) { const off = (lastWeatherData.utc_offset_seconds || 0) * 1000; let ts = 0, c = 0; for (let i = 0; i < h.time.length; i++) { if (new Date(new Date(h.time[i]).getTime() + off).toISOString().slice(0, 10) !== new Date(Date.now() + off).toISOString().slice(0, 10)) continue; if (h.is_day[i]) { ts += calculateMotoScore(h.temperature_2m[i], h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], h.weather_code[i]).score; c++; } } return c === 0 ? "--" : Math.round((ts / c) * 10) / 10; }
