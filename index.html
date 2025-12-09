@@ -758,7 +758,8 @@
 
         <div id="dynamicContent" class="hidden w-full max-w-lg space-y-4 animate-fade-in">
             <!-- BEST RIDE CARD (Feature: Best Ride Finder) -->
-            <div id="bestRideSection" class="glass-panel rounded-2xl p-4 hidden">
+            <div id="bestRideSection" onclick="showBestRideDetails()"
+                class="glass-panel rounded-2xl p-4 hidden active:scale-95 transition-transform cursor-pointer relative">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="text-sm font-bold text-yellow-300 flex items-center gap-2 uppercase tracking-wide">
                         <i data-lucide="star" size="16"></i> Beste Zeit
@@ -769,7 +770,12 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div id="bestRideTime" class="text-xl font-bold text-white mb-0.5">--:-- - --:--</div>
-                        <div id="bestRideDay" class="text-xs text-slate-400 uppercase tracking-widest font-semibold">--
+                        <div class="flex items-center gap-2">
+                            <div id="bestRideDay"
+                                class="text-xs text-slate-400 uppercase tracking-widest font-semibold">--</div>
+                            <div id="bestRideTemp"
+                                class="text-xs font-bold text-emerald-300 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 hidden">
+                                --°</div>
                         </div>
                     </div>
                     <div class="text-right">
@@ -1039,6 +1045,76 @@
                     class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Reset
                     App</button>
             </div>
+        </div>
+    </div>
+
+    <!-- BEST RIDE DETAILS MODAL -->
+    <div id="bestRideModal" onclick="if(event.target === this) this.classList.add('hidden')"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
+            <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
+                    data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
+                    size="20"></i> Beste Zeit Details</h3>
+
+            <div class="flex flex-col items-center mb-6">
+                <div id="brDetailScoreCircle"
+                    class="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-500/10 mb-2">
+                    <span id="brDetailScore" class="text-xl font-black text-yellow-100">--</span>
+                </div>
+                <div id="brDetailTime" class="text-2xl font-bold text-white">--:-- - --:--</div>
+                <div id="brDetailDay" class="text-sm text-yellow-200/80 font-medium uppercase tracking-wider">--</div>
+            </div>
+
+            <div class="space-y-3">
+                <h4
+                    class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">
+                    Warum diese Zeit?</h4>
+                <div id="brReasonsList" class="space-y-2">
+                    <!-- Dynamic Reasons -->
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind, Regenrisiko
+                und Tageszeit.</p>
+        </div>
+    </div>
+
+    <!-- BEST RIDE DETAILS MODAL -->
+    <div id="bestRideModal" onclick="if(event.target === this) this.classList.add('hidden')"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
+            <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
+                    data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
+                    size="20"></i> Beste Zeit Details</h3>
+
+            <div class="flex flex-col items-center mb-6">
+                <div id="brDetailScoreCircle"
+                    class="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-500/10 mb-2">
+                    <span id="brDetailScore" class="text-xl font-black text-yellow-100">--</span>
+                </div>
+                <div id="brDetailTime" class="text-2xl font-bold text-white">--:-- - --:--</div>
+                <div id="brDetailDay" class="text-sm text-yellow-200/80 font-medium uppercase tracking-wider mb-2">--
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
+                    <i data-lucide="thermometer" size="14" class="text-emerald-400"></i>
+                    <span id="brDetailTempDisplay" class="text-sm font-bold text-emerald-100">--°</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h4
+                    class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">
+                    Warum diese Zeit?</h4>
+                <div id="brReasonsList" class="space-y-2">
+                    <!-- Dynamic Reasons -->
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind, Regenrisiko
+                und Tageszeit.</p>
         </div>
     </div>
 
@@ -2392,8 +2468,12 @@
             };
         }
 
+        let cachedBestRide = null; // Store for modal
+
         function updateBestRideUI() {
             const br = calculateBestRide(lastWeatherData.hourly);
+            cachedBestRide = br; // Save for modal
+
             const el = document.getElementById('bestRideSection');
             if (br && br.avgScore >= 6) {
                 // Determine layout visibility
@@ -2424,6 +2504,23 @@
                     document.getElementById('bestRideDay').innerText = displayDay;
                     document.getElementById('bestRideScore').innerText = br.avgScore.toFixed(1);
 
+                    // Calc and show temp on card
+                    const h = lastWeatherData.hourly;
+                    let cTemp = 0, cCount = 0;
+                    let sIdx = 0;
+                    while (sIdx < h.time.length && h.time[sIdx] !== br.start) sIdx++;
+                    if (sIdx < h.time.length) {
+                        for (let k = 0; k < br.length; k++) {
+                            if (sIdx + k < h.time.length) { cTemp += h.temperature_2m[sIdx + k]; cCount++; }
+                        }
+                        if (cCount > 0) cTemp /= cCount;
+                    }
+                    const trEl = document.getElementById('bestRideTemp');
+                    if (trEl) {
+                        trEl.innerText = Math.round(cTemp) + "°";
+                        trEl.classList.remove('hidden');
+                    }
+
                     // Style score
                     const scEl = document.getElementById('bestRideScore');
                     if (br.avgScore >= 8) {
@@ -2439,6 +2536,81 @@
             } else {
                 el.classList.add('hidden'); // No good ride found
             }
+        }
+
+        function showBestRideDetails() {
+            if (!cachedBestRide) return;
+            const br = cachedBestRide;
+
+            const dStart = new Date(br.start);
+            const dEnd = new Date(br.end);
+            const dayName = dStart.toLocaleDateString('de-DE', { weekday: 'long' });
+            const todayName = new Date().toLocaleDateString('de-DE', { weekday: 'long' });
+            const displayDay = (dayName === todayName) ? "Heute" : dayName;
+
+            const tStart = dStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            let endH = dEnd.getHours() + 1;
+            const tEnd = (endH > 23 ? 0 : endH).toString().padStart(2, '0') + ":00";
+
+            document.getElementById('brDetailScore').innerText = br.avgScore.toFixed(1);
+            document.getElementById('brDetailTime').innerText = `${tStart} - ${tEnd}`;
+            document.getElementById('brDetailDay').innerText = displayDay;
+
+            // Generate Reasons (Analyze average conditions in window)
+            // We need to fetch data for the window indices
+            // Simply use the first hour of the window as representative for now, or calculate averages
+            // Since we have the window object but not the indices directly here, we can re-find them or just use the start time
+
+            // Re-find indices in hourly
+            const h = lastWeatherData.hourly;
+            const off = (lastWeatherData.utc_offset_seconds || 0) * 1000;
+            let startIdx = -1;
+            const startMs = new Date(br.start).getTime();
+
+            // Find start index
+            // Small tolerance for time string match
+            // Actually br.start is the ISO string from api
+            for (let i = 0; i < h.time.length; i++) {
+                if (h.time[i] === br.start) { startIdx = i; break; }
+            }
+
+            const list = document.getElementById('brReasonsList');
+            list.innerHTML = '';
+
+            if (startIdx !== -1) {
+                // Analyze average of window
+                let avgTemp = 0, maxWind = 0, rainSum = 0;
+                const len = br.length;
+
+                for (let k = 0; k < len; k++) {
+                    const idx = startIdx + k;
+                    if (idx < h.time.length) {
+                        avgTemp += h.temperature_2m[idx];
+                        maxWind = Math.max(maxWind, h.wind_speed_10m[idx]);
+                        rainSum += h.precipitation[idx]
+                    }
+                }
+                avgTemp /= len;
+
+                // Set main temp display
+                document.getElementById('brDetailTempDisplay').innerText = Math.round(avgTemp) + "°";
+
+                // Generate Pros
+                if (avgTemp >= 18 && avgTemp <= 26) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer-sun" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Perfekte Temperatur (~${Math.round(avgTemp)}°)</span></div>`;
+                else if (avgTemp >= 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Angenehm (~${Math.round(avgTemp)}°)</span></div>`;
+
+                if (rainSum === 0) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="droplets" class="text-blue-300"></i><span class="text-sm text-blue-100">Kein Regen vorhergesagt</span></div>`;
+
+                if (maxWind < 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Wenig Wind (< ${Math.round(maxWind)} km/h)</span></div>`;
+                else if (maxWind < 30) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-yellow-400"></i><span class="text-sm text-yellow-100">Mäßiger Wind (~${Math.round(maxWind)} km/h)</span></div>`;
+
+                // Score text
+                if (br.avgScore >= 9) list.innerHTML += `<div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/50"><i data-lucide="check-check" class="text-emerald-400"></i><span class="text-sm font-bold text-emerald-100">Absoluter Top-Zeitraum!</span></div>`;
+            }
+
+            const modal = document.getElementById('bestRideModal');
+            modal.classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function updateRadar() { if (typeof L !== 'undefined') { initRadarMap(); } }
