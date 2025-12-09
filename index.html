@@ -1120,38 +1120,45 @@
     <div id="bestRideModal" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
-            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] overflow-y-auto">
-            <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
-                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
-                    data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
-                    size="20"></i> Beste Zeit Details</h3>
-
-            <div class="flex flex-col items-center mb-6">
-                <div id="brDetailScoreCircle"
-                    class="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-500/10 mb-2">
-                    <span id="brDetailScore" class="text-xl font-black text-yellow-100">--</span>
-                </div>
-                <div id="brDetailTime" class="text-2xl font-bold text-white">--:-- - --:--</div>
-                <div id="brDetailDay" class="text-sm text-yellow-200/80 font-medium uppercase tracking-wider mb-2">--
-                </div>
-
-                <div class="flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
-                    <i data-lucide="thermometer" size="14" class="text-emerald-400"></i>
-                    <span id="brDetailTempDisplay" class="text-sm font-bold text-emerald-100">--°</span>
-                </div>
+            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] flex flex-col">
+            <div class="shrink-0">
+                <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
+                    class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
+                        data-lucide="x" size="20"></i></button>
+                <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
+                        size="20"></i> Beste Zeit Details</h3>
             </div>
 
-            <div class="space-y-3">
-                <h4
-                    class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">
-                    Warum diese Zeit?</h4>
-                <div id="brReasonsList" class="space-y-2">
-                    <!-- Dynamic Reasons -->
+            <div class="overflow-y-auto flex-1 min-h-0 -mx-4 px-4 custom-scrollbar">
+                <div class="flex flex-col items-center mb-6">
+                    <div id="brDetailScoreCircle"
+                        class="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-500/10 mb-2">
+                        <span id="brDetailScore" class="text-xl font-black text-yellow-100">--</span>
+                    </div>
+                    <div id="brDetailTime" class="text-2xl font-bold text-white">--:-- - --:--</div>
+                    <div id="brDetailDay" class="text-sm text-yellow-200/80 font-medium uppercase tracking-wider mb-2">
+                        --
+                    </div>
+
+                    <div
+                        class="flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
+                        <i data-lucide="thermometer" size="14" class="text-emerald-400"></i>
+                        <span id="brDetailTempDisplay" class="text-sm font-bold text-emerald-100">--°</span>
+                    </div>
                 </div>
+
+                <div class="space-y-3">
+                    <h4
+                        class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">
+                        Warum diese Zeit?</h4>
+                    <div id="brReasonsList" class="space-y-2">
+                        <!-- Dynamic Reasons -->
+                    </div>
+                </div>
+                <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind,
+                    Regenrisiko
+                    und Tageszeit.</p>
             </div>
-            <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind, Regenrisiko
-                und Tageszeit.</p>
         </div>
     </div>
 
@@ -1159,89 +1166,96 @@
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
-            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[85vh] overflow-y-auto">
-            <button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')"
-                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
-                    data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-2 text-blue-100 flex items-center gap-2"><i data-lucide="calendar"
-                    size="20"></i> <span id="dailyDetailTitle">Tages-Infos</span></h3>
-            <p id="dailyDetailDate" class="text-xs text-slate-400 mb-6 uppercase tracking-wider">Details</p>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center">
-                    <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
-                            data-lucide="sunrise" size="12"></i> Aufgang</div>
-                    <div id="detailSunrise" class="font-bold">--:--</div>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center">
-                    <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
-                            data-lucide="sunset" size="12"></i> Untergang</div>
-                    <div id="detailSunset" class="font-bold">--:--</div>
-                </div>
+            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[80vh] flex flex-col">
+            <div class="shrink-0 mb-2">
+                <button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')"
+                    class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+                        data-lucide="x" size="20"></i></button>
+                <h3 class="text-lg font-bold mb-2 text-blue-100 flex items-center gap-2"><i data-lucide="calendar"
+                        size="20"></i> <span id="dailyDetailTitle">Tages-Infos</span></h3>
+                <p id="dailyDetailDate" class="text-xs text-slate-400 mb-6 uppercase tracking-wider">Details</p>
             </div>
 
-            <div class="bg-slate-800/50 p-4 rounded-xl mb-4 border border-slate-700/50">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="text-slate-400 text-xs flex items-center gap-1"><i data-lucide="umbrella" size="12"></i>
-                        Regen</div>
-                    <div class="text-blue-300 font-bold text-sm"><span id="detailPrecipSum">0</span> mm</div>
-                </div>
-                <div class="w-full bg-slate-700 rounded-full h-1.5 mb-1">
-                    <div id="detailPrecipProbBar" class="bg-blue-500 h-1.5 rounded-full" style="width:0%"></div>
-                </div>
-                <div class="text-[10px] text-right text-slate-500"><span id="detailPrecipProb">0</span>% Wahrsch.</div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center">
-                    <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
-                            data-lucide="wind" size="12"></i> Max Wind</div>
-                    <div class="font-bold text-white"><span id="detailWindMax">--</span> <span
-                            class="text-xs font-normal text-slate-400">km/h</span></div>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-xl text-center">
-                    <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i data-lucide="sun"
-                            size="12"></i> Max UV</div>
-                    <div class="font-bold text-white"><span id="detailUVMax">--</span></div>
-                </div>
-            </div>
-
-            <!-- Current Day Only Logic -->
-            <div id="currentDayExtras" class="hidden">
-                <div id="sunCountdownContainer"
-                    class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 mb-4 text-center">
-                    <div class="text-xs text-yellow-200 font-medium flex items-center justify-center gap-2"><i
-                            data-lucide="hourglass" size="12"></i> <span id="sunCountdownText">...</span></div>
-                </div>
-                <div class="bg-slate-800/50 p-3 rounded-xl flex justify-between items-center">
-                    <span class="text-sm text-slate-300">Luftqualität (AQI)</span>
-                    <div class="flex items-center gap-2"><span id="detailAqiVal" class="font-bold text-white">--</span>
-                        <div id="detailAqiBar" class="w-2 h-2 rounded-full bg-slate-600"></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-6 mt-4">
+            <div class="overflow-y-auto flex-1 min-h-0 -mx-4 px-4 custom-scrollbar">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-slate-800/50 p-3 rounded-xl text-center">
                         <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
-                                data-lucide="eye" size="12"></i> Sicht</div>
-                        <div id="detailVisibility" class="font-bold">--</div>
+                                data-lucide="sunrise" size="12"></i> Aufgang</div>
+                        <div id="detailSunrise" class="font-bold">--:--</div>
                     </div>
                     <div class="bg-slate-800/50 p-3 rounded-xl text-center">
                         <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
-                                data-lucide="sun" size="12"></i> UV</div>
-                        <div id="detailUV" class="font-bold">--</div>
+                                data-lucide="sunset" size="12"></i> Untergang</div>
+                        <div id="detailSunset" class="font-bold">--:--</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- STÜNDLICHER REGEN VERLAUF -->
-            <div id="dailyHourlyRain"
-                class="mt-4 mb-2 max-h-48 overflow-y-auto custom-scrollbar border-t border-slate-700/50 pt-2"></div>
+                <div class="bg-slate-800/50 p-4 rounded-xl mb-4 border border-slate-700/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-slate-400 text-xs flex items-center gap-1"><i data-lucide="umbrella"
+                                size="12"></i>
+                            Regen</div>
+                        <div class="text-blue-300 font-bold text-sm"><span id="detailPrecipSum">0</span> mm</div>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-1.5 mb-1">
+                        <div id="detailPrecipProbBar" class="bg-blue-500 h-1.5 rounded-full" style="width:0%"></div>
+                    </div>
+                    <div class="text-[10px] text-right text-slate-500"><span id="detailPrecipProb">0</span>% Wahrsch.
+                    </div>
+                </div>
 
-            <div id="dailyMotoScore"
-                class="mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800">
-                <span class="text-xs uppercase font-bold text-slate-400">Tages-Score</span>
-                <span id="dailyScoreDetailVal" class="font-black text-lg">--</span>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-slate-800/50 p-3 rounded-xl text-center">
+                        <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
+                                data-lucide="wind" size="12"></i> Max Wind</div>
+                        <div class="font-bold text-white"><span id="detailWindMax">--</span> <span
+                                class="text-xs font-normal text-slate-400">km/h</span></div>
+                    </div>
+                    <div class="bg-slate-800/50 p-3 rounded-xl text-center">
+                        <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
+                                data-lucide="sun" size="12"></i> Max UV</div>
+                        <div class="font-bold text-white"><span id="detailUVMax">--</span></div>
+                    </div>
+                </div>
+
+                <!-- Current Day Only Logic -->
+                <div id="currentDayExtras" class="hidden">
+                    <div id="sunCountdownContainer"
+                        class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 mb-4 text-center">
+                        <div class="text-xs text-yellow-200 font-medium flex items-center justify-center gap-2"><i
+                                data-lucide="hourglass" size="12"></i> <span id="sunCountdownText">...</span></div>
+                    </div>
+                    <div class="bg-slate-800/50 p-3 rounded-xl flex justify-between items-center">
+                        <span class="text-sm text-slate-300">Luftqualität (AQI)</span>
+                        <div class="flex items-center gap-2"><span id="detailAqiVal"
+                                class="font-bold text-white">--</span>
+                            <div id="detailAqiBar" class="w-2 h-2 rounded-full bg-slate-600"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6 mt-4">
+                        <div class="bg-slate-800/50 p-3 rounded-xl text-center">
+                            <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
+                                    data-lucide="eye" size="12"></i> Sicht</div>
+                            <div id="detailVisibility" class="font-bold">--</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-3 rounded-xl text-center">
+                            <div class="text-slate-400 text-xs mb-1 flex justify-center items-center gap-1"><i
+                                    data-lucide="sun" size="12"></i> UV</div>
+                            <div id="detailUV" class="font-bold">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STÜNDLICHER REGEN VERLAUF -->
+                <div id="dailyHourlyRain"
+                    class="mt-4 mb-2 max-h-48 overflow-y-auto custom-scrollbar border-t border-slate-700/50 pt-2"></div>
+
+                <div id="dailyMotoScore"
+                    class="mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800">
+                    <span class="text-xs uppercase font-bold text-slate-400">Tages-Score</span>
+                    <span id="dailyScoreDetailVal" class="font-black text-lg">--</span>
+                </div>
             </div>
         </div>
     </div>
