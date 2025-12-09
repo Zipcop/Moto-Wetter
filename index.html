@@ -268,11 +268,45 @@
         }
 
         .dev-btn {
-            @apply bg-slate-700 hover:bg-slate-600 text-white text-xs font-mono py-2 px-3 rounded border border-slate-600 transition-colors;
+            /* @apply replaced with standard CSS (or use classes in HTML) */
+            /* Using standard styles here to avoid lint error, or just ignoring if using a build tool that supports it. 
+               However, since this is in a <style> tag without type="text/tailwindcss", standard CSS is preferred or explicit style configuration.
+               Let's replace @apply with actual properties effectively or just use the utility classes in the HTML directly. 
+               But since the user asked to fix the 'problem', and we see they are using CDN, 
+               'Unknown at rule @apply' suggests the IDE doesn't like it.
+               We can convert these to standard CSS or just comment them out and ensure the HTML has classes.
+               Looking at usage, .dev-btn is likely used in JS or HTML.
+               Let's just translate the Tailwind classes to CSS properties here to satisfy the linter and keep functionality.
+            */
+            background-color: #334155;
+            /* bg-slate-700 */
+            color: white;
+            /* text-white */
+            font-size: 0.75rem;
+            /* text-xs */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            /* font-mono */
+            padding: 0.5rem 0.75rem;
+            /* py-2 px-3 */
+            border-radius: 0.25rem;
+            /* rounded */
+            border: 1px solid #475569;
+            /* border-slate-600 */
+            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+            /* transition-colors */
+            cursor: pointer;
+        }
+
+        .dev-btn:hover {
+            background-color: #475569;
+            /* hover:bg-slate-600 */
         }
 
         .dev-btn-active {
-            @apply bg-blue-600 border-blue-400;
+            background-color: #2563eb;
+            /* bg-blue-600 */
+            border-color: #60a5fa;
+            /* border-blue-400 */
         }
 
         /* LEAFLET CUSTOM STYLES */
@@ -309,6 +343,8 @@
         /* TIMELINE SLIDER STYLES */
         input[type=range] {
             -webkit-appearance: none;
+            appearance: none;
+            /* Fix: Define standard property */
             background: transparent;
         }
 
