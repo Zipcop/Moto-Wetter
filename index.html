@@ -689,6 +689,16 @@
         body.light-mode .cloud-shape {
             background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 60%, transparent 70%);
         }
+
+        /* FAVORITES STYLES */
+        .fav-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fav-item:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 
@@ -747,7 +757,10 @@
                     <button onclick="toggleSettings()"
                         class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
                         title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
-                    <!-- Benachrichtigungs-Button ENTFERNT -->
+                    <button
+                        onclick="document.getElementById('favoritesModal').classList.remove('hidden'); renderFavoritesList()"
+                        class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50"
+                        title="Favoriten"><i data-lucide="heart" size="18"></i></button>
                 </div>
             </div>
             <form onsubmit="event.preventDefault(); searchCity();" class="flex gap-2 relative">
@@ -766,7 +779,12 @@
                     class="glass-btn p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i
                         data-lucide="map-pin"></i></button>
             </form>
-            <div id="cityName" class="text-xl font-bold mt-4 text-center tracking-wide text-blue-100">--</div>
+            <div class="flex justify-center items-center gap-3 mt-4">
+                <div id="cityName" class="text-xl font-bold tracking-wide text-blue-100">--</div>
+                <button id="favToggleBtn" onclick="toggleFavoriteCurrent()"
+                    class="transition active:scale-95 opacity-80 hover:opacity-100"><i data-lucide="heart"
+                        class="text-slate-500" size="20"></i></button>
+            </div>
             <div id="offlineBanner"
                 class="hidden flex items-center justify-center gap-2 text-[10px] text-orange-300 font-bold mb-1 bg-orange-500/20 rounded py-1 px-3 mx-auto w-fit animate-pulse cursor-pointer hover:bg-orange-500/30 transition"
                 onclick="fetchWeather(lastWeatherData?.name || 'Standort', '')"><span>OFFLINE-MODUS</span> <i
@@ -1273,12 +1291,9 @@
             <div id="motoAnalysisList" class="space-y-3 mb-6"></div>
             <h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i
                     data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3>
-            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-600/50 flex items-start gap-4">
-                <div id="gearIcon" class="text-3xl bg-slate-700/50 p-2 rounded-lg flex-shrink-0">🧥</div>
-                <div>
-                    <div class="text-sm font-bold text-white mb-1" id="gearTitle">Lade...</div>
-                    <div class="text-xs text-slate-300 leading-relaxed" id="gearDesc">...</div>
-                </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3">
+                <div id="gearIcon" class="text-2xl">🧥</div>
+                <div class="text-sm font-medium text-slate-200" id="gearText">...</div>
             </div>
         </div>
     </div>
@@ -1343,6 +1358,21 @@
                         class="text-white w-6 h-6"></i> <span>Schnee</span></div>
                 <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning"
                         class="text-purple-400 w-6 h-6"></i> <span>Gewitter</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
+        class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div
+            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[70vh] flex flex-col">
+            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
+                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+                    data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-4 text-red-200 flex items-center gap-2"><i data-lucide="heart" size="20"
+                    class="text-red-500 fill-red-500"></i> Favoriten</h3>
+            <div id="favoritesListContent" class="overflow-y-auto custom-scrollbar flex-1 min-h-0">
+                <!-- List -->
             </div>
         </div>
     </div>
@@ -1986,51 +2016,8 @@
             }
         }
 
-        function getGearRecommendation(t, r) {
-            let title = "Standard-Outfit", desc = "Lederkombi oder Textil-Set passt perfekt.", ic = "🧥";
-
-            if (t > 26) {
-                title = "Sommer-Outfit";
-                desc = "Mesh-Jacke, Kevlar-Jeans & leichte Handschuhe. Bleib luftig!";
-                ic = "👕";
-            }
-            else if (t < 10) {
-                title = "Winter-Outfit";
-                desc = "Thermo-Futter, Winterhandschuhe & Halstuch essenziell.";
-                ic = "🧣";
-            }
-            else if (t < 18) {
-                title = "Übergangs-Outfit";
-                desc = "Textil mit Futter oder Leder mit Hoodie drunter.";
-                ic = "🧥";
-            }
-
-            if (r > 0.5) {
-                desc += " <span class='text-blue-300 font-bold block mt-1'>⚠️ Regenkombi einpacken!</span>";
-                ic = "☔";
-            }
-
-            return { title, desc, icon: ic };
-        }
-
-        function showMotoDetails() {
-            if (!lastWeatherData) return;
-            const c = lastWeatherData.current;
-            const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
-            const l = document.getElementById('motoAnalysisList');
-            l.innerHTML = "";
-            ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
-            ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
-            if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
-
-            const g = getGearRecommendation(c.temperature_2m, c.precipitation);
-            document.getElementById('gearTitle').innerText = g.title;
-            document.getElementById('gearDesc').innerHTML = g.desc; // innerHTML for styling
-            document.getElementById('gearIcon').innerText = g.icon;
-
-            document.getElementById('motoDetailsModal').classList.remove('hidden');
-            lucide.createIcons();
-        }
+        function getGearRecommendation(t, r) { let tx = "Standard", ic = "🧥"; if (t > 26) { tx = "Sommer/Mesh"; ic = "👕" } else if (t < 10) { tx = "Winter/Thermo"; ic = "🧣" } else if (t < 18) { tx = "Futter rein"; ic = "🧥" } if (r > 0.5) { tx += " + Regen!"; ic = "☔" } return { text: tx, icon: ic }; }
+        function showMotoDetails() { if (!lastWeatherData) return; const c = lastWeatherData.current; const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code); const l = document.getElementById('motoAnalysisList'); l.innerHTML = ""; ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`); ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`); if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`; const g = getGearRecommendation(c.temperature_2m, c.precipitation); document.getElementById('gearText').innerText = g.text; document.getElementById('gearIcon').innerText = g.icon; document.getElementById('motoDetailsModal').classList.remove('hidden'); lucide.createIcons(); }
         function calculateMotoAnalysis(t, w, r, d, c) { let p = [], n = []; if (t >= 15 && t <= 28) p.push("Top Temp"); else if (t < 5) n.push("Glätte (<5°)"); else if (t < 10) n.push("Kalt (<10°)"); else if (t > 30) n.push("Hitze (>30°)"); if (w < 15) p.push("Wenig Wind"); else if (w > 40) n.push("Böen (>40kmh)"); if (r > 0) n.push("Nass"); if (c < 3) p.push("Gute Sicht"); if (d === 0) n.push("Nacht"); else p.push("Tag"); return { pros: p, cons: n }; }
         function calculateMotoScore(t, w, r, d, c) { let s = 10, rs = "Top"; if (t < 0) { s -= 10; rs = "Eis" } else if (t < 5) { s -= 8; rs = "Kalt" } else if (t < 10) { s -= 5; rs = "Frisch" } else if (t > 35) { s -= 4; rs = "Hitze" } if (c >= 95) { s -= 10; rs = "Gewitter" } else if (c >= 66 || c == 71 || c == 73 || c == 75) { s -= 9; rs = "Schnee" } else if (c >= 61) { s -= 7; rs = "Regen" } else if (c >= 51) { s -= 4; rs = "Niesel" } if (r > 0.5) { s -= 5; rs = "Nass" } if (w > 60) { s -= 9; rs = "Sturm" } else if (w > 40) { s -= 5; rs = "Windig" } if (d === 0) { s -= 2; if (rs === "Top") rs = "Nacht" } return { score: Math.max(0, Math.min(10, s)), reason: rs }; }
         function calculateDailyScore(h) { const off = (lastWeatherData.utc_offset_seconds || 0) * 1000; let ts = 0, c = 0; for (let i = 0; i < h.time.length; i++) { if (new Date(new Date(h.time[i]).getTime() + off).toISOString().slice(0, 10) !== new Date(Date.now() + off).toISOString().slice(0, 10)) continue; if (h.is_day[i]) { ts += calculateMotoScore(h.temperature_2m[i], h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], h.weather_code[i]).score; c++; } } return c === 0 ? "--" : Math.round((ts / c) * 10) / 10; }
@@ -2736,6 +2723,7 @@
                 if (lastWeatherData.hourly) document.getElementById('dailyScoreValue').innerText = calculateDailyScore(lastWeatherData.hourly) + " / 10";
                 updateBestRideUI(); // NEW
                 renderRainChart(lastWeatherData.minutely_15); renderHourly(); render7Day(); applyLayout();
+                updateFavIconState(); // NEW: Update Favorite Icon
                 document.getElementById('startPrompt').classList.add('hidden');
                 document.getElementById('dynamicContent').classList.remove('hidden');
                 loadingIndicator.classList.add('hidden'); updateRadar();
@@ -2896,6 +2884,45 @@
             }, 1000);
         }
         startClock(); document.addEventListener('DOMContentLoaded', () => { if (typeof locateMe === 'function') locateMe(true); });
+
+        // --- FAVORITES LOGIC ---
+        let favorites = [];
+        try { const f = localStorage.getItem('motoWeather_favorites_v1'); if (f) favorites = JSON.parse(f); } catch (e) { }
+        function isFavorite(n) { return favorites.some(fav => fav.name.toLowerCase() === n.toLowerCase()); }
+
+        function toggleFavoriteCurrent() {
+            if (!currentCityName) return;
+            // Slightly normalize name
+            const n = currentCityName; const c = currentCountry || "";
+            const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase());
+            if (idx > -1) { favorites.splice(idx, 1); } else { favorites.push({ name: n, country: c }); }
+            saveFavorites(); updateFavIconState();
+        }
+
+        function saveFavorites() { localStorage.setItem('motoWeather_favorites_v1', JSON.stringify(favorites)); renderFavoritesList(); }
+
+        function updateFavIconState() {
+            const btn = document.getElementById('favToggleBtn'); if (!btn || !currentCityName) return;
+            const isFav = isFavorite(currentCityName);
+            btn.innerHTML = isFav ? `<i data-lucide="heart" class="text-red-500 fill-red-500" size="20"></i>` : `<i data-lucide="heart" class="text-slate-500" size="20"></i>`;
+            lucide.createIcons();
+        }
+
+        function renderFavoritesList() {
+            const l = document.getElementById('favoritesListContent'); if (!l) return;
+            l.innerHTML = '';
+            if (favorites.length === 0) { l.innerHTML = '<div class="text-center text-slate-500 py-6 italic text-sm">Noch keine Favoriten gespeichert.<br>Tippe auf das Herz beim Ort!</div>'; return; }
+            favorites.forEach(fav => {
+                l.innerHTML += `<div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 mb-2 fav-item group hover:bg-slate-700/50">
+                    <div onclick="loadFavorite('${fav.name}', '${fav.country}')" class="flex-grow font-bold text-slate-200 text-sm flex items-center gap-2"><i data-lucide="map-pin" size="14" class="text-slate-500"></i> ${fav.name}</div>
+                    <button onclick="removeFavorite('${fav.name}')" class="p-2 text-slate-500 hover:text-red-400 transition bg-slate-800 rounded-lg hover:bg-slate-900 border border-slate-700"><i data-lucide="trash-2" size="14"></i></button>
+                </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function loadFavorite(n, c) { document.getElementById('favoritesModal').classList.add('hidden'); fetchWeather(n, c); }
+        function removeFavorite(n) { const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase()); if (idx > -1) { favorites.splice(idx, 1); saveFavorites(); } }
     </script>
 </body>
 
