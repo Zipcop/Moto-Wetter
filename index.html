@@ -2890,12 +2890,18 @@
         try { const f = localStorage.getItem('motoWeather_favorites_v1'); if (f) favorites = JSON.parse(f); } catch (e) { }
         function isFavorite(n) { return favorites.some(fav => fav.name.toLowerCase() === n.toLowerCase()); }
 
-        function toggleFavoriteCurrent() {
+        async function toggleFavoriteCurrent() {
             if (!currentCityName) return;
             // Slightly normalize name
             const n = currentCityName; const c = currentCountry || "";
             const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase());
-            if (idx > -1) { favorites.splice(idx, 1); } else { favorites.push({ name: n, country: c }); }
+
+            if (idx > -1) {
+                favorites.splice(idx, 1);
+            } else {
+                // Fix: Save current coordinates with favorite
+                favorites.push({ name: n, country: c, lat: currentLat, lon: currentLon });
+            }
             saveFavorites(); updateFavIconState();
         }
 
@@ -2914,14 +2920,52 @@
             if (favorites.length === 0) { l.innerHTML = '<div class="text-center text-slate-500 py-6 italic text-sm">Noch keine Favoriten gespeichert.<br>Tippe auf das Herz beim Ort!</div>'; return; }
             favorites.forEach(fav => {
                 l.innerHTML += `<div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 mb-2 fav-item group hover:bg-slate-700/50">
-                    <div onclick="loadFavorite('${fav.name}', '${fav.country}')" class="flex-grow font-bold text-slate-200 text-sm flex items-center gap-2"><i data-lucide="map-pin" size="14" class="text-slate-500"></i> ${fav.name}</div>
+                    <div onclick="loadFavorite('${fav.name}', '${fav.country}', ${fav.lat}, ${fav.lon})" class="flex-grow font-bold text-slate-200 text-sm flex items-center justify-start gap-2 text-left"><i data-lucide="map-pin" size="14" class="text-slate-500 shrink-0"></i> ${fav.name}</div>
                     <button onclick="removeFavorite('${fav.name}')" class="p-2 text-slate-500 hover:text-red-400 transition bg-slate-800 rounded-lg hover:bg-slate-900 border border-slate-700"><i data-lucide="trash-2" size="14"></i></button>
                 </div>`;
             });
             lucide.createIcons();
         }
 
-        function loadFavorite(n, c) { document.getElementById('favoritesModal').classList.add('hidden'); fetchWeather(n, c); }
+        async function loadFavorite(n, c, lat, lon) {
+            document.getElementById('favoritesModal').classList.add('hidden');
+
+            // Case 1: Coordinates exist (New favorites)
+            if (lat && lon && !isNaN(lat) && !isNaN(lon)) {
+                currentLat = parseFloat(lat);
+                currentLon = parseFloat(lon);
+                fetchWeather(n, c);
+                return;
+            }
+
+            // Case 2: Legacy favorite (missing coords) - Fetch them!
+            loadingIndicator.classList.remove('hidden');
+            try {
+                const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(n)}&count=1&language=de&format=json`);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    currentLat = data.results[0].latitude;
+                    currentLon = data.results[0].longitude;
+
+                    // Optional: Update the legacy favorite to prevent future lookups
+                    const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase());
+                    if (idx > -1) {
+                        favorites[idx].lat = currentLat;
+                        favorites[idx].lon = currentLon;
+                        saveFavorites();
+                    }
+
+                    fetchWeather(n, c);
+                } else {
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                    loadingIndicator.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error("Fav Geo Error", e);
+                loadingIndicator.classList.add('hidden');
+            }
+        }
         function removeFavorite(n) { const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase()); if (idx > -1) { favorites.splice(idx, 1); saveFavorites(); } }
     </script>
 </body>
