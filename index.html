@@ -9,6 +9,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Wetter">
 
+    <!-- FONT: Outfit (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- PWA MANIFEST (Ermöglicht Installation als App) -->
     <link rel="manifest"
         href='data:application/manifest+json;charset=utf-8,{"name":"Moto Wetter","short_name":"MotoWetter","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://img.icons8.com/fluency/512/weather.png?v=2","sizes":"512x512","type":"image/png"}]}'>
@@ -49,7 +55,7 @@
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: 1rem;
             padding-right: 1rem;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
             transition: background 0.5s ease, color 0.5s ease;
         }
@@ -118,20 +124,39 @@
             z-index: 10;
         }
 
+        /* PREMIUM GLASSMORPHISM */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: background 0.3s, border-color 0.3s;
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s, border-color 0.3s;
         }
 
         .glass-btn {
-            background: rgba(30, 41, 59, 0.5);
+            background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(71, 85, 105, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            transition: all 0.3s;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* TACTILE FEEDBACK (Global) */
+        button,
+        .glass-btn,
+        .fav-item,
+        .glass-panel[onclick] {
+            cursor: pointer;
+            touch-action: manipulation;
+            /* No double-tap zoom */
+        }
+
+        button:active,
+        .glass-btn:active,
+        .fav-item:active,
+        .glass-panel[onclick]:active {
+            transform: scale(0.96);
         }
 
         .loader {
@@ -1428,6 +1453,18 @@
         let currentCityName = "Standort"; // NEW: Store name for refresh
         let currentCountry = ""; // NEW: Store country for refresh
         let lastPastIndex = 0; // NEW: Store index where history ends
+
+        // --- HAPTIC FEEDBACK SYSTEM ---
+        const vibrate = (pattern = 10) => {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+        };
+        // Global Click Listener for Haptics
+        document.addEventListener('click', (e) => {
+            // Trigger light vibration on button clicks
+            if (e.target.closest('button') || e.target.closest('.glass-btn') || e.target.closest('.fav-item') || e.target.closest('.glass-panel[onclick]')) {
+                vibrate(8); // Short crisp tick
+            }
+        });
 
         // --- FEATURE 7: RAIN GLASS EFFECT CLASS ---
         class RainGlass {
