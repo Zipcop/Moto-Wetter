@@ -636,6 +636,38 @@
             opacity: 0.6;
         }
 
+        /* VIEW TRANSITIONS: Premium Fade */
+        ::view-transition-group(mobile-morph) {
+            animation-duration: 0.3s;
+            /* Faster, cleaner fade */
+        }
+
+        ::view-transition-old(mobile-morph) {
+            animation: fade-out 0.2s ease both;
+        }
+
+        ::view-transition-new(mobile-morph) {
+            animation: fade-in-scale 0.3s ease both;
+        }
+
+        @keyframes fade-out {
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fade-in-scale {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         .bird {
             position: absolute;
             width: 10px;
@@ -723,6 +755,13 @@
 
         .fav-item:active {
             transform: scale(0.98);
+        }
+
+        /* VIEW TRANSITIONS */
+        ::view-transition-old(mobile-morph),
+        ::view-transition-new(mobile-morph) {
+            animation-duration: 0.35s;
+            animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
         }
     </style>
 </head>
@@ -1076,6 +1115,29 @@
                         </div>
                         <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!
                         </div>
+
+                        <!-- BIKE TYPE SELECTOR -->
+                        <div class="mt-4 pt-4 border-t border-slate-700/50">
+                            <h5 class="text-xs text-slate-300 mb-2 font-bold uppercase tracking-wider">Dein Bike</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setBikeType('sport')" id="btn-bike-sport"
+                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                                    <i data-lucide="zap" size="16"></i> Sport
+                                </button>
+                                <button onclick="setBikeType('cruiser')" id="btn-bike-cruiser"
+                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                                    <i data-lucide="armchair" size="16"></i> Cruiser
+                                </button>
+                                <button onclick="setBikeType('adv')" id="btn-bike-adv"
+                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                                    <i data-lucide="mountain" size="16"></i> Enduro
+                                </button>
+                                <button onclick="setBikeType('naked')" id="btn-bike-naked"
+                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                                    <i data-lucide="wind" size="16"></i> Naked
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1314,12 +1376,7 @@
                     class="text-blue-400"></i> Moto Analyse</h3>
             <p class="text-xs text-slate-400 mb-4">Details</p>
             <div id="motoAnalysisList" class="space-y-3 mb-6"></div>
-            <h3 class="text-md font-bold mb-2 text-white flex items-center gap-2 border-t border-slate-600 pt-4"><i
-                    data-lucide="shirt" size="20" class="text-orange-400"></i> Gear Guide</h3>
-            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-600/50 flex items-center gap-3">
-                <div id="gearIcon" class="text-2xl">🧥</div>
-                <div class="text-sm font-medium text-slate-200" id="gearText">...</div>
-            </div>
+
         </div>
     </div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
@@ -1389,17 +1446,20 @@
 
     <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
-        <div
-            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[70vh] flex flex-col">
-            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
-                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
-                    data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-4 text-red-200 flex items-center gap-2"><i data-lucide="heart" size="20"
-                    class="text-red-500 fill-red-500"></i> Favoriten</h3>
-            <div id="favoritesListContent" class="overflow-y-auto custom-scrollbar flex-1 min-h-0">
-                <!-- List -->
-            </div>
+        <div </div>
         </div>
+
+        <!-- ROUTE MODAL REMOVED -->
+
+        <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
+            class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+                data-lucide="x" size="20"></i></button>
+        <h3 class="text-lg font-bold mb-4 text-red-200 flex items-center gap-2"><i data-lucide="heart" size="20"
+                class="text-red-500 fill-red-500"></i> Favoriten</h3>
+        <div id="favoritesListContent" class="overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            <!-- List -->
+        </div>
+    </div>
     </div>
 
     <!-- DEV MENU MODAL -->
@@ -1460,11 +1520,44 @@
         };
         // Global Click Listener for Haptics
         document.addEventListener('click', (e) => {
-            // Trigger light vibration on button clicks
             if (e.target.closest('button') || e.target.closest('.glass-btn') || e.target.closest('.fav-item') || e.target.closest('.glass-panel[onclick]')) {
-                vibrate(8); // Short crisp tick
+                vibrate(8);
             }
         });
+
+        // --- VIEW TRANSITION HELPER ---
+        async function openWithMorph(triggerId, modalId, updateFn) {
+            // Fallback for browsers without support
+            if (!document.startViewTransition) {
+                updateFn();
+                return;
+            }
+
+            // MODIFICATION: User requested "Fade", not "Morph/Fly".
+            // We consciously DO NOT attach the viewTransitionName to the trigger.
+            // This prevents the browser from morphing geometry across the screen.
+            // Instead, the modal will just "Enter" using the css animation.
+
+            // 1. Start Transition (No Trigger Name)
+            const transition = document.startViewTransition(() => {
+                // 2. Update DOM (Show Modal)
+                updateFn();
+
+                // 3. Assign Name to End Element (Modal Content)
+                const modalParams = document.querySelector(`#${modalId} .modal-content`);
+                if (modalParams) {
+                    modalParams.style.viewTransitionName = 'mobile-morph';
+                }
+            });
+
+            // 4. Cleanup
+            try {
+                await transition.finished;
+            } finally {
+                const modalParams = document.querySelector(`#${modalId} .modal-content`);
+                if (modalParams) modalParams.style.viewTransitionName = '';
+            }
+        }
 
         // --- FEATURE 7: RAIN GLASS EFFECT CLASS ---
         class RainGlass {
@@ -1536,11 +1629,7 @@
         const rainGlass = new RainGlass();
 
         // MOTO PROFILE STATE
-        let motoProfile = { minTemp: 10, maxWind: 40, strictRain: true };
-        try {
-            const saved = localStorage.getItem('motoProfile_v1');
-            if (saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
-        } catch (e) { }
+        // (Old motoProfile definition removed)
 
         // --- MOTO GRID CONFIG (CUSTOMIZABLE) ---
         // Definition der verfügbaren Metriken
@@ -1805,10 +1894,16 @@
         }
         function toggleSettings() {
             const m = document.getElementById('settingsModal');
-            m.classList.toggle('hidden');
-            if (!m.classList.contains('hidden')) {
-                renderSettingsList();
-                renderMotoSettingsUI(); // NEW: Render moto settings when opening
+            if (m.classList.contains('hidden')) {
+                // Opening - Animate
+                openWithMorph('card-weather', 'settingsModal', () => {
+                    m.classList.remove('hidden');
+                    renderSettingsList();
+                    renderMotoSettingsUI();
+                });
+            } else {
+                // Closing - Just hide
+                m.classList.add('hidden');
             }
         }
         function renderSettingsList() {
@@ -1938,84 +2033,87 @@
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
 
         async function showDailyDetails(index = 0) {
-            try {
-                if (!lastWeatherData) return;
-                const d = lastWeatherData.daily;
-                const c = lastWeatherData.current;
-                if (!d || !d.time || !d.time[index]) return;
+            // CHANGED: Use specific item ID if available, else fallback to card-weather
+            const triggerId = document.getElementById(`day-item-${index}`) ? `day-item-${index}` : `card-weather`;
+            openWithMorph(triggerId, 'dailyDetailsModal', async () => {
+                try {
+                    if (!lastWeatherData) return;
+                    const d = lastWeatherData.daily;
+                    const c = lastWeatherData.current;
+                    if (!d || !d.time || !d.time[index]) return;
 
-                const date = new Date(d.time[index]);
-                const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', { weekday: 'long' });
-                const dateStr = date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+                    const date = new Date(d.time[index]);
+                    const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', { weekday: 'long' });
+                    const dateStr = date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
 
-                safeSetText('dailyDetailTitle', dayName);
-                safeSetText('dailyDetailDate', dateStr);
+                    safeSetText('dailyDetailTitle', dayName);
+                    safeSetText('dailyDetailDate', dateStr);
 
-                if (d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
-                if (d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+                    if (d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+                    if (d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
 
-                const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
-                const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
+                    const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
+                    const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
 
-                safeSetText('detailPrecipSum', precipSum.toFixed(1));
-                safeSetText('detailPrecipProb', precipProb);
-                const probBar = document.getElementById('detailPrecipProbBar');
-                if (probBar) probBar.style.width = precipProb + '%';
+                    safeSetText('detailPrecipSum', precipSum.toFixed(1));
+                    safeSetText('detailPrecipProb', precipProb);
+                    const probBar = document.getElementById('detailPrecipProbBar');
+                    if (probBar) probBar.style.width = precipProb + '%';
 
-                const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
-                safeSetText('detailWindMax', windMax);
-                const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
-                safeSetText('detailUVMax', uvVal);
+                    const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
+                    safeSetText('detailWindMax', windMax);
+                    const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
+                    safeSetText('detailUVMax', uvVal);
 
-                const extras = document.getElementById('currentDayExtras');
-                if (index === 0) {
-                    safeSetText('detailVisibility', (c.visibility && c.visibility > 9999) ? ">10 km" : ((c.visibility / 1000).toFixed(1) + " km"));
-                    safeSetText('detailUV', c.uv_index || "--");
-                    if (extras) extras.classList.remove('hidden');
-                    if (d.sunset && d.sunset[0]) {
-                        const diff = new Date(d.sunset[0]) - new Date();
-                        const cd = document.getElementById('sunCountdownText');
-                        if (cd) {
-                            if (diff > 0) cd.innerText = `Noch ${Math.floor(diff / 36e5)}h ${Math.floor((diff % 36e5) / 6e4)}m Licht`;
-                            else cd.innerText = "Dunkelheit";
+                    const extras = document.getElementById('currentDayExtras');
+                    if (index === 0) {
+                        safeSetText('detailVisibility', (c.visibility && c.visibility > 9999) ? ">10 km" : ((c.visibility / 1000).toFixed(1) + " km"));
+                        safeSetText('detailUV', c.uv_index || "--");
+                        if (extras) extras.classList.remove('hidden');
+                        if (d.sunset && d.sunset[0]) {
+                            const diff = new Date(d.sunset[0]) - new Date();
+                            const cd = document.getElementById('sunCountdownText');
+                            if (cd) {
+                                if (diff > 0) cd.innerText = `Noch ${Math.floor(diff / 36e5)}h ${Math.floor((diff % 36e5) / 6e4)}m Licht`;
+                                else cd.innerText = "Dunkelheit";
+                            }
                         }
+                        try {
+                            const r = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
+                            const ad = await r.json(); const v = ad.current.european_aqi;
+                            safeSetText('detailAqiVal', v);
+                            let cl = "bg-green-500"; if (v > 40) cl = "bg-yellow-400"; if (v > 60) cl = "bg-orange-500"; if (v > 80) cl = "bg-red-600";
+                            const aqiBar = document.getElementById('detailAqiBar'); if (aqiBar) aqiBar.className = `w-2 h-2 rounded-full ${cl}`;
+                        } catch (e) { }
+                    } else {
+                        if (extras) extras.classList.add('hidden');
                     }
-                    try {
-                        const r = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
-                        const ad = await r.json(); const v = ad.current.european_aqi;
-                        safeSetText('detailAqiVal', v);
-                        let cl = "bg-green-500"; if (v > 40) cl = "bg-yellow-400"; if (v > 60) cl = "bg-orange-500"; if (v > 80) cl = "bg-red-600";
-                        const aqiBar = document.getElementById('detailAqiBar'); if (aqiBar) aqiBar.className = `w-2 h-2 rounded-full ${cl}`;
-                    } catch (e) { }
-                } else {
-                    if (extras) extras.classList.add('hidden');
-                }
 
-                // --- NEU: Hourly Rain Render ---
-                const rainCon = document.getElementById('dailyHourlyRain');
-                if (rainCon) {
-                    rainCon.innerHTML = '<div class="text-xs font-bold text-slate-400 mb-2 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm">Regen-Verlauf</div>';
-                    const h = lastWeatherData.hourly;
-                    // Find start index for this day
-                    let dayStartIdx = -1;
-                    // Simplistic matching by date string
-                    const dateMatch = date.toISOString().slice(0, 10);
+                    // --- NEU: Hourly Rain Render ---
+                    const rainCon = document.getElementById('dailyHourlyRain');
+                    if (rainCon) {
+                        rainCon.innerHTML = '<div class="text-xs font-bold text-slate-400 mb-2 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm">Regen-Verlauf</div>';
+                        const h = lastWeatherData.hourly;
+                        // Find start index for this day
+                        let dayStartIdx = -1;
+                        // Simplistic matching by date string
+                        const dateMatch = date.toISOString().slice(0, 10);
 
-                    let hasRainEntries = false;
-                    for (let k = 0; k < h.time.length; k++) {
-                        if (h.time[k].startsWith(dateMatch)) {
-                            const prec = h.precipitation[k];
-                            // Show even small amounts or if it's "wet" code, but main focus on >0
-                            if (prec > 0) {
-                                hasRainEntries = true;
-                                const timeObj = new Date(h.time[k]);
-                                const timeStr = timeObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                const barW = Math.min(100, prec * 30); // scale: 3mm approx full bar
-                                let barCol = "bg-blue-500";
-                                if (prec > 2) barCol = "bg-purple-500";
-                                else if (prec < 0.5) barCol = "bg-blue-300";
+                        let hasRainEntries = false;
+                        for (let k = 0; k < h.time.length; k++) {
+                            if (h.time[k].startsWith(dateMatch)) {
+                                const prec = h.precipitation[k];
+                                // Show even small amounts or if it's "wet" code, but main focus on >0
+                                if (prec > 0) {
+                                    hasRainEntries = true;
+                                    const timeObj = new Date(h.time[k]);
+                                    const timeStr = timeObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                    const barW = Math.min(100, prec * 30); // scale: 3mm approx full bar
+                                    let barCol = "bg-blue-500";
+                                    if (prec > 2) barCol = "bg-purple-500";
+                                    else if (prec < 0.5) barCol = "bg-blue-300";
 
-                                rainCon.innerHTML += `
+                                    rainCon.innerHTML += `
                                 <div class="flex items-center justify-between mb-1.5 p-2 bg-slate-800/40 rounded-lg">
                                     <span class="text-xs text-slate-300 font-mono w-10">${timeStr}</span>
                                     <div class="flex-grow mx-3 h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -2023,40 +2121,106 @@
                                     </div>
                                     <span class="text-xs font-bold text-blue-100 w-10 text-right">${prec.toFixed(1)}</span>
                                 </div>`;
+                                }
                             }
                         }
+                        if (!hasRainEntries) {
+                            rainCon.innerHTML += `<div class="text-xs text-slate-500 italic text-center py-4">Kein Regen für diesen Tag vorhergesagt.</div>`;
+                        }
                     }
-                    if (!hasRainEntries) {
-                        rainCon.innerHTML += `<div class="text-xs text-slate-500 italic text-center py-4">Kein Regen für diesen Tag vorhergesagt.</div>`;
-                    }
+
+                    const score = calculateMotoScore(
+                        d.temperature_2m_max[index] || 15,
+                        d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
+                        precipSum,
+                        1,
+                        d.weather_code[index] || 0
+                    );
+                    const col = getScoreColor(score.score);
+                    const scoreEl = document.getElementById('dailyMotoScore');
+                    if (scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
+                    safeSetText('dailyScoreDetailVal', score.score + "/10");
+
+                    const modal = document.getElementById('dailyDetailsModal');
+                    if (modal) modal.classList.remove('hidden');
+                    lucide.createIcons();
+                } catch (e) {
+                    console.error("Detail Error", e);
+                    const modal = document.getElementById('dailyDetailsModal');
+                    if (modal) modal.classList.remove('hidden');
                 }
-
-                const score = calculateMotoScore(
-                    d.temperature_2m_max[index] || 15,
-                    d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
-                    precipSum,
-                    1,
-                    d.weather_code[index] || 0
-                );
-                const col = getScoreColor(score.score);
-                const scoreEl = document.getElementById('dailyMotoScore');
-                if (scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
-                safeSetText('dailyScoreDetailVal', score.score + "/10");
-
-                const modal = document.getElementById('dailyDetailsModal');
-                if (modal) modal.classList.remove('hidden');
-                lucide.createIcons();
-            } catch (e) {
-                console.error("Detail Error", e);
-                const modal = document.getElementById('dailyDetailsModal');
-                if (modal) modal.classList.remove('hidden');
-            }
+            });
         }
 
-        function getGearRecommendation(t, r) { let tx = "Standard", ic = "🧥"; if (t > 26) { tx = "Sommer/Mesh"; ic = "👕" } else if (t < 10) { tx = "Winter/Thermo"; ic = "🧣" } else if (t < 18) { tx = "Futter rein"; ic = "🧥" } if (r > 0.5) { tx += " + Regen!"; ic = "☔" } return { text: tx, icon: ic }; }
-        function showMotoDetails() { if (!lastWeatherData) return; const c = lastWeatherData.current; const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code); const l = document.getElementById('motoAnalysisList'); l.innerHTML = ""; ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`); ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`); if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`; const g = getGearRecommendation(c.temperature_2m, c.precipitation); document.getElementById('gearText').innerText = g.text; document.getElementById('gearIcon').innerText = g.icon; document.getElementById('motoDetailsModal').classList.remove('hidden'); lucide.createIcons(); }
+        // Gear Guide Removed
+        function showMotoDetails() {
+            openWithMorph('card-moto', 'motoDetailsModal', () => {
+                if (!lastWeatherData) return;
+                const c = lastWeatherData.current;
+                const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
+                const l = document.getElementById('motoAnalysisList');
+                l.innerHTML = "";
+                ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
+                ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
+                if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
+                document.getElementById('motoDetailsModal').classList.remove('hidden');
+                lucide.createIcons();
+            });
+        }
         function calculateMotoAnalysis(t, w, r, d, c) { let p = [], n = []; if (t >= 15 && t <= 28) p.push("Top Temp"); else if (t < 5) n.push("Glätte (<5°)"); else if (t < 10) n.push("Kalt (<10°)"); else if (t > 30) n.push("Hitze (>30°)"); if (w < 15) p.push("Wenig Wind"); else if (w > 40) n.push("Böen (>40kmh)"); if (r > 0) n.push("Nass"); if (c < 3) p.push("Gute Sicht"); if (d === 0) n.push("Nacht"); else p.push("Tag"); return { pros: p, cons: n }; }
-        function calculateMotoScore(t, w, r, d, c) { let s = 10, rs = "Top"; if (t < 0) { s -= 10; rs = "Eis" } else if (t < 5) { s -= 8; rs = "Kalt" } else if (t < 10) { s -= 5; rs = "Frisch" } else if (t > 35) { s -= 4; rs = "Hitze" } if (c >= 95) { s -= 10; rs = "Gewitter" } else if (c >= 66 || c == 71 || c == 73 || c == 75) { s -= 9; rs = "Schnee" } else if (c >= 61) { s -= 7; rs = "Regen" } else if (c >= 51) { s -= 4; rs = "Niesel" } if (r > 0.5) { s -= 5; rs = "Nass" } if (w > 60) { s -= 9; rs = "Sturm" } else if (w > 40) { s -= 5; rs = "Windig" } if (d === 0) { s -= 2; if (rs === "Top") rs = "Nacht" } return { score: Math.max(0, Math.min(10, s)), reason: rs }; }
+
+        function calculateMotoScore(t, w, r, d, c) {
+            let s = 10, rs = "Top";
+
+            // --- BIKE TYPE MODIFIERS ---
+            // Sport: Hates cold & rain
+            // Cruiser: Hates wind, okay with heat
+            // Adv: Tolerates more
+            // Naked: Hates wind
+
+            // Temperature
+            if (t < 0) { s -= 10; rs = "Eis"; }
+            else if (t < 5) { s -= 8; rs = "Arschkalt"; }
+            else if (t < motoProfile.minTemp) {
+                let pen = 5;
+                if (currentBikeType === 'sport') pen += 2; // Sport tires need heat
+                s -= pen; rs = "Zu Kalt";
+            }
+            else if (t > 35) { s -= 4; rs = "Hitze"; }
+
+            // Weather Code
+            if (c >= 95) { s -= 10; rs = "Gewitter"; }
+            else if (c >= 66 || c == 71 || c == 73 || c == 75) { s -= 9; rs = "Schnee"; }
+            else if (c >= 61) { s -= 7; rs = "Regen"; }
+            else if (c >= 51) {
+                let pen = 4;
+                if (currentBikeType === 'sport') pen += 2; // Slick danger
+                if (currentBikeType === 'adv') pen -= 1; // Can handle it
+                s -= pen; rs = "Niesel";
+            }
+
+            // Rain Amount
+            if (r > 0.5) {
+                if (!motoProfile.rainTolerance) {
+                    let pen = 5;
+                    if (currentBikeType === 'adv') pen = 3;
+                    s -= pen; rs = "Nass";
+                }
+            }
+
+            // Wind
+            if (w > 60) { s -= 9; rs = "Sturm"; }
+            else if (w > motoProfile.maxWind) {
+                let pen = 5;
+                if (currentBikeType === 'naked' || currentBikeType === 'cruiser') pen += 2; // Wind catcher
+                if (currentBikeType === 'adv') pen -= 1;
+                s -= pen; rs = "Windig";
+            }
+
+            if (d === 0) { s -= 2; if (rs === "Top") rs = "Nacht" }
+
+            return { score: Math.max(0, Math.min(10, s)), reason: rs };
+        }
         function calculateDailyScore(h) { const off = (lastWeatherData.utc_offset_seconds || 0) * 1000; let ts = 0, c = 0; for (let i = 0; i < h.time.length; i++) { if (new Date(new Date(h.time[i]).getTime() + off).toISOString().slice(0, 10) !== new Date(Date.now() + off).toISOString().slice(0, 10)) continue; if (h.is_day[i]) { ts += calculateMotoScore(h.temperature_2m[i], h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], h.weather_code[i]).score; c++; } } return c === 0 ? "--" : Math.round((ts / c) * 10) / 10; }
         function getScoreColor(s) { if (s >= 8) return { bg: "border-emerald-500 text-emerald-400", hex: "#10b981" }; if (s >= 5) return { bg: "border-yellow-500 text-yellow-400", hex: "#eab308" }; if (s >= 3) return { bg: "border-orange-500 text-orange-400", hex: "#f97316" }; return { bg: "border-red-500 text-red-400", hex: "#ef4444" }; }
 
@@ -2374,7 +2538,8 @@
                 const min = Math.round(d.temperature_2m_min[i]);
                 const max = Math.round(d.temperature_2m_max[i]);
                 const info = getWeatherInfo(code);
-                con.innerHTML += `<div onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-700/50 transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-500">/</span><span class="text-red-400">${max}°</span></div></div>`;
+                // ADDED: id="day-item-${i}" for specific transition trigger
+                con.innerHTML += `<div id="day-item-${i}" onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-700/50 transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-500">/</span><span class="text-red-400">${max}°</span></div></div>`;
             }
             lucide.createIcons();
         }
@@ -2659,79 +2824,68 @@
             }
         }
 
-        function showBestRideDetails() {
-            if (!cachedBestRide) return;
-            const br = cachedBestRide;
+        async function showBestRideDetails() {
+            openWithMorph('bestRideSection', 'bestRideModal', () => {
+                if (!cachedBestRide) return;
+                const br = cachedBestRide;
 
-            const dStart = new Date(br.start);
-            const dEnd = new Date(br.end);
-            const dayName = dStart.toLocaleDateString('de-DE', { weekday: 'long' });
-            const todayName = new Date().toLocaleDateString('de-DE', { weekday: 'long' });
-            const displayDay = (dayName === todayName) ? "Heute" : dayName;
+                const dStart = new Date(br.start);
+                const dEnd = new Date(br.end);
+                const dayName = dStart.toLocaleDateString('de-DE', { weekday: 'long' });
+                const todayName = new Date().toLocaleDateString('de-DE', { weekday: 'long' });
+                const displayDay = (dayName === todayName) ? "Heute" : dayName;
 
-            const tStart = dStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            let endH = dEnd.getHours() + 1;
-            const tEnd = (endH > 23 ? 0 : endH).toString().padStart(2, '0') + ":00";
+                const tStart = dStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                let endH = dEnd.getHours() + 1;
+                const tEnd = (endH > 23 ? 0 : endH).toString().padStart(2, '0') + ":00";
 
-            document.getElementById('brDetailScore').innerText = br.avgScore.toFixed(1);
-            document.getElementById('brDetailTime').innerText = `${tStart} - ${tEnd}`;
-            document.getElementById('brDetailDay').innerText = displayDay;
+                document.getElementById('brDetailScore').innerText = br.avgScore.toFixed(1);
+                document.getElementById('brDetailTime').innerText = `${tStart} - ${tEnd}`;
+                document.getElementById('brDetailDay').innerText = displayDay;
 
-            // Generate Reasons (Analyze average conditions in window)
-            // We need to fetch data for the window indices
-            // Simply use the first hour of the window as representative for now, or calculate averages
-            // Since we have the window object but not the indices directly here, we can re-find them or just use the start time
-
-            // Re-find indices in hourly
-            const h = lastWeatherData.hourly;
-            const off = (lastWeatherData.utc_offset_seconds || 0) * 1000;
-            let startIdx = -1;
-            const startMs = new Date(br.start).getTime();
-
-            // Find start index
-            // Small tolerance for time string match
-            // Actually br.start is the ISO string from api
-            for (let i = 0; i < h.time.length; i++) {
-                if (h.time[i] === br.start) { startIdx = i; break; }
-            }
-
-            const list = document.getElementById('brReasonsList');
-            list.innerHTML = '';
-
-            if (startIdx !== -1) {
-                // Analyze average of window
-                let avgTemp = 0, maxWind = 0, rainSum = 0;
-                const len = br.length;
-
-                for (let k = 0; k < len; k++) {
-                    const idx = startIdx + k;
-                    if (idx < h.time.length) {
-                        avgTemp += h.temperature_2m[idx];
-                        maxWind = Math.max(maxWind, h.wind_speed_10m[idx]);
-                        rainSum += h.precipitation[idx]
-                    }
+                // Re-find indices in hourly
+                const h = lastWeatherData.hourly;
+                const off = (lastWeatherData.utc_offset_seconds || 0) * 1000;
+                let startIdx = -1;
+                // Simple string match
+                for (let i = 0; i < h.time.length; i++) {
+                    if (h.time[i] === br.start) { startIdx = i; break; }
                 }
-                avgTemp /= len;
 
-                // Set main temp display
-                document.getElementById('brDetailTempDisplay').innerText = Math.round(avgTemp) + "°";
+                const list = document.getElementById('brReasonsList');
+                list.innerHTML = '';
 
-                // Generate Pros
-                if (avgTemp >= 18 && avgTemp <= 26) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer-sun" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Perfekte Temperatur (~${Math.round(avgTemp)}°)</span></div>`;
-                else if (avgTemp >= 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Angenehm (~${Math.round(avgTemp)}°)</span></div>`;
+                if (startIdx !== -1) {
+                    let avgTemp = 0, maxWind = 0, rainSum = 0;
+                    const len = br.length;
 
-                if (rainSum === 0) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="droplets" class="text-blue-300"></i><span class="text-sm text-blue-100">Kein Regen vorhergesagt</span></div>`;
+                    for (let k = 0; k < len; k++) {
+                        const idx = startIdx + k;
+                        if (idx < h.time.length) {
+                            avgTemp += h.temperature_2m[idx];
+                            maxWind = Math.max(maxWind, h.wind_speed_10m[idx]);
+                            rainSum += h.precipitation[idx]
+                        }
+                    }
+                    avgTemp /= len;
 
-                if (maxWind < 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Wenig Wind (< ${Math.round(maxWind)} km/h)</span></div>`;
-                else if (maxWind < 30) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-yellow-400"></i><span class="text-sm text-yellow-100">Mäßiger Wind (~${Math.round(maxWind)} km/h)</span></div>`;
+                    document.getElementById('brDetailTempDisplay').innerText = Math.round(avgTemp) + "°";
 
-                // Score text
-                if (br.avgScore >= 9) list.innerHTML += `<div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/50"><i data-lucide="check-check" class="text-emerald-400"></i><span class="text-sm font-bold text-emerald-100">Absoluter Top-Zeitraum!</span></div>`;
-            }
+                    if (avgTemp >= 18 && avgTemp <= 26) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer-sun" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Perfekte Temperatur (~${Math.round(avgTemp)}°)</span></div>`;
+                    else if (avgTemp >= 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Angenehm (~${Math.round(avgTemp)}°)</span></div>`;
 
-            const modal = document.getElementById('bestRideModal');
-            modal.classList.remove('hidden');
-            lucide.createIcons();
+                    if (rainSum === 0) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="droplets" class="text-blue-300"></i><span class="text-sm text-blue-100">Kein Regen vorhergesagt</span></div>`;
+
+                    if (maxWind < 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Wenig Wind (< ${Math.round(maxWind)} km/h)</span></div>`;
+                    else if (maxWind < 30) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-yellow-400"></i><span class="text-sm text-yellow-100">Mäßiger Wind (~${Math.round(maxWind)} km/h)</span></div>`;
+
+                    if (br.avgScore >= 9) list.innerHTML += `<div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/50"><i data-lucide="check-check" class="text-emerald-400"></i><span class="text-sm font-bold text-emerald-100">Absoluter Top-Zeitraum!</span></div>`;
+                }
+
+                const modal = document.getElementById('bestRideModal');
+                modal.classList.remove('hidden');
+                lucide.createIcons();
+            });
         }
 
         function updateRadar() { if (typeof L !== 'undefined') { initRadarMap(); } }
@@ -2884,14 +3038,25 @@
         });
 
         function selectHour(i) {
-            const h = lastWeatherData.hourly; const t = Math.round(h.temperature_2m[i]); const c = h.weather_code[i]; const d = new Date(h.time[i]);
-            const s = calculateMotoScore(t, h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], c); const cl = getScoreColor(s.score);
-            document.getElementById('modalTime').innerText = `${d.toLocaleDateString('de-DE', { weekday: 'long' })} ${d.getHours()}:00`;
-            document.getElementById('modalTemp').innerText = t; document.getElementById('modalDesc').innerText = getWeatherInfo(c).t;
-            document.getElementById('modalIcon').innerHTML = `<i data-lucide="${getWeatherInfo(c).i}" size="48"></i>`;
-            document.getElementById('modalWind').innerText = h.wind_speed_10m[i] + " km/h"; document.getElementById('modalRain').innerText = h.precipitation[i] + " mm"; document.getElementById('modalHum').innerText = h.relative_humidity_2m[i] + "%";
-            document.getElementById('modalScoreVal').innerText = s.score; document.getElementById('modalScoreBg').className = `rounded-xl p-3 border flex items-center justify-between ${cl.bg} bg-slate-900/50`;
-            document.getElementById('hourlyDetailsModal').classList.remove('hidden'); lucide.createIcons();
+            openWithMorph('hourlyContainer', 'hourlyDetailsModal', () => {
+                const h = lastWeatherData.hourly;
+                const t = Math.round(h.temperature_2m[i]);
+                const c = h.weather_code[i];
+                const d = new Date(h.time[i]);
+                const s = calculateMotoScore(t, h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], c);
+                const cl = getScoreColor(s.score);
+                document.getElementById('modalTime').innerText = `${d.toLocaleDateString('de-DE', { weekday: 'long' })} ${d.getHours()}:00`;
+                document.getElementById('modalTemp').innerText = t;
+                document.getElementById('modalDesc').innerText = getWeatherInfo(c).t;
+                document.getElementById('modalIcon').innerHTML = `<i data-lucide="${getWeatherInfo(c).i}" size="48"></i>`;
+                document.getElementById('modalWind').innerText = h.wind_speed_10m[i] + " km/h";
+                document.getElementById('modalRain').innerText = h.precipitation[i] + " mm";
+                document.getElementById('modalHum').innerText = h.relative_humidity_2m[i] + "%";
+                document.getElementById('modalScoreVal').innerText = s.score;
+                document.getElementById('modalScoreBg').className = `rounded-xl p-3 border flex items-center justify-between ${cl.bg} bg-slate-900/50`;
+                document.getElementById('hourlyDetailsModal').classList.remove('hidden');
+                lucide.createIcons();
+            });
         }
 
         function renderHourly() {
@@ -2921,6 +3086,173 @@
             }, 1000);
         }
         startClock(); document.addEventListener('DOMContentLoaded', () => { if (typeof locateMe === 'function') locateMe(true); });
+
+        // --- INTELLIGENT GARAGE LOGIC ---
+        let motoProfile = { minTemp: 10, maxWind: 40, rainTolerance: false };
+        let currentBikeType = 'naked'; // Default
+
+        // Load Settings
+        try {
+            const saved = localStorage.getItem('motoWeather_profile');
+            if (saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
+
+            const savedBike = localStorage.getItem('motoWeather_bikeType');
+            if (savedBike) currentBikeType = savedBike;
+        } catch (e) { }
+
+        // --- BIKE TYPE LOGIC ---
+        function setBikeType(type) {
+            currentBikeType = type;
+            localStorage.setItem('motoWeather_bikeType', type);
+            updateBikeTypeUI();
+            updateUI(currentCityName, true); // Recalculate scores
+        }
+
+        function updateBikeTypeUI() {
+            document.querySelectorAll('.bike-btn').forEach(b => {
+                b.className = "bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1";
+            });
+            const activeBtn = document.getElementById(`btn-bike-${currentBikeType}`);
+            if (activeBtn) {
+                // Highlight active button
+                activeBtn.className = "bike-btn p-2 rounded-xl border border-blue-500 bg-blue-500/20 text-xs font-bold text-blue-100 shadow-lg transition flex flex-col items-center gap-1 scale-[1.02]";
+            }
+        }
+
+        function updateMotoProfile(key, val) {
+            if (key === 'minTemp') motoProfile.minTemp = parseInt(val);
+            if (key === 'maxWind') motoProfile.maxWind = parseInt(val);
+            saveMotoProfile();
+            updateUI(currentCityName, false);
+        }
+        function toggleRainTolerance() { motoProfile.rainTolerance = !motoProfile.rainTolerance; saveMotoProfile(); updateUI(currentCityName, false); }
+        function saveMotoProfile() {
+            localStorage.setItem('motoWeather_profile', JSON.stringify(motoProfile));
+            const dMin = document.getElementById('dispMinTemp'); if (dMin) dMin.innerText = motoProfile.minTemp + "°C";
+            const dWind = document.getElementById('dispMaxWind'); if (dWind) dWind.innerText = motoProfile.maxWind + " km/h";
+            const iMin = document.getElementById('inputMinTemp'); if (iMin) iMin.value = motoProfile.minTemp;
+            const iWind = document.getElementById('inputMaxWind'); if (iWind) iWind.value = motoProfile.maxWind;
+
+            const btn = document.getElementById('btnRainTol');
+            const desc = document.getElementById('rainTolDesc');
+            if (btn && desc) {
+                if (motoProfile.rainTolerance) { btn.innerText = "Egal"; btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-700 text-slate-300 border border-slate-600"; desc.innerText = "Regenkombi am Start!"; }
+                else { btn.innerText = "Streng"; btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500"; desc.innerText = "Kein Tropfen erlaubt!"; }
+            }
+        }
+
+        // Init UI on load
+        document.addEventListener('DOMContentLoaded', () => {
+            saveMotoProfile();
+            updateBikeTypeUI();
+        });
+
+        // --- ROUTE WEATHER LOGIC ---
+        function openRouteModal() {
+            document.getElementById('routeStartName').innerText = currentCityName || "Unbekannt";
+            document.getElementById('routeDestInput').value = "";
+            document.getElementById('routeModal').classList.remove('hidden');
+            document.getElementById('routeDestInput').focus();
+        }
+
+        async function calculateRouteWeather() {
+            const destName = document.getElementById('routeDestInput').value;
+            if (!destName || destName.length < 2) return;
+
+            const btn = document.querySelector('#routeModal button[onclick="calculateRouteWeather()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<div class="loader-sm border-white"></div> Prüfe Route...`;
+            btn.disabled = true;
+
+            try {
+                // 1. Geocode Destination
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destName)}&count=1&language=de&format=json`);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    alert("Zielort nicht gefunden.");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const destLat = geoData.results[0].latitude;
+                const destLon = geoData.results[0].longitude;
+                const destRealName = geoData.results[0].name;
+
+                // 2. Fetch Destination Weather (Reuse current city data for Start)
+                // Use simplified fetch for destination (only current & daily needed)
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current=temperature_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max&timezone=auto`;
+                const r = await fetch(url);
+                const destData = await r.json();
+
+                // 3. Compare & Display
+                // Start Data
+                const startCur = lastWeatherData.current;
+                const startScore = calculateMotoScore(startCur.temperature_2m, startCur.wind_speed_10m, startCur.precipitation, startCur.is_day, startCur.weather_code);
+
+                // End Data
+                const endCur = destData.current;
+                const endScore = calculateMotoScore(endCur.temperature_2m, endCur.wind_speed_10m, endCur.precipitation, endCur.is_day, endCur.weather_code);
+
+                // Build Result UI
+                const modalContent = document.querySelector('#routeModal .modal-content');
+
+                // Colorize Scores
+                const sCol = getScoreColor(startScore.score);
+                const eCol = getScoreColor(endScore.score);
+
+                modalContent.innerHTML = `
+                    <button onclick="resetRouteModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i data-lucide="x" size="20"></i></button>
+                    <h3 class="text-lg font-bold mb-4 text-blue-300 flex items-center gap-2"><i data-lucide="map" size="20"></i> Route Check</h3>
+                    
+                    <div class="flex items-center justify-between mb-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                        <div class="text-center">
+                            <div class="text-[10px] text-slate-500 uppercase font-bold">Start</div>
+                            <div class="font-bold text-white text-sm">${currentCityName}</div>
+                            <div class="text-xs text-slate-400">${Math.round(startCur.temperature_2m)}°</div>
+                        </div>
+                        <i data-lucide="arrow-right" class="text-slate-600"></i>
+                        <div class="text-center">
+                            <div class="text-[10px] text-slate-500 uppercase font-bold">Ziel</div>
+                            <div class="font-bold text-white text-sm">${destRealName}</div>
+                            <div class="text-xs text-slate-400">${Math.round(endCur.temperature_2m)}°</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-slate-800/30 p-4 rounded-xl border ${sCol.bg} flex flex-col items-center">
+                            <div class="text-xs text-slate-500 mb-1">Start Score</div>
+                            <div class="text-3xl font-black ${sCol.bg.split(' ')[1]}">${startScore.score}</div>
+                            <div class="text-[10px] text-slate-400">${startScore.reason}</div>
+                        </div>
+                        <div class="bg-slate-800/30 p-4 rounded-xl border ${eCol.bg} flex flex-col items-center">
+                            <div class="text-xs text-slate-500 mb-1">Ziel Score</div>
+                            <div class="text-3xl font-black ${eCol.bg.split(' ')[1]}">${endScore.score}</div>
+                            <div class="text-[10px] text-slate-400">${endScore.reason}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        ${(startScore.score > 7 && endScore.score > 7)
+                        ? '<div class="text-emerald-400 font-bold bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">Gute Fahrt! 🏍️💨</div>'
+                        : (endScore.score < 4)
+                            ? '<div class="text-red-400 font-bold bg-red-500/10 p-2 rounded-lg border border-red-500/20">Zielwetter ist mies! ⚠️</div>'
+                            : '<div class="text-blue-200 font-bold bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">Fahr vorsichtig.</div>'
+                    }
+                    </div>
+                `;
+                lucide.createIcons();
+
+            } catch (e) {
+                console.error(e);
+                alert("Fehler beim Abrufen der Route.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Reset Logic Removed
 
         // --- FAVORITES LOGIC ---
         let favorites = [];
