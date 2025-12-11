@@ -1116,28 +1116,7 @@
                         <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!
                         </div>
 
-                        <!-- BIKE TYPE SELECTOR -->
-                        <div class="mt-4 pt-4 border-t border-slate-700/50">
-                            <h5 class="text-xs text-slate-300 mb-2 font-bold uppercase tracking-wider">Dein Bike</h5>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setBikeType('sport')" id="btn-bike-sport"
-                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
-                                    <i data-lucide="zap" size="16"></i> Sport
-                                </button>
-                                <button onclick="setBikeType('cruiser')" id="btn-bike-cruiser"
-                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
-                                    <i data-lucide="armchair" size="16"></i> Cruiser
-                                </button>
-                                <button onclick="setBikeType('adv')" id="btn-bike-adv"
-                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
-                                    <i data-lucide="mountain" size="16"></i> Enduro
-                                </button>
-                                <button onclick="setBikeType('naked')" id="btn-bike-naked"
-                                    class="bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1">
-                                    <i data-lucide="wind" size="16"></i> Naked
-                                </button>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -2172,18 +2151,14 @@
         function calculateMotoScore(t, w, r, d, c) {
             let s = 10, rs = "Top";
 
-            // --- BIKE TYPE MODIFIERS ---
-            // Sport: Hates cold & rain
-            // Cruiser: Hates wind, okay with heat
-            // Adv: Tolerates more
-            // Naked: Hates wind
+
 
             // Temperature
             if (t < 0) { s -= 10; rs = "Eis"; }
             else if (t < 5) { s -= 8; rs = "Arschkalt"; }
             else if (t < motoProfile.minTemp) {
                 let pen = 5;
-                if (currentBikeType === 'sport') pen += 2; // Sport tires need heat
+
                 s -= pen; rs = "Zu Kalt";
             }
             else if (t > 35) { s -= 4; rs = "Hitze"; }
@@ -2194,27 +2169,21 @@
             else if (c >= 61) { s -= 7; rs = "Regen"; }
             else if (c >= 51) {
                 let pen = 4;
-                if (currentBikeType === 'sport') pen += 2; // Slick danger
-                if (currentBikeType === 'adv') pen -= 1; // Can handle it
+
                 s -= pen; rs = "Niesel";
             }
 
             // Rain Amount
             if (r > 0.5) {
                 if (!motoProfile.rainTolerance) {
-                    let pen = 5;
-                    if (currentBikeType === 'adv') pen = 3;
-                    s -= pen; rs = "Nass";
+                    s -= 5; rs = "Nass";
                 }
             }
 
             // Wind
             if (w > 60) { s -= 9; rs = "Sturm"; }
             else if (w > motoProfile.maxWind) {
-                let pen = 5;
-                if (currentBikeType === 'naked' || currentBikeType === 'cruiser') pen += 2; // Wind catcher
-                if (currentBikeType === 'adv') pen -= 1;
-                s -= pen; rs = "Windig";
+                s -= 5; rs = "Windig";
             }
 
             if (d === 0) { s -= 2; if (rs === "Top") rs = "Nacht" }
@@ -3089,35 +3058,16 @@
 
         // --- INTELLIGENT GARAGE LOGIC ---
         let motoProfile = { minTemp: 10, maxWind: 40, rainTolerance: false };
-        let currentBikeType = 'naked'; // Default
 
         // Load Settings
         try {
             const saved = localStorage.getItem('motoWeather_profile');
             if (saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
 
-            const savedBike = localStorage.getItem('motoWeather_bikeType');
-            if (savedBike) currentBikeType = savedBike;
+
         } catch (e) { }
 
-        // --- BIKE TYPE LOGIC ---
-        function setBikeType(type) {
-            currentBikeType = type;
-            localStorage.setItem('motoWeather_bikeType', type);
-            updateBikeTypeUI();
-            updateUI(currentCityName, true); // Recalculate scores
-        }
 
-        function updateBikeTypeUI() {
-            document.querySelectorAll('.bike-btn').forEach(b => {
-                b.className = "bike-btn p-2 rounded-xl border border-slate-600/50 bg-slate-800/50 text-xs font-medium text-slate-400 hover:bg-slate-700 transition flex flex-col items-center gap-1";
-            });
-            const activeBtn = document.getElementById(`btn-bike-${currentBikeType}`);
-            if (activeBtn) {
-                // Highlight active button
-                activeBtn.className = "bike-btn p-2 rounded-xl border border-blue-500 bg-blue-500/20 text-xs font-bold text-blue-100 shadow-lg transition flex flex-col items-center gap-1 scale-[1.02]";
-            }
-        }
 
         function updateMotoProfile(key, val) {
             if (key === 'minTemp') motoProfile.minTemp = parseInt(val);
@@ -3144,7 +3094,6 @@
         // Init UI on load
         document.addEventListener('DOMContentLoaded', () => {
             saveMotoProfile();
-            updateBikeTypeUI();
         });
 
         // --- ROUTE WEATHER LOGIC ---
