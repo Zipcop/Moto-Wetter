@@ -48,16 +48,60 @@
         }
 
         /* ZURÜCKGESETZT: Originaler blauer Hintergrund ohne Bild */
+        /* PREMIUM THEME BASE */
         body {
+            /* Fallback Background */
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: max(env(safe-area-inset-top), 20px);
+            padding-bottom: max(env(safe-area-inset-bottom), 20px);
             padding-left: 1rem;
             padding-right: 1rem;
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: white;
-            transition: background 0.5s ease, color 0.5s ease;
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        /* NOISE TEXTURE REMOVED per User Request */
+
+        /* DYNAMIC ATMOSPHERES - Classes to be toggled by JS */
+
+        /* Clear / Sunny */
+        body.theme-clear-day {
+            background: linear-gradient(180deg, #38bdf8 0%, #3b82f6 100%);
+        }
+
+        body.theme-clear-night {
+            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        /* Cloudy */
+        body.theme-cloudy-day {
+            background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+        }
+
+        body.theme-cloudy-night {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        /* Rain */
+        body.theme-rain-day {
+            background: linear-gradient(180deg, #334155 0%, #475569 100%);
+        }
+
+        body.theme-rain-night {
+            background: linear-gradient(180deg, #020617 0%, #1e293b 100%);
+        }
+
+        /* Sunset / Sunrise */
+        body.theme-sunset {
+            background: linear-gradient(180deg, #fb923c 0%, #db2777 60%, #4c1d95 100%);
+        }
+
+        /* Extreme (Thunder/Snow) */
+        body.theme-extreme {
+            background: linear-gradient(180deg, #312e81 0%, #111827 100%);
         }
 
         /* Z-INDEX LAYERING (Repariert) */
@@ -125,21 +169,42 @@
         }
 
         /* PREMIUM GLASSMORPHISM */
+        /* PREMIUM GLASSMORPHISM */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s, border-color 0.3s;
+            background: rgba(255, 255, 255, 0.08);
+            /* Lighter base for more light interaction */
+            backdrop-filter: blur(24px) saturate(140%);
+            /* High blur + saturation for vibrancy */
+            -webkit-backdrop-filter: blur(24px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            /* Highlight top edge */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            /* Lowlight bottom edge */
+            box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
         .glass-btn {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Hover effects for Desktop */
+        @media (hover: hover) {
+            .glass-panel:hover {
+                background: rgba(255, 255, 255, 0.12);
+                transform: translateY(-2px);
+                box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.3);
+            }
+
+            .glass-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateY(-1px);
+            }
         }
 
         /* TACTILE FEEDBACK (Global) */
@@ -636,6 +701,12 @@
             opacity: 0.6;
         }
 
+        /* SCROLL FADE MASK - Adjusted: Only fade right side to prevent cutting off start */
+        .scroll-fade-mask {
+            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+            mask-image: linear-gradient(to right, black 85%, transparent 100%);
+        }
+
         /* VIEW TRANSITIONS: Premium Fade */
         ::view-transition-group(mobile-morph) {
             animation-duration: 0.3s;
@@ -903,19 +974,49 @@
             </div>
             <div id="statusSection" class="grid grid-cols-2 gap-4 transition-all duration-300">
                 <div id="card-weather" onclick="showDailyDetails(0)"
-                    class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 relative group">
-                    <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i
-                            data-lucide="maximize-2" size="12"></i></div>
-                    <div id="weatherIconContainer" class="mb-1 text-blue-300"><i data-lucide="cloud" size="40"></i>
+                    class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer relative group overflow-hidden">
+
+                    <!-- Hero Temperature -->
+                    <div class="relative z-10 flex flex-col items-center mt-2">
+                        <div class="flex items-start leading-none" style="text-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                            <span id="temperature" class="text-[7rem] font-[200] tracking-tighter text-white">--</span>
+                            <span class="text-4xl font-light mt-6 text-white/60">°</span>
+                        </div>
+
+                        <!-- Icon & Desc -->
+                        <div
+                            class="flex items-center gap-3 mb-6 bg-white/5 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md">
+                            <div id="weatherIconContainer" class="text-white drop-shadow-lg scale-110"><i
+                                    data-lucide="cloud" size="20"></i></div>
+                            <div id="weatherDesc" class="text-sm font-bold tracking-widest uppercase text-white/90">--
+                            </div>
+                        </div>
+
+                        <!-- High / Low / Feels -->
+                        <!-- High / Low / Feels -->
+                        <!-- High / Low / Feels -->
+                        <div class="flex w-full px-2 mb-2 items-stretch justify-between">
+                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Tief</span>
+                                <span class="font-semibold text-lg leading-none"><span id="tempMin">--</span>°</span>
+                            </div>
+                            <!-- Separator -->
+                            <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
+
+                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Gefühlt</span>
+                                <span class="font-semibold text-lg leading-none"><span id="feelsLike">--</span>°</span>
+                            </div>
+
+                            <!-- Separator -->
+                            <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
+
+                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Hoch</span>
+                                <span class="font-semibold text-lg leading-none"><span id="tempMax">--</span>°</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-4xl font-bold mb-1"><span id="temperature">--</span>°</div>
-                    <div class="text-sm font-semibold text-blue-200 mb-2">Gefühlt <span id="feelsLike">--</span>°</div>
-                    <div id="weatherDesc" class="text-xs text-slate-300">--</div>
-                    <div class="flex gap-4 text-sm font-semibold text-blue-200 mt-2 mb-2"><span
-                            class="flex items-center"><i data-lucide="arrow-up" size="14"
-                                class="mr-1 text-red-400"></i><span id="tempMax">--</span>°</span><span
-                            class="flex items-center"><i data-lucide="arrow-down" size="14"
-                                class="mr-1 text-blue-400"></i><span id="tempMin">--</span>°</span></div>
 
                     <!-- FEATURE 5: WIND COMPASS (UPDATED v2) -->
                     <!-- Geändert: von py-2 zu p-4 für eine größere Box -->
@@ -970,9 +1071,29 @@
                     <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i
                             data-lucide="info" size="12"></i></div>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
-                    <div id="motoScoreCircle"
-                        class="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner">
-                        <span id="motoScoreValue" class="text-2xl font-black">--</span>
+                    <!-- NEW: SVG Gauge for Moto Index -->
+                    <div class="relative w-24 h-24 mb-1">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <!-- Background Track -->
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)"
+                                stroke-width="8" />
+                            <!-- Progress Arc -->
+                            <circle id="motoScoreGauge" cx="50" cy="50" r="40" fill="transparent"
+                                stroke="url(#scoreGradient)" stroke-width="8" stroke-dasharray="251.2"
+                                stroke-dashoffset="251.2" stroke-linecap="round"
+                                style="transition: stroke-dashoffset 1s ease-out;" />
+                            <!-- Gradient Definition -->
+                            <defs>
+                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#ef4444" />
+                                    <stop offset="50%" style="stop-color:#fbbf24" />
+                                    <stop offset="100%" style="stop-color:#10b981" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="motoScoreValue" class="text-3xl font-black text-white">--</span>
+                        </div>
                     </div>
                     <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
 
@@ -1041,7 +1162,8 @@
                         class="text-slate-400 hover:text-white transition p-1 bg-slate-800/50 rounded-full hover:bg-slate-700"><i
                             data-lucide="info" size="16"></i></button>
                 </div>
-                <div id="hourlyContainer" class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x">
+                <div id="hourlyContainer"
+                    class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask">
                 </div>
             </div>
             <div id="forecast7DaySection" class="glass-panel rounded-2xl p-4">
@@ -1057,7 +1179,7 @@
         </div>
         <!-- FOOTER ANGEPASST -->
         <div class="text-center text-[10px] text-slate-500 mt-6 pb-4 font-medium tracking-wide opacity-60">
-            MOTO WETTER v5.0 • RIDE SAFE • N.W.
+            MOTO WETTER • RIDE SAFE • N.W.
         </div>
     </main>
 
@@ -1504,7 +1626,39 @@
             }
         });
 
-        // --- VIEW TRANSITION HELPER ---
+        // --- FEATURE: DYNAMIC THEME ENGINE ---
+        function updateDynamicTheme(weatherCode, isDay) {
+            const body = document.body;
+            // Reset all theme classes
+            body.className = body.className.replace(/theme-[\w-]+/g, '').trim();
+
+            // 1. Determine Base Theme
+            let themeClass = 'theme-clear-day'; // Default
+
+            if (!isDay) {
+                // Night Logic
+                if ([0, 1].includes(weatherCode)) themeClass = 'theme-clear-night';
+                else if ([2, 3, 45, 48].includes(weatherCode)) themeClass = 'theme-cloudy-night';
+                else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode)) themeClass = 'theme-rain-night';
+                else if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) themeClass = 'theme-extreme'; // Snow night
+                else if ([95, 96, 99].includes(weatherCode)) themeClass = 'theme-extreme';
+                else themeClass = 'theme-cloudy-night';
+            } else {
+                // Day Logic
+                if (weatherCode === 0) themeClass = 'theme-clear-day';
+                else if ([1, 2, 3].includes(weatherCode)) themeClass = 'theme-cloudy-day'; // Partly cloudy
+                else if ([45, 48].includes(weatherCode)) themeClass = 'theme-cloudy-day'; // Fog
+                else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode)) themeClass = 'theme-rain-day';
+                else if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) themeClass = 'theme-extreme'; // Snow
+                else if ([95, 96, 99].includes(weatherCode)) themeClass = 'theme-extreme';
+                else themeClass = 'theme-cloudy-day';
+            }
+
+            // Add new class
+            body.classList.add(themeClass);
+
+            // Refine Glass panels based on theme (optional, can be done via CSS var)
+        }
         async function openWithMorph(triggerId, modalId, updateFn) {
             // Fallback for browsers without support
             if (!document.startViewTransition) {
@@ -2198,15 +2352,38 @@
                 if (!lastWeatherData || !lastWeatherData.current) return;
                 const cur = lastWeatherData.current; // Safe access to full data
 
+                // 1. Update Theme Dynamically
+                updateDynamicTheme(c, d);
+
+                // 2. Render Hero Values
                 document.getElementById('temperature').innerText = Math.round(t);
                 safeSetText('feelsLike', Math.round(app_t));
+                safeSetText('tempMin', Math.round(lastWeatherData.daily.temperature_2m_min[0])); // Add Max/Min logic if needed in args, but fetch from daily[0] is safe for "Current" view
+                safeSetText('tempMax', Math.round(lastWeatherData.daily.temperature_2m_max[0]));
 
-                document.getElementById('windSpeed').innerText = w; // Updated: removed "km/h" here, handled in HTML
+                document.getElementById('windSpeed').innerText = w;
                 document.getElementById('humidity').innerText = h;
-                const i = getWeatherInfo(c); document.getElementById('weatherDesc').innerText = i.t; document.getElementById('weatherIconContainer').innerHTML = `<i data-lucide="${i.i}" class="w-12 h-12"></i>`;
-                const sc = calculateMotoScore(t, w, r, d, c); const col = getScoreColor(sc.score);
-                const el = document.getElementById('motoScoreCircle'); el.className = `w-20 h-20 rounded-full border-4 flex items-center justify-center bg-slate-800 transition-colors duration-500 mb-1 shadow-inner ${col.bg}`;
-                document.getElementById('motoScoreValue').innerText = sc.score; document.getElementById('motoScoreText').innerText = sc.reason;
+
+                const i = getWeatherInfo(c);
+                document.getElementById('weatherDesc').innerText = i.t;
+                document.getElementById('weatherIconContainer').innerHTML = `<i data-lucide="${i.i}" size="32"></i>`;
+
+                // 3. Render Moto Score SVG Gauge
+                const sc = calculateMotoScore(t, w, r, d, c);
+                // const col = getScoreColor(sc.score); // Not needed for SVG Gradient, but maybe for text?
+
+                // SVG Animation
+                const circle = document.getElementById('motoScoreGauge');
+                if (circle) {
+                    const radius = 40;
+                    const circumference = 2 * Math.PI * radius;
+                    const offset = circumference - ((sc.score / 10) * circumference);
+                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circle.style.strokeDashoffset = offset;
+                }
+
+                document.getElementById('motoScoreValue').innerText = sc.score;
+                document.getElementById('motoScoreText').innerText = sc.reason;
 
                 // --- RENDER DYNAMIC MOTO GRID ---
                 const gridContainer = document.getElementById('motoDynamicGrid');
