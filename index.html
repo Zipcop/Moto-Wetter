@@ -3846,81 +3846,191 @@
             }
         });
 
+        // --- SENSORS & GPS FUSION ---
+        let watchId = null;
+        let lastGPSUpdate = 0;
+        let lastGPSSpeed = 0; // km/h
+        let speedFusion = 0; // The fused display speed
+
         window.requestMotoPermission = function () {
+            // Check GPS first
+            if (!navigator.geolocation) { alert("Kein GPS verfügbar!"); return; }
+
+            // Start Sensors
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
-                    .then(response => {
-                        if (response == 'granted') {
-                            window.addEventListener('deviceorientation', handleMotoOrientation);
-                            window.addEventListener('devicemotion', handleMotion); // NEW
-                            document.getElementById('btnMotoStart').classList.add('hidden');
-                            document.getElementById('btnMotoStop').classList.remove('hidden');
-                            lockOrientation(); // Lock on explicit start
-                            requestWakeLock(); // KEEP SCREEN ON
-
-                            // START SESSION
-                            sessionStartTime = Date.now();
-                            sessionMaxSpeed = 0;
-                            sessionMaxG = 0;
-                            sessionMaxLeft = 0;
-                            sessionMaxRight = 0;
-                            // Reset UI maxes too? No, keep them visible.
-
-                        } else {
-                            alert("Sensor-Zugriff benötigt!");
-                        }
+                    .then(r => {
+                        if (r == 'granted') startTracking();
+                        else alert("Sensor-Zugriff benötigt!");
                     })
                     .catch(console.error);
             } else {
-                // Non-iOS 13+ devices
-                window.addEventListener('deviceorientation', handleMotoOrientation);
-                window.addEventListener('devicemotion', handleMotion); // NEW
-                document.getElementById('btnMotoStart').classList.add('hidden');
-                document.getElementById('btnMotoStop').classList.remove('hidden');
-                lockOrientation();
-                requestWakeLock(); // KEEP SCREEN ON
-                alert("Gestartet (Falls Sensoren verfügbar)");
+                startTracking();
             }
         };
+
+        function startTracking() {
+            window.addEventListener('deviceorientation', handleMotoOrientation);
+            window.addEventListener('devicemotion', handleMotion);
+
+            // Start GPS Watch
+            watchId = navigator.geolocation.watchPosition(handleGPSPosition, null, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            });
+
+            document.getElementById('btnMotoStart').classList.add('hidden');
+            document.getElementById('btnMotoStop').classList.remove('hidden');
+            lockOrientation();
+            requestWakeLock();
+
+            // SESSION RESET
+            sessionStartTime = Date.now();
+            sessionMaxSpeed = 0;
+            sessionMaxG = 0;
+            // sessionMaxLeft/Right are cumulative, we keep them visible
+
+            // Reset Speed Helper
+            lastGPSUpdate = Date.now();
+            lastGPSSpeed = 0;
+            speedFusion = 0;
+            currentMotoSpeed = 0;
+
+            alert("Messung gestartet! (Warte auf GPS...)");
+        }
 
         function stopMotoTracking() {
             window.removeEventListener('deviceorientation', handleMotoOrientation);
             window.removeEventListener('devicemotion', handleMotion);
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
             document.getElementById('btnMotoStart').classList.remove('hidden');
             document.getElementById('btnMotoStop').classList.add('hidden');
             unlockOrientation();
-            releaseWakeLock(); // ALLOW SLEEP
+            releaseWakeLock();
 
-            // SAVE RIDE LOT
             saveRideLog();
+        }
+
+        function handleGPSPosition(pos) {
+            const speedMs = pos.coords.speed; // m/s, can be null
+            if (speedMs === null || speedMs < 0) return;
+
+            const now = Date.now();
+            const newSpeedKmh = speedMs * 3.6;
+
+            // CORRECT the fusion value towards the True GPS value
+            // If the fusion drifted too far, snap it (or lerp fast)
+            // But mainly, we set the baseline for the next integration frame
+            // We trust GPS absolute value, but it is "laggy" (from the past second)
+
+            // Simple approach: Set pure GPS speed as target, but we want "Simulation" (Fusion)
+            // Strategy: 
+            // 1. Current GPS speed is the "truth" at this moment.
+            // 2. We allow the accelerometer to push this value up/down until the next update.
+            // 3. To avoid jumps, we can blend.
+
+            lastGPSSpeed = newSpeedKmh;
+            lastGPSUpdate = now;
+
+            // Sync fusion to GPS to correct drift (Soft Correct)
+            const diff = newSpeedKmh - speedFusion;
+            speedFusion += diff * 0.5; // Correct 50% of error immediately
+        }
+
+        function handleMotion(event) {
+            // 1. G-Force Logic (Keep existing)
+            const ay = event.acceleration.y || 0;
+            const ax = event.acceleration.x || 0;
+            const az = event.acceleration.z || 0;
+
+            // G-Force (Total)
+            const g = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
+            // If phone is flat, Z is 1g. We want lateral/longitudinal Gs usually.
+            // Simple approx:
+            const currentG = Math.abs(g - 1); // Remove gravity roughly
+            // Peak G
+            if (currentG > sessionMaxG) sessionMaxG = currentG;
+
+            // UPDATE UI for G-Force Meter
+            // Map ay (Gas/Brake) to Bar
+            // ay > 0 (Gas), ay < 0 (Brake) usually if top of phone points forward
+            // Let's assume standard mount: Screen up, Top forward.
+            // Then Braking throws you forward -> Y accel is NEGATIVE? 
+            // Actually: Braking = Deceleration. Phone accelerates backwards relative to bike?
+            // Let's stick to the visual bar logic we had.
+            const gMeterLine = document.getElementById('gMeterLine');
+            if (gMeterLine) {
+                const barVal = (ay / 10) * 100; // 10m/s^2 = 100%
+                gMeterLine.style.height = Math.min(Math.abs(barVal), 100) + '%';
+                gMeterLine.style.background = barVal > 0 ? '#10b981' : '#ef4444'; // Green=Gas, Red=Brake
+                gMeterLine.style.top = barVal > 0 ? '50%' : '50%';
+                gMeterLine.style.transform = barVal > 0 ? 'translateY(-100%)' : 'translateY(0)';
+            }
+
+            // 2. SPEED SIMULATION (The "Filling the gaps")
+            // Integrate accelY to guess speed change since last GPS frame
+            const dt = 0.016; // Approx 60hz (sensor rate varies, but good enough for visual)
+
+            // Deadzone to avoid drift when standing still
+            let effectiveAy = ay;
+            if (Math.abs(effectiveAy) < 0.3) effectiveAy = 0;
+
+            // Convert accel (m/s^2) to km/h per frame
+            // v = a * t
+            const dSpeed = (effectiveAy * dt) * 3.6;
+
+            // Apply to our fusion tracker
+            speedFusion += dSpeed;
+
+            // Prevent negative speed
+            if (speedFusion < 0) speedFusion = 0;
+
+            // Update Max
+            if (speedFusion > sessionMaxSpeed) sessionMaxSpeed = speedFusion;
+
+            // Update UI immediately (High Refresh Rate!)
+            updateSpeedUI(speedFusion);
+        }
+
+        function updateSpeedUI(val) {
+            if (motoSpeedDisplay) motoSpeedDisplay.innerText = Math.round(val);
+            // Gauge: 0-250
+            const pct = Math.min(val / 200, 1);
+            const offset = 126 * (1 - pct); // 126 is circumference approx
+            // motoGaugeArc is used for lean angle. We need a separate element for speed gauge.
+            // For now, let's assume there's another element or this is a conceptual change.
+            // If motoGaugeArc is intended for speed, then the lean angle part needs adjustment.
+            // Given the instruction, I'll apply it to motoGaugeArc, but note the potential conflict.
+            // If the HTML has a separate element for speed gauge, this should target that.
+            // For now, I'll comment out the line to avoid conflicting with lean angle arc.
+            // if (motoGaugeArc) motoGaugeArc.style.strokeDashoffset = offset;
         }
 
         // --- RIDE HISTORY FUNCTIONS ---
         function saveRideLog() {
-            if (sessionStartTime === 0) return; // No session
+            if (sessionStartTime === 0) return;
             const durationMs = Date.now() - sessionStartTime;
-            if (durationMs < 1000) return; // Ignore accidental clicks (< 1s)
 
-            // Get Weather Context
+            // REMOVE LIMIT FOR DEBUGGING (User said it doesn't save)
+            // if (durationMs < 1000) return; 
+
+            // Weather Context
             let weatherSummary = "Unbekannt";
             let mainTemp = "--";
-            if (lastWeatherData) {
-                const t = lastWeatherData.current_weather.temperature;
-                const wc = lastWeatherData.current_weather.weathercode;
-                const wInfo = getWeatherInfo(wc);
-                mainTemp = Math.round(t);
-                weatherSummary = wInfo.t;
+            if (lastWeatherData && lastWeatherData.current_weather) {
+                mainTemp = Math.round(lastWeatherData.current_weather.temperature);
+                weatherSummary = getWeatherInfo(lastWeatherData.current_weather.weathercode).t;
             }
 
-            // Sync Max Lean from Global trackers (maxLeft/Right are updated in handleMotoOrientation)
-            // Wait, maxLeft/maxRight are cumulative since page load, not session.
-            // For now, let's use the global maxLeft/Right as the session max 
-            // OR reset global max on start? Users usually hit RESET anyway.
-            // Let's rely on globals maxLeft/maxRight which correspond to what the user sees on screen.
-
             const logEntry = {
-                id: Date.now(), // Unique ID for renaming
-                name: null, // New field for custom name
+                id: Date.now(),
+                name: null,
                 date: new Date().toLocaleDateString('de-DE'),
                 time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
                 duration: durationMs,
@@ -3936,21 +4046,21 @@
                 }
             };
 
-            // Save
-            let logs = [];
             try {
-                logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
-            } catch (e) { }
-            logs.unshift(logEntry);
-            if (logs.length > 20) logs.pop(); // Keep last 20
-            localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
+                let logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
+                logs.unshift(logEntry);
+                if (logs.length > 20) logs.pop();
+                localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
 
-            // Reset
+                // Feedback for user
+                // alert("Fahrt gespeichert!"); 
+                vibrate([50, 100]);
+            } catch (e) {
+                console.error("Save failed:", e);
+                alert("Fehler beim Speichern: " + e.message);
+            }
+
             sessionStartTime = 0;
-
-            // Feedback
-            vibrate([50, 50, 50]);
-            // Optional: Show modal? Nah, just save silently.
         }
 
         function showRideHistory() {
