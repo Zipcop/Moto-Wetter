@@ -1248,51 +1248,65 @@
                     <p class="text-xs font-mono text-slate-500">LIVE ANGLE TRACKING</p>
                 </div>
 
-                <!-- Main Gauge -->
-                <div class="relative w-64 h-64 flex items-center justify-center -mt-10">
-                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                        <path d="M20,100 L180,100" stroke="#334155" stroke-width="2" />
-                        <path d="M100,20 L100,180" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
-                        <circle cx="100" cy="100" r="90" stroke="#1e293b" stroke-width="4" fill="none" />
-                        <path id="motoGaugeArc" d="M100,100 L100,10" stroke="url(#leanGradient)" stroke-width="6"
-                            stroke-linecap="round" fill="none" class="transition-all duration-100 ease-linear" />
-                        <defs>
-                            <linearGradient id="leanGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#3b82f6" />
-                                <stop offset="100%" stop-color="#ef4444" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div id="motoBikeIcon"
-                        class="transform transition-transform duration-100 ease-linear origin-center text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
-                        <i data-lucide="bike" size="64"></i>
-                    </div>
-                </div>
-
-                <!-- Controls - MOVED UP -->
-                <div class="flex gap-4 -mt-10">
-                    <button onclick="resetMotoMax()"
-                        class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
-                    <button onclick="calibrateMoto()"
-                        class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">NULL</button>
-                    <button onclick="requestMotoPermission()"
-                        class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
-                        id="btnMotoStart">START</button>
-                </div>
-
-                <!-- Digital Readout -->
-                <div class="flex flex-col items-center mb-8">
-                    <div class="text-6xl font-black text-white tabular-nums tracking-tighter" id="motoAngleDisplay">0°
-                    </div>
-                    <div class="flex gap-8 mt-4 text-sm font-bold">
-                        <div class="text-left">
-                            <span class="block text-[10px] text-slate-500 uppercase">Links Max</span>
-                            <span id="maxLeftDisplay" class="text-blue-400">0°</span>
+                <!-- CENTER GROUP: Gauge + Readout + Buttons -->
+                <div class="flex flex-col items-center justify-center w-full flex-grow">
+                    <!-- Main Gauge -->
+                    <div class="relative w-64 h-64 flex items-center justify-center -mt-10">
+                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+                            <path d="M20,100 L180,100" stroke="#334155" stroke-width="2" />
+                            <path d="M100,20 L100,180" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
+                            <circle cx="100" cy="100" r="90" stroke="#1e293b" stroke-width="4" fill="none" />
+                            <path id="motoGaugeArc" d="M100,100 L100,10" stroke="url(#leanGradient)" stroke-width="6"
+                                stroke-linecap="round" fill="none" class="transition-all duration-100 ease-linear" />
+                            <defs>
+                                <linearGradient id="leanGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#3b82f6" />
+                                    <stop offset="100%" stop-color="#ef4444" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div id="motoBikeIcon"
+                            class="transform transition-transform duration-100 ease-linear origin-center text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                            <i data-lucide="bike" size="64"></i>
                         </div>
-                        <div class="text-right">
-                            <span class="block text-[10px] text-slate-500 uppercase">Rechts Max</span>
-                            <span id="maxRightDisplay" class="text-blue-400">0°</span>
+                    </div>
+
+                    <!-- Digital Readout (Side by Side) -->
+                    <div class="flex items-center justify-center gap-8 -mt-8 mb-6 w-full max-w-sm relative z-20">
+                        <!-- Angle Side -->
+                        <div class="flex flex-col items-center flex-1">
+                            <span
+                                class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Neigung</span>
+                            <div class="text-6xl font-black text-white tabular-nums tracking-tighter leading-none"
+                                id="motoAngleDisplay">0°</div>
+                            <div class="flex gap-4 mt-2 text-[10px] font-bold text-slate-400">
+                                <span>L: <span id="maxLeftDisplay" class="text-blue-400">0°</span></span>
+                                <span>R: <span id="maxRightDisplay" class="text-blue-400">0°</span></span>
+                            </div>
                         </div>
+
+                        <!-- Divider -->
+                        <div class="w-px h-16 bg-slate-700/50"></div>
+
+                        <!-- Speed Side -->
+                        <div class="flex flex-col items-center flex-1">
+                            <span
+                                class="text-[10px] text-blue-500 uppercase font-bold tracking-widest mb-1">Tempo</span>
+                            <div class="text-6xl font-black text-blue-400 tabular-nums tracking-tighter leading-none"
+                                id="motoSpeedDisplay">0</div>
+                            <span class="text-[10px] text-slate-500 mt-2 font-mono">km/h</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex gap-4 z-20 mt-2">
+                        <button onclick="resetMotoMax()"
+                            class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
+                        <button onclick="calibrateMoto()"
+                            class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">NULL</button>
+                        <button onclick="requestMotoPermission()"
+                            class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
+                            id="btnMotoStart">START</button>
                     </div>
                 </div>
 
@@ -2207,6 +2221,42 @@
             if (!compassTicking) {
                 window.requestAnimationFrame(updateWindArrow);
                 compassTicking = true;
+            }
+        }
+
+        // --- NEW ISOLATED MOTION HANDLER FOR SPEED SIMULATION ---
+        function handleMotion(event) {
+            if (!event.acceleration) return;
+
+            const now = Date.now();
+            if (lastAccelTime === 0) {
+                lastAccelTime = now;
+                return;
+            }
+
+            const dt = (now - lastAccelTime) / 1000; // Seconds
+            lastAccelTime = now;
+
+            // SIMULATION LOGIC:
+            // We assume Y-axis acceleration (portrait mode) contributes to forward speed.
+            // Ideally we'd project this vector based on orientation, but for "simulation" 
+            // to fill 1s gaps, taking the raw Y (or Z if flat) is a heuristic.
+            // Given the user wants "simulation", we add a fraction of accel to speed.
+
+            // We use a threshold to ignore sensor noise (0.2 m/s²)
+            const ay = event.acceleration.y || 0;
+            // Note: Breaking (negative Y) should reduce speed.
+
+            if (Math.abs(ay) > 0.2) {
+                // v = v0 + a * t
+                // Convert to km/h: (m/s^2 * s) * 3.6
+                currentMotoSpeed += (ay * dt * 3.6);
+                if (currentMotoSpeed < 0) currentMotoSpeed = 0; // No reverse
+            }
+
+            // Update UI immediately for smooth frame rate
+            if (document.getElementById('motoSpeedDisplay')) {
+                document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
             }
         }
 
@@ -3593,9 +3643,15 @@
         let maxRight = 0;
         let calibrationOffset = 0;
         let currentGamma = 0;
+        // SPEED VARIABLES
+        let currentMotoSpeed = 0; // km/h
+        let lastAccelTime = 0;
+        const speedSmoothingFactor = 0.1; // Simple low-pass filter if needed
+
         const motoGaugeArc = document.getElementById('motoGaugeArc');
         const motoBikeIcon = document.getElementById('motoBikeIcon');
         const motoAngleDisplay = document.getElementById('motoAngleDisplay');
+        const motoSpeedDisplay = document.getElementById('motoSpeedDisplay'); // NEW
         const maxLeftDisplay = document.getElementById('maxLeftDisplay');
         const maxRightDisplay = document.getElementById('maxRightDisplay');
 
@@ -3684,6 +3740,7 @@
         // Attempt auto-start on load for non-iOS
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
             window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('devicemotion', handleMotion); // NEW
             // document.getElementById('btnMotoStart').style.display = 'none';
         }
 
@@ -3712,6 +3769,15 @@
                     const lat = p.coords.latitude;
                     const lon = p.coords.longitude;
                     motoMap.flyTo([lat, lon], 15);
+
+                    // NEW: SYNC SPEED FROM GPS (The "Anchor")
+                    if (p.coords.speed !== null && p.coords.speed >= 0) {
+                        currentMotoSpeed = p.coords.speed * 3.6; // Convert m/s to km/h
+                        // Update UI immediately on GPS fix too
+                        if (document.getElementById('motoSpeedDisplay')) {
+                            document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
+                        }
+                    }
                 }, (e) => console.log(e), { enableHighAccuracy: true });
             }
         }
