@@ -3899,7 +3899,7 @@
         function saveRideLog() {
             if (sessionStartTime === 0) return; // No session
             const durationMs = Date.now() - sessionStartTime;
-            if (durationMs < 5000) return; // Ignore accidental clicks (< 5s)
+            if (durationMs < 1000) return; // Ignore accidental clicks (< 1s)
 
             // Get Weather Context
             let weatherSummary = "Unbekannt";
