@@ -1812,6 +1812,8 @@
         let currentCountry = ""; // NEW: Store country for refresh
         let lastPastIndex = 0; // NEW: Store index where history ends
 
+
+
         // --- HAPTIC FEEDBACK SYSTEM ---
         const vibrate = (pattern = 10) => {
             if (navigator.vibrate) navigator.vibrate(pattern);
@@ -4014,8 +4016,16 @@
 
         // --- RIDE HISTORY FUNCTIONS ---
         function saveRideLog() {
-            if (sessionStartTime === 0) return;
+            // DEBUG ALERTS
+            // alert("Versuche zu speichern... StartTime: " + sessionStartTime);
+
+            if (sessionStartTime === 0) {
+                // alert("Speichern abgebrochen: Keine Session gestartet (Zeit=0)");
+                return;
+            }
+
             const durationMs = Date.now() - sessionStartTime;
+            // alert("Dauer der Fahrt: " + (durationMs/1000) + "s");
 
             // REMOVE LIMIT FOR DEBUGGING (User said it doesn't save)
             // if (durationMs < 1000) return; 
@@ -4053,7 +4063,7 @@
                 localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
 
                 // Feedback for user
-                // alert("Fahrt gespeichert!"); 
+                // alert("Fahrt gespeichert! (" + (durationMs/1000).toFixed(1) + "s)"); 
                 vibrate([50, 100]);
             } catch (e) {
                 console.error("Save failed:", e);
