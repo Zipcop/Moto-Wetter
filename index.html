@@ -841,7 +841,7 @@
 
     <!-- VIEW CONTAINER -->
     <div id="view-container"
-        class="w-screen h-[100dvh] flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth touch-pan-x no-scrollbar">
+        class="w-screen h-[100dvh] flex overflow-hidden snap-x snap-mandatory scroll-smooth no-scrollbar">
 
         <!-- === VIEW 1: WEATHER === -->
         <section id="view-weather" class="w-screen h-full flex-shrink-0 snap-center relative overflow-hidden">
@@ -884,7 +884,7 @@
             </div>
 
             <main
-                class="w-full h-full max-w-lg mx-auto space-y-4 pt-4 pb-20 relative z-10 overflow-y-auto custom-scrollbar">
+                class="w-full h-full max-w-md mx-auto space-y-4 pt-4 pb-20 relative z-10 overflow-y-auto custom-scrollbar px-6">
                 <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
@@ -899,6 +899,11 @@
                             </h1>
                         </div>
                         <div class="flex items-center gap-3">
+                            <!-- NEW: Moto Button -->
+                            <button onclick="scrollToMoto()"
+                                class="text-blue-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 bg-blue-500/10 border border-blue-500/20"
+                                title="Moto Cockpit"><i data-lucide="bike" size="18"></i></button>
+
                             <button onclick="toggleSettings()"
                                 class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
                                 title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
@@ -1215,8 +1220,14 @@
 
         <!-- === VIEW 2: MOTO ANGLE === -->
         <section id="view-moto"
-            class="w-screen h-full flex-shrink-0 snap-center relative bg-slate-950 flex flex-col items-center justify-center p-4">
-            <div class="relative w-full max-w-md h-full flex flex-col items-center justify-between py-10">
+            class="w-screen h-full flex-shrink-0 snap-center relative bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
+
+            <!-- BACKGROUND LIVE MAP -->
+            <div id="motoMap"
+                class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[400px] max-h-[400px] rounded-full opacity-30 pointer-events-none z-0 border-[2px] border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-opacity duration-1000 grayscale">
+            </div>
+
+            <div class="relative w-full max-w-md h-full flex flex-col items-center justify-between py-10 z-10">
                 <!-- Header -->
                 <div class="text-center space-y-1">
                     <h2
@@ -1226,7 +1237,7 @@
                 </div>
 
                 <!-- Main Gauge -->
-                <div class="relative w-64 h-64 flex items-center justify-center">
+                <div class="relative w-64 h-64 flex items-center justify-center -mt-10">
                     <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
                         <path d="M20,100 L180,100" stroke="#334155" stroke-width="2" />
                         <path d="M100,20 L100,180" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
@@ -1246,8 +1257,19 @@
                     </div>
                 </div>
 
+                <!-- Controls - MOVED UP -->
+                <div class="flex gap-4 -mt-10">
+                    <button onclick="resetMotoMax()"
+                        class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
+                    <button onclick="calibrateMoto()"
+                        class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">NULL</button>
+                    <button onclick="requestMotoPermission()"
+                        class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
+                        id="btnMotoStart">START</button>
+                </div>
+
                 <!-- Digital Readout -->
-                <div class="flex flex-col items-center">
+                <div class="flex flex-col items-center mb-8">
                     <div class="text-6xl font-black text-white tabular-nums tracking-tighter" id="motoAngleDisplay">0°
                     </div>
                     <div class="flex gap-8 mt-4 text-sm font-bold">
@@ -1262,19 +1284,11 @@
                     </div>
                 </div>
 
-                <!-- Controls -->
-                <div class="flex gap-4">
-                    <button onclick="resetMotoMax()"
-                        class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700">RESET</button>
-                    <button onclick="calibrateMoto()"
-                        class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50">NULL</button>
-                    <button onclick="requestMotoPermission()"
-                        class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50"
-                        id="btnMotoStart">START</button>
-                </div>
-
-                <div class="absolute bottom-4 text-[10px] text-slate-600 font-mono flex items-center gap-2">
-                    <i data-lucide="arrow-left" size="12"></i> swipe for weather
+                <div class="absolute bottom-4">
+                    <button onclick="scrollToWeather()" region="navigation"
+                        class="flex items-center gap-2 text-slate-400 hover:text-white transition px-4 py-2 bg-slate-800/80 backdrop-blur-md rounded-full border border-slate-700/50 shadow-xl">
+                        <i data-lucide="arrow-left" size="16"></i> Zurück zum Wetter
+                    </button>
                 </div>
             </div>
         </section>
@@ -3661,6 +3675,46 @@
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
             window.addEventListener('deviceorientation', handleOrientation);
             // document.getElementById('btnMotoStart').style.display = 'none';
+        }
+
+        // --- MOTO MAP LOGIC ---
+        let motoMap = null;
+        function initMotoMap() {
+            if (motoMap) return;
+            // Default center Berlin
+            motoMap = L.map('motoMap', {
+                zoomControl: false,
+                attributionControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                touchZoom: false
+            }).setView([52.52, 13.405], 13);
+
+            // Dark Matter / CartoDB Dark
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20
+            }).addTo(motoMap);
+
+            // Watch position
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(p => {
+                    const lat = p.coords.latitude;
+                    const lon = p.coords.longitude;
+                    motoMap.flyTo([lat, lon], 15);
+                }, (e) => console.log(e), { enableHighAccuracy: true });
+            }
+        }
+
+        // --- VIEW NAVIGATION ---
+        function scrollToMoto() {
+            document.getElementById('view-moto').scrollIntoView({ behavior: 'smooth' });
+            // Init map slightly delayed so layout is ready
+            setTimeout(initMotoMap, 500);
+        }
+
+        function scrollToWeather() {
+            document.getElementById('view-weather').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
