@@ -2299,14 +2299,17 @@
 
             // 2. SPEED SIMULATION (Existing)
             // Apply Friction / Aerodynamic Drag (Natural Deceleration)
-            // This prevents "infinite coasting" and fixes the "shaking drift" issue.
-            // Decay speed by ~20% per second if not accelerating
-            const drag = currentMotoSpeed * 0.2 * dt;
+            const drag = currentMotoSpeed * 0.5 * dt;
             currentMotoSpeed -= drag;
 
-            // Apply Acceleration (with deadzone)
+            // Apply Acceleration (with Asymmetric Braking)
+            // Fix: Make braking 3x stronger than gas. 
+            // This ensures shaking (+/- oscillations) results in net speed loss.
             if (Math.abs(ay) > 0.3) {
-                currentMotoSpeed += (ay * dt * 3.6);
+                let factor = 3.6; // Km/h conversion
+                if (ay < 0) factor *= 3; // BRAKING IS STRONGER
+
+                currentMotoSpeed += (ay * dt * factor);
             }
 
             // Clamp
