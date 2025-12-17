@@ -1250,12 +1250,17 @@
 
                 <!-- CENTER GROUP: Gauge + Readout + Buttons -->
                 <div class="flex flex-col items-center justify-center w-full flex-grow">
-                    <!-- Main Gauge -->
-                    <div class="relative w-64 h-64 flex items-center justify-center -mt-10">
-                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                            <path d="M20,100 L180,100" stroke="#334155" stroke-width="2" />
-                            <path d="M100,20 L100,180" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
-                            <circle cx="100" cy="100" r="90" stroke="#1e293b" stroke-width="4" fill="none" />
+                    <!-- Main Gauge (Semi-Circle) -->
+                    <div class="relative w-64 h-40 flex items-end justify-center -mt-4">
+                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 120"
+                            preserveAspectRatio="xMidYMax meet">
+                            <!-- Helper grid/lines optional -->
+                            <path d="M10,100 A90,90 0 0,1 190,100" stroke="#334155" stroke-width="4" fill="none"
+                                stroke-linecap="round" />
+                            <!-- 0-Degree Marker -->
+                            <path d="M100,10 L100,20" stroke="#475569" stroke-width="2" />
+
+                            <!-- Active Arc (Controlled by JS) -->
                             <path id="motoGaugeArc" d="M100,100 L100,10" stroke="url(#leanGradient)" stroke-width="6"
                                 stroke-linecap="round" fill="none" class="transition-all duration-100 ease-linear" />
                             <defs>
@@ -1265,14 +1270,16 @@
                                 </linearGradient>
                             </defs>
                         </svg>
+
+                        <!-- Bike Icon (Pivot Point) -->
                         <div id="motoBikeIcon"
-                            class="transform transition-transform duration-100 ease-linear origin-center text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                            class="absolute bottom-4 transform transition-transform duration-100 ease-linear origin-bottom text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
                             <i data-lucide="bike" size="64"></i>
                         </div>
                     </div>
 
                     <!-- Digital Readout (Side by Side) -->
-                    <div class="flex items-center justify-center gap-8 -mt-8 mb-6 w-full max-w-sm relative z-20">
+                    <div class="flex items-center justify-center gap-8 mt-2 mb-6 w-full max-w-sm relative z-20">
                         <!-- Angle Side -->
                         <div class="flex flex-col items-center flex-1">
                             <span
@@ -1307,6 +1314,9 @@
                         <button onclick="requestMotoPermission()"
                             class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
                             id="btnMotoStart">START</button>
+                        <button onclick="stopMotoTracking()"
+                            class="hidden px-6 py-3 bg-red-900/40 text-red-300 rounded-xl font-bold text-sm hover:bg-red-900/60 transition active:scale-95 border border-red-800/50 shadow-lg"
+                            id="btnMotoStop">STOP</button>
                     </div>
                 </div>
 
@@ -3655,7 +3665,7 @@
         const maxLeftDisplay = document.getElementById('maxLeftDisplay');
         const maxRightDisplay = document.getElementById('maxRightDisplay');
 
-        function handleOrientation(event) {
+        function handleMotoOrientation(event) {
             let tilt = event.gamma;
             if (tilt === null) return;
             currentGamma = tilt;
@@ -3721,8 +3731,10 @@
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
                         if (response == 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                            document.getElementById('btnMotoStart').style.display = 'none';
+                            window.addEventListener('deviceorientation', handleMotoOrientation);
+                            window.addEventListener('devicemotion', handleMotion); // NEW
+                            document.getElementById('btnMotoStart').classList.add('hidden');
+                            document.getElementById('btnMotoStop').classList.remove('hidden');
                             lockOrientation(); // Lock on explicit start
                         } else {
                             alert("Sensor-Zugriff benötigt!");
@@ -3731,15 +3743,25 @@
                     .catch(console.error);
             } else {
                 // Non-iOS 13+ devices
-                window.addEventListener('deviceorientation', handleOrientation);
-                document.getElementById('btnMotoStart').style.display = 'none';
+                window.addEventListener('deviceorientation', handleMotoOrientation);
+                window.addEventListener('devicemotion', handleMotion); // NEW
+                document.getElementById('btnMotoStart').classList.add('hidden');
+                document.getElementById('btnMotoStop').classList.remove('hidden');
                 alert("Gestartet (Falls Sensoren verfügbar)");
             }
         };
 
+        function stopMotoTracking() {
+            window.removeEventListener('deviceorientation', handleMotoOrientation);
+            window.removeEventListener('devicemotion', handleMotion);
+            document.getElementById('btnMotoStart').classList.remove('hidden');
+            document.getElementById('btnMotoStop').classList.add('hidden');
+            unlockOrientation();
+        }
+
         // Attempt auto-start on load for non-iOS
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
-            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('deviceorientation', handleMotoOrientation);
             window.addEventListener('devicemotion', handleMotion); // NEW
             // document.getElementById('btnMotoStart').style.display = 'none';
         }
