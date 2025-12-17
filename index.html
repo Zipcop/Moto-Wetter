@@ -1278,8 +1278,26 @@
                         </div>
                     </div>
 
+                    <!-- G-Force Meter (New) -->
+                    <div class="flex flex-col items-center w-48 mb-2">
+                        <div
+                            class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
+                            <span>Brake</span>
+                            <span>Accel</span>
+                        </div>
+                        <div class="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-1">
+                            <!-- Center Marker -->
+                            <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-500 z-10"></div>
+                            <!-- Active Bar -->
+                            <div id="gForceBar"
+                                class="absolute top-0 bottom-0 bg-blue-500 transition-all duration-75 ease-out"
+                                style="left: 50%; width: 0%;"></div>
+                        </div>
+                        <div id="gForceVal" class="text-[9px] font-mono text-slate-400 mt-1">0.0 G</div>
+                    </div>
+
                     <!-- Digital Readout (Side by Side) -->
-                    <div class="flex items-center justify-center gap-8 mt-2 mb-6 w-full max-w-sm relative z-20">
+                    <div class="flex items-center justify-center gap-8 mt-1 mb-6 w-full max-w-sm relative z-20">
                         <!-- Angle Side -->
                         <div class="flex flex-col items-center flex-1">
                             <span
@@ -1302,6 +1320,7 @@
                             <div class="text-6xl font-black text-blue-400 tabular-nums tracking-tighter leading-none"
                                 id="motoSpeedDisplay">0</div>
                             <span class="text-[10px] text-slate-500 mt-2 font-mono">km/h</span>
+
                         </div>
                     </div>
 
@@ -2234,7 +2253,7 @@
             }
         }
 
-        // --- NEW ISOLATED MOTION HANDLER FOR SPEED SIMULATION ---
+        // --- NEW ISOLATED MOTION HANDLER FOR SPEED SIMULATION + G-FORCE + RACE TIMER ---
         function handleMotion(event) {
             if (!event.acceleration) return;
 
@@ -2247,24 +2266,42 @@
             const dt = (now - lastAccelTime) / 1000; // Seconds
             lastAccelTime = now;
 
-            // SIMULATION LOGIC:
-            // We assume Y-axis acceleration (portrait mode) contributes to forward speed.
-            // Ideally we'd project this vector based on orientation, but for "simulation" 
-            // to fill 1s gaps, taking the raw Y (or Z if flat) is a heuristic.
-            // Given the user wants "simulation", we add a fraction of accel to speed.
-
-            // We use a threshold to ignore sensor noise (0.2 m/s²)
+            // 1. G-FORCE LOGIC
+            // Y-axis is forward/backward in portrait.
+            // Accel (Speeding up) = +Y, Braking = -Y.
             const ay = event.acceleration.y || 0;
-            // Note: Breaking (negative Y) should reduce speed.
+            const g = (ay / 9.81); // Convert m/s^2 to G
 
-            if (Math.abs(ay) > 0.2) {
-                // v = v0 + a * t
-                // Convert to km/h: (m/s^2 * s) * 3.6
-                currentMotoSpeed += (ay * dt * 3.6);
-                if (currentMotoSpeed < 0) currentMotoSpeed = 0; // No reverse
+            const gForceBar = document.getElementById('gForceBar');
+            const gForceVal = document.getElementById('gForceVal');
+
+            if (gForceBar && gForceVal) {
+                // Limit visualization to +/- 1.5G
+                let pct = (Math.abs(g) / 1.5) * 50;
+                if (pct > 50) pct = 50;
+
+                if (g > 0.05) {
+                    // Acceleration (Right side, Green)
+                    gForceBar.style.left = '50%';
+                    gForceBar.style.width = pct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
+                } else if (g < -0.05) {
+                    // Braking (Left side, Red)
+                    gForceBar.style.left = (50 - pct) + '%';
+                    gForceBar.style.width = pct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
+                } else {
+                    gForceBar.style.width = '0%';
+                }
+                gForceVal.innerText = g.toFixed(2) + ' G';
             }
 
-            // Update UI immediately for smooth frame rate
+
+            // 2. SPEED SIMULATION (Existing)
+            if (Math.abs(ay) > 0.2) {
+                currentMotoSpeed += (ay * dt * 3.6);
+                if (currentMotoSpeed < 0) currentMotoSpeed = 0;
+            }
             if (document.getElementById('motoSpeedDisplay')) {
                 document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
             }
