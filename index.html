@@ -2916,6 +2916,9 @@
                     // Limit to next 48h (approx 48 indices)
                     if (i > startIndex + 48) break;
 
+                    // FIX: STRICTLY EXCLUDE NIGHT
+                    if (h.is_day[i] === 0) continue;
+
                     const sc = calculateMotoScore(h.temperature_2m[i], h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], h.weather_code[i]);
                     scores.push({
                         index: i,
@@ -3076,13 +3079,25 @@
                         document.getElementById('bestRideDesc').innerText = "Gutes Zeitfenster";
                     }
                 } else {
+                    console.log("Config hidden bestRideSection");
                     el.classList.add('hidden'); // hidden by config
                 }
             } else {
-                el.classList.add('hidden'); // No good ride found
+                // FALLBACK: User wants to see *something* instead of nothing.
+                if (layoutConfig.visibility.bestRideSection) {
+                    el.classList.remove('hidden');
+                    document.getElementById('bestRideTime').innerText = "--:--";
+                    document.getElementById('bestRideDay').innerText = "Kein Fenster";
+                    document.getElementById('bestRideScore').innerText = "--";
+                    document.getElementById('bestRideScore').className = "text-xs font-black bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-600/50";
+                    document.getElementById('bestRideDesc').innerText = "Keine guten Bedingungen nächsten 48h";
+                    const trEl = document.getElementById('bestRideTemp');
+                    if (trEl) trEl.classList.add('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
             }
         }
-
         async function showBestRideDetails() {
             if (!cachedBestRide) return;
             const br = cachedBestRide;
