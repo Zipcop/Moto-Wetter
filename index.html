@@ -289,6 +289,17 @@
             animation: pulse-red 2s infinite;
         }
 
+        /* MODAL ACTIVE STATE */
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-overlay {
+            pointer-events: none;
+            /* Prevent clicks when hidden/fading out */
+        }
+
         .dot-forecast {
             background-color: #a855f7;
             animation: pulse-purple 2s infinite;
@@ -906,7 +917,7 @@
                                 class="text-blue-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 bg-blue-500/10 border border-blue-500/20"
                                 title="Moto Cockpit"><i data-lucide="bike" size="18"></i></button>
 
-                            <button onclick="toggleSettings()"
+                            <button onclick="showModal('settingsModal')"
                                 class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
                                 title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
                             <button
@@ -1297,8 +1308,8 @@
 
     <!-- MODALS -->
     <!-- SETTINGS MODAL (Updated with Moto Profile) -->
-    <div id="settingsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="settingsModal" onclick="if(event.target === this) hideModal('settingsModal')"
+        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="toggleSettings()"
@@ -1403,10 +1414,10 @@
     </div>
 
     <!-- BEST RIDE DETAILS MODAL -->
-    <div id="bestRideModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
-            <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
+            <button onclick="hideModal('bestRideModal')"
                 class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
@@ -1435,8 +1446,8 @@
     </div>
 
     <!-- BEST RIDE DETAILS MODAL -->
-    <div id="bestRideModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] flex flex-col">
             <div class="shrink-0">
@@ -1771,38 +1782,7 @@
 
             // Refine Glass panels based on theme (optional, can be done via CSS var)
         }
-        async function openWithMorph(triggerId, modalId, updateFn) {
-            // Fallback for browsers without support
-            if (!document.startViewTransition) {
-                updateFn();
-                return;
-            }
 
-            // MODIFICATION: User requested "Fade", not "Morph/Fly".
-            // We consciously DO NOT attach the viewTransitionName to the trigger.
-            // This prevents the browser from morphing geometry across the screen.
-            // Instead, the modal will just "Enter" using the css animation.
-
-            // 1. Start Transition (No Trigger Name)
-            const transition = document.startViewTransition(() => {
-                // 2. Update DOM (Show Modal)
-                updateFn();
-
-                // 3. Assign Name to End Element (Modal Content)
-                const modalParams = document.querySelector(`#${modalId} .modal-content`);
-                if (modalParams) {
-                    modalParams.style.viewTransitionName = 'mobile-morph';
-                }
-            });
-
-            // 4. Cleanup
-            try {
-                await transition.finished;
-            } finally {
-                const modalParams = document.querySelector(`#${modalId} .modal-content`);
-                if (modalParams) modalParams.style.viewTransitionName = '';
-            }
-        }
 
         // --- FEATURE 7: RAIN GLASS EFFECT CLASS ---
         class RainGlass {
@@ -2141,14 +2121,13 @@
             const m = document.getElementById('settingsModal');
             if (m.classList.contains('hidden')) {
                 // Opening - Animate
-                openWithMorph('card-weather', 'settingsModal', () => {
-                    m.classList.remove('hidden');
-                    renderSettingsList();
-                    renderMotoSettingsUI();
-                });
+                m.classList.remove('hidden');
+                renderSettingsList();
+                renderMotoSettingsUI();
+                showModal('settingsModal');
             } else {
-                // Closing - Just hide
-                m.classList.add('hidden');
+                // Closing
+                hideModal('settingsModal');
             }
         }
         function renderSettingsList() {
@@ -2278,87 +2257,82 @@
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
 
         async function showDailyDetails(index = 0) {
-            // CHANGED: Use specific item ID if available, else fallback to card-weather
-            const triggerId = document.getElementById(`day-item-${index}`) ? `day-item-${index}` : `card-weather`;
-            openWithMorph(triggerId, 'dailyDetailsModal', async () => {
-                try {
-                    if (!lastWeatherData) return;
-                    const d = lastWeatherData.daily;
-                    const c = lastWeatherData.current;
-                    if (!d || !d.time || !d.time[index]) return;
+            try {
+                if (!lastWeatherData) return;
+                const d = lastWeatherData.daily;
+                const c = lastWeatherData.current;
+                if (!d || !d.time || !d.time[index]) return;
 
-                    const date = new Date(d.time[index]);
-                    const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', { weekday: 'long' });
-                    const dateStr = date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+                const date = new Date(d.time[index]);
+                const dayName = index === 0 ? "Heute" : date.toLocaleDateString('de-DE', { weekday: 'long' });
+                const dateStr = date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
 
-                    safeSetText('dailyDetailTitle', dayName);
-                    safeSetText('dailyDetailDate', dateStr);
+                safeSetText('dailyDetailTitle', dayName);
+                safeSetText('dailyDetailDate', dateStr);
 
-                    if (d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
-                    if (d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+                if (d.sunrise && d.sunrise[index]) safeSetText('detailSunrise', new Date(d.sunrise[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+                if (d.sunset && d.sunset[index]) safeSetText('detailSunset', new Date(d.sunset[index]).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
 
-                    const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
-                    const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
+                const precipSum = (d.precipitation_sum && d.precipitation_sum[index] !== undefined) ? d.precipitation_sum[index] : 0;
+                const precipProb = (d.precipitation_probability_max && d.precipitation_probability_max[index] !== undefined) ? d.precipitation_probability_max[index] : 0;
 
-                    safeSetText('detailPrecipSum', precipSum.toFixed(1));
-                    safeSetText('detailPrecipProb', precipProb);
-                    const probBar = document.getElementById('detailPrecipProbBar');
-                    if (probBar) probBar.style.width = precipProb + '%';
+                safeSetText('detailPrecipSum', precipSum.toFixed(1));
+                safeSetText('detailPrecipProb', precipProb);
+                const probBar = document.getElementById('detailPrecipProbBar');
+                if (probBar) probBar.style.width = precipProb + '%';
 
-                    const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
-                    safeSetText('detailWindMax', windMax);
-                    const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
-                    safeSetText('detailUVMax', uvVal);
+                const windMax = (d.wind_speed_10m_max && d.wind_speed_10m_max[index] !== undefined) ? d.wind_speed_10m_max[index] : '--';
+                safeSetText('detailWindMax', windMax);
+                const uvVal = (d.uv_index_max && d.uv_index_max[index] !== undefined) ? d.uv_index_max[index] : '--';
+                safeSetText('detailUVMax', uvVal);
 
-                    const extras = document.getElementById('currentDayExtras');
-                    if (index === 0) {
-                        safeSetText('detailVisibility', (c.visibility && c.visibility > 9999) ? ">10 km" : ((c.visibility / 1000).toFixed(1) + " km"));
-                        safeSetText('detailUV', c.uv_index || "--");
-                        if (extras) extras.classList.remove('hidden');
-                        if (d.sunset && d.sunset[0]) {
-                            const diff = new Date(d.sunset[0]) - new Date();
-                            const cd = document.getElementById('sunCountdownText');
-                            if (cd) {
-                                if (diff > 0) cd.innerText = `Noch ${Math.floor(diff / 36e5)}h ${Math.floor((diff % 36e5) / 6e4)}m Licht`;
-                                else cd.innerText = "Dunkelheit";
-                            }
+                const extras = document.getElementById('currentDayExtras');
+                if (index === 0) {
+                    safeSetText('detailVisibility', (c.visibility && c.visibility > 9999) ? ">10 km" : ((c.visibility / 1000).toFixed(1) + " km"));
+                    safeSetText('detailUV', c.uv_index || "--");
+                    if (extras) extras.classList.remove('hidden');
+                    if (d.sunset && d.sunset[0]) {
+                        const diff = new Date(d.sunset[0]) - new Date();
+                        const cd = document.getElementById('sunCountdownText');
+                        if (cd) {
+                            if (diff > 0) cd.innerText = `Noch ${Math.floor(diff / 36e5)}h ${Math.floor((diff % 36e5) / 6e4)}m Licht`;
+                            else cd.innerText = "Dunkelheit";
                         }
-                        try {
-                            const r = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
-                            const ad = await r.json(); const v = ad.current.european_aqi;
-                            safeSetText('detailAqiVal', v);
-                            let cl = "bg-green-500"; if (v > 40) cl = "bg-yellow-400"; if (v > 60) cl = "bg-orange-500"; if (v > 80) cl = "bg-red-600";
-                            const aqiBar = document.getElementById('detailAqiBar'); if (aqiBar) aqiBar.className = `w-2 h-2 rounded-full ${cl}`;
-                        } catch (e) { }
-                    } else {
-                        if (extras) extras.classList.add('hidden');
                     }
+                    try {
+                        const r = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLon}&current=european_aqi,pm10,pm2_5`);
+                        const ad = await r.json(); const v = ad.current.european_aqi;
+                        safeSetText('detailAqiVal', v);
+                        let cl = "bg-green-500"; if (v > 40) cl = "bg-yellow-400"; if (v > 60) cl = "bg-orange-500"; if (v > 80) cl = "bg-red-600";
+                        const aqiBar = document.getElementById('detailAqiBar'); if (aqiBar) aqiBar.className = `w-2 h-2 rounded-full ${cl}`;
+                    } catch (e) { }
+                } else {
+                    if (extras) extras.classList.add('hidden');
+                }
 
-                    // --- NEU: Hourly Rain Render ---
-                    const rainCon = document.getElementById('dailyHourlyRain');
-                    if (rainCon) {
-                        rainCon.innerHTML = '<div class="text-xs font-bold text-slate-400 mb-2 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm">Regen-Verlauf</div>';
-                        const h = lastWeatherData.hourly;
-                        // Find start index for this day
-                        let dayStartIdx = -1;
-                        // Simplistic matching by date string
-                        const dateMatch = date.toISOString().slice(0, 10);
+                // --- NEU: Hourly Rain Render ---
+                const rainCon = document.getElementById('dailyHourlyRain');
+                if (rainCon) {
+                    rainCon.innerHTML = '<div class="text-xs font-bold text-slate-400 mb-2 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm">Regen-Verlauf</div>';
+                    const h = lastWeatherData.hourly;
+                    // Find start index for this day
+                    const dateMatch = date.toISOString().slice(0, 10);
 
-                        let hasRainEntries = false;
-                        for (let k = 0; k < h.time.length; k++) {
-                            if (h.time[k].startsWith(dateMatch)) {
-                                const prec = h.precipitation[k];
-                                // Show even small amounts or if it's "wet" code, but main focus on >0
-                                if (prec > 0) {
-                                    hasRainEntries = true;
-                                    const timeObj = new Date(h.time[k]);
-                                    const timeStr = timeObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                    const barW = Math.min(100, prec * 30); // scale: 3mm approx full bar
-                                    let barCol = "bg-blue-500";
-                                    if (prec > 2) barCol = "bg-purple-500";
-                                    else if (prec < 0.5) barCol = "bg-blue-300";
+                    let hasRainEntries = false;
+                    for (let k = 0; k < h.time.length; k++) {
+                        if (h.time[k].startsWith(dateMatch)) {
+                            const prec = h.precipitation[k];
+                            // Show even small amounts or if it's "wet" code, but main focus on >0
+                            if (prec > 0) {
+                                hasRainEntries = true;
+                                const timeObj = new Date(h.time[k]);
+                                const timeStr = timeObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                const barW = Math.min(100, prec * 30); // scale: 3mm approx full bar
+                                let barCol = "bg-blue-500";
+                                if (prec > 2) barCol = "bg-purple-500";
+                                else if (prec < 0.5) barCol = "bg-blue-300";
 
-                                    rainCon.innerHTML += `
+                                rainCon.innerHTML += `
                                 <div class="flex items-center justify-between mb-1.5 p-2 bg-slate-800/40 rounded-lg">
                                     <span class="text-xs text-slate-300 font-mono w-10">${timeStr}</span>
                                     <div class="flex-grow mx-3 h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -2366,51 +2340,48 @@
                                     </div>
                                     <span class="text-xs font-bold text-blue-100 w-10 text-right">${prec.toFixed(1)}</span>
                                 </div>`;
-                                }
                             }
                         }
-                        if (!hasRainEntries) {
-                            rainCon.innerHTML += `<div class="text-xs text-slate-500 italic text-center py-4">Kein Regen für diesen Tag vorhergesagt.</div>`;
-                        }
                     }
-
-                    const score = calculateMotoScore(
-                        d.temperature_2m_max[index] || 15,
-                        d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
-                        precipSum,
-                        1,
-                        d.weather_code[index] || 0
-                    );
-                    const col = getScoreColor(score.score);
-                    const scoreEl = document.getElementById('dailyMotoScore');
-                    if (scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
-                    safeSetText('dailyScoreDetailVal', score.score + "/10");
-
-                    const modal = document.getElementById('dailyDetailsModal');
-                    if (modal) modal.classList.remove('hidden');
-                    lucide.createIcons();
-                } catch (e) {
-                    console.error("Detail Error", e);
-                    const modal = document.getElementById('dailyDetailsModal');
-                    if (modal) modal.classList.remove('hidden');
+                    if (!hasRainEntries) {
+                        rainCon.innerHTML += `<div class="text-xs text-slate-500 italic text-center py-4">Kein Regen für diesen Tag vorhergesagt.</div>`;
+                    }
                 }
-            });
+
+                const score = calculateMotoScore(
+                    d.temperature_2m_max[index] || 15,
+                    d.wind_speed_10m_max ? d.wind_speed_10m_max[index] : 10,
+                    precipSum,
+                    1,
+                    d.weather_code[index] || 0
+                );
+                const col = getScoreColor(score.score);
+                const scoreEl = document.getElementById('dailyMotoScore');
+                if (scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
+                safeSetText('dailyScoreDetailVal', score.score + "/10");
+
+                renderSplashEffects(d.weather_code[index], 1); // Simulate conditions for fun? No, keep it clean.
+
+                showModal('dailyDetailsModal');
+                lucide.createIcons();
+            } catch (e) {
+                console.error("Detail Error", e);
+                showModal('dailyDetailsModal');
+            }
         }
 
         // Gear Guide Removed
         function showMotoDetails() {
-            openWithMorph('card-moto', 'motoDetailsModal', () => {
-                if (!lastWeatherData) return;
-                const c = lastWeatherData.current;
-                const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
-                const l = document.getElementById('motoAnalysisList');
-                l.innerHTML = "";
-                ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
-                ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
-                if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
-                document.getElementById('motoDetailsModal').classList.remove('hidden');
-                lucide.createIcons();
-            });
+            if (!lastWeatherData) return;
+            const c = lastWeatherData.current;
+            const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
+            const l = document.getElementById('motoAnalysisList');
+            l.innerHTML = "";
+            ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
+            ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
+            if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
+            showModal('motoDetailsModal');
+            lucide.createIcons();
         }
         function calculateMotoAnalysis(t, w, r, d, c) { let p = [], n = []; if (t >= 15 && t <= 28) p.push("Top Temp"); else if (t < 5) n.push("Glätte (<5°)"); else if (t < 10) n.push("Kalt (<10°)"); else if (t > 30) n.push("Hitze (>30°)"); if (w < 15) p.push("Wenig Wind"); else if (w > 40) n.push("Böen (>40kmh)"); if (r > 0) n.push("Nass"); if (c < 3) p.push("Gute Sicht"); if (d === 0) n.push("Nacht"); else p.push("Tag"); return { pros: p, cons: n }; }
 
@@ -3018,6 +2989,32 @@
 
         let cachedBestRide = null; // Store for modal
 
+        // --- MODAL UTILS FOR SMOOTH TRANSITION ---
+        function showModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('hidden');
+            // Double RAF to ensure browser renders
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    el.classList.add('active');
+                    el.style.opacity = '1';
+                });
+            });
+        }
+
+        function hideModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('active');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                if (!el.classList.contains('active')) {
+                    el.classList.add('hidden');
+                }
+            }, 300);
+        }
+
         function updateBestRideUI() {
             const br = calculateBestRide(lastWeatherData.hourly);
             cachedBestRide = br; // Save for modal
@@ -3087,67 +3084,65 @@
         }
 
         async function showBestRideDetails() {
-            openWithMorph('bestRideSection', 'bestRideModal', () => {
-                if (!cachedBestRide) return;
-                const br = cachedBestRide;
+            if (!cachedBestRide) return;
+            const br = cachedBestRide;
 
-                const dStart = new Date(br.start);
-                const dEnd = new Date(br.end);
-                const dayName = dStart.toLocaleDateString('de-DE', { weekday: 'long' });
-                const todayName = new Date().toLocaleDateString('de-DE', { weekday: 'long' });
-                const displayDay = (dayName === todayName) ? "Heute" : dayName;
+            const dStart = new Date(br.start);
+            const dEnd = new Date(br.end);
+            const dayName = dStart.toLocaleDateString('de-DE', { weekday: 'long' });
+            const todayName = new Date().toLocaleDateString('de-DE', { weekday: 'long' });
+            const displayDay = (dayName === todayName) ? "Heute" : dayName;
 
-                const tStart = dStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                let endH = dEnd.getHours() + 1;
-                const tEnd = (endH > 23 ? 0 : endH).toString().padStart(2, '0') + ":00";
+            const tStart = dStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            let endH = dEnd.getHours() + 1;
+            const tEnd = (endH > 23 ? 0 : endH).toString().padStart(2, '0') + ":00";
 
-                document.getElementById('brDetailScore').innerText = br.avgScore.toFixed(1);
-                document.getElementById('brDetailTime').innerText = `${tStart} - ${tEnd}`;
-                document.getElementById('brDetailDay').innerText = displayDay;
+            document.getElementById('brDetailScore').innerText = br.avgScore.toFixed(1);
+            document.getElementById('brDetailTime').innerText = `${tStart} - ${tEnd}`;
+            document.getElementById('brDetailDay').innerText = displayDay;
 
-                // Re-find indices in hourly
-                const h = lastWeatherData.hourly;
-                const off = (lastWeatherData.utc_offset_seconds || 0) * 1000;
-                let startIdx = -1;
-                // Simple string match
-                for (let i = 0; i < h.time.length; i++) {
-                    if (h.time[i] === br.start) { startIdx = i; break; }
-                }
+            // Re-find indices in hourly
+            const h = lastWeatherData.hourly;
+            // const off = (lastWeatherData.utc_offset_seconds || 0) * 1000; // Not strictly needed for string match
+            let startIdx = -1;
+            // Simple string match
+            for (let i = 0; i < h.time.length; i++) {
+                if (h.time[i] === br.start) { startIdx = i; break; }
+            }
 
-                const list = document.getElementById('brReasonsList');
-                list.innerHTML = '';
+            const list = document.getElementById('brReasonsList');
+            list.innerHTML = '';
 
-                if (startIdx !== -1) {
-                    let avgTemp = 0, maxWind = 0, rainSum = 0;
-                    const len = br.length;
+            if (startIdx !== -1) {
+                let avgTemp = 0, maxWind = 0, rainSum = 0;
+                const len = br.length;
 
-                    for (let k = 0; k < len; k++) {
-                        const idx = startIdx + k;
-                        if (idx < h.time.length) {
-                            avgTemp += h.temperature_2m[idx];
-                            maxWind = Math.max(maxWind, h.wind_speed_10m[idx]);
-                            rainSum += h.precipitation[idx]
-                        }
+                for (let k = 0; k < len; k++) {
+                    const idx = startIdx + k;
+                    if (idx < h.time.length) {
+                        avgTemp += h.temperature_2m[idx];
+                        maxWind = Math.max(maxWind, h.wind_speed_10m[idx]);
+                        rainSum += h.precipitation[idx]
                     }
-                    avgTemp /= len;
-
-                    document.getElementById('brDetailTempDisplay').innerText = Math.round(avgTemp) + "°";
-
-                    if (avgTemp >= 18 && avgTemp <= 26) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer-sun" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Perfekte Temperatur (~${Math.round(avgTemp)}°)</span></div>`;
-                    else if (avgTemp >= 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Angenehm (~${Math.round(avgTemp)}°)</span></div>`;
-
-                    if (rainSum === 0) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="droplets" class="text-blue-300"></i><span class="text-sm text-blue-100">Kein Regen vorhergesagt</span></div>`;
-
-                    if (maxWind < 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Wenig Wind (< ${Math.round(maxWind)} km/h)</span></div>`;
-                    else if (maxWind < 30) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-yellow-400"></i><span class="text-sm text-yellow-100">Mäßiger Wind (~${Math.round(maxWind)} km/h)</span></div>`;
-
-                    if (br.avgScore >= 9) list.innerHTML += `<div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/50"><i data-lucide="check-check" class="text-emerald-400"></i><span class="text-sm font-bold text-emerald-100">Absoluter Top-Zeitraum!</span></div>`;
                 }
+                avgTemp /= len;
 
-                const modal = document.getElementById('bestRideModal');
-                modal.classList.remove('hidden');
-                lucide.createIcons();
-            });
+                document.getElementById('brDetailTempDisplay').innerText = Math.round(avgTemp) + "°";
+
+                if (avgTemp >= 18 && avgTemp <= 26) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer-sun" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Perfekte Temperatur (~${Math.round(avgTemp)}°)</span></div>`;
+                else if (avgTemp >= 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="thermometer" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Angenehm (~${Math.round(avgTemp)}°)</span></div>`;
+
+                if (rainSum === 0) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="droplets" class="text-blue-300"></i><span class="text-sm text-blue-100">Kein Regen vorhergesagt</span></div>`;
+
+                if (maxWind < 15) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-emerald-400"></i><span class="text-sm text-emerald-100">Wenig Wind (< ${Math.round(maxWind)} km/h)</span></div>`;
+                else if (maxWind < 30) list.innerHTML += `<div class="flex items-center gap-3"><i data-lucide="wind" class="text-yellow-400"></i><span class="text-sm text-yellow-100">Mäßiger Wind (~${Math.round(maxWind)} km/h)</span></div>`;
+
+                if (br.avgScore >= 9) list.innerHTML += `<div class="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/50"><i data-lucide="check-check" class="text-emerald-400"></i><span class="text-sm font-bold text-emerald-100">Absoluter Top-Zeitraum!</span></div>`;
+            }
+
+            // REPLACED: openWithMorph logic removed, using showModal directly
+            showModal('bestRideModal');
+            lucide.createIcons();
         }
 
         function updateRadar() { if (typeof L !== 'undefined') { initRadarMap(); } }
@@ -3300,25 +3295,23 @@
         });
 
         function selectHour(i) {
-            openWithMorph('hourlyContainer', 'hourlyDetailsModal', () => {
-                const h = lastWeatherData.hourly;
-                const t = Math.round(h.temperature_2m[i]);
-                const c = h.weather_code[i];
-                const d = new Date(h.time[i]);
-                const s = calculateMotoScore(t, h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], c);
-                const cl = getScoreColor(s.score);
-                document.getElementById('modalTime').innerText = `${d.toLocaleDateString('de-DE', { weekday: 'long' })} ${d.getHours()}:00`;
-                document.getElementById('modalTemp').innerText = t;
-                document.getElementById('modalDesc').innerText = getWeatherInfo(c).t;
-                document.getElementById('modalIcon').innerHTML = `<i data-lucide="${getWeatherInfo(c).i}" size="48"></i>`;
-                document.getElementById('modalWind').innerText = h.wind_speed_10m[i] + " km/h";
-                document.getElementById('modalRain').innerText = h.precipitation[i] + " mm";
-                document.getElementById('modalHum').innerText = h.relative_humidity_2m[i] + "%";
-                document.getElementById('modalScoreVal').innerText = s.score;
-                document.getElementById('modalScoreBg').className = `rounded-xl p-3 border flex items-center justify-between ${cl.bg} bg-slate-900/50`;
-                document.getElementById('hourlyDetailsModal').classList.remove('hidden');
-                lucide.createIcons();
-            });
+            const h = lastWeatherData.hourly;
+            const t = Math.round(h.temperature_2m[i]);
+            const c = h.weather_code[i];
+            const d = new Date(h.time[i]);
+            const s = calculateMotoScore(t, h.wind_speed_10m[i], h.precipitation[i], h.is_day[i], c);
+            const cl = getScoreColor(s.score);
+            document.getElementById('modalTime').innerText = `${d.toLocaleDateString('de-DE', { weekday: 'long' })} ${d.getHours()}:00`;
+            document.getElementById('modalTemp').innerText = t;
+            document.getElementById('modalDesc').innerText = getWeatherInfo(c).t;
+            document.getElementById('modalIcon').innerHTML = `<i data-lucide="${getWeatherInfo(c).i}" size="48"></i>`;
+            document.getElementById('modalWind').innerText = h.wind_speed_10m[i] + " km/h";
+            document.getElementById('modalRain').innerText = h.precipitation[i] + " mm";
+            document.getElementById('modalHum').innerText = h.relative_humidity_2m[i] + "%";
+            document.getElementById('modalScoreVal').innerText = s.score;
+            document.getElementById('modalScoreBg').className = `rounded-xl p-3 border flex items-center justify-between ${cl.bg} bg-slate-900/50`;
+            showModal('hourlyDetailsModal');
+            lucide.createIcons();
         }
 
         function renderHourly() {
@@ -3659,6 +3652,7 @@
                         if (response == 'granted') {
                             window.addEventListener('deviceorientation', handleOrientation);
                             document.getElementById('btnMotoStart').style.display = 'none';
+                            lockOrientation(); // Lock on explicit start
                         } else {
                             alert("Sensor-Zugriff benötigt!");
                         }
@@ -3707,15 +3701,42 @@
             }
         }
 
+        // --- ORIENTATION LOCK ---
+        async function lockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('portrait');
+                    console.log("Orientation locked to portrait");
+                }
+            } catch (e) {
+                // Fails on some browsers if not fullscreen, just log it
+                console.warn("Orientation lock failed (likely needs fullscreen):", e);
+            }
+        }
+
+        function unlockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                    console.log("Orientation unlocked");
+                }
+            } catch (e) {
+                console.warn("Orientation unlock failed:", e);
+            }
+        }
+
         // --- VIEW NAVIGATION ---
         function scrollToMoto() {
             document.getElementById('view-moto').scrollIntoView({ behavior: 'smooth' });
             // Init map slightly delayed so layout is ready
             setTimeout(initMotoMap, 500);
+            // Attempt lock (might fail if not triggered by direct interaction, but try anyway)
+            lockOrientation();
         }
 
         function scrollToWeather() {
             document.getElementById('view-weather').scrollIntoView({ behavior: 'smooth' });
+            unlockOrientation();
         }
     </script>
 </body>
