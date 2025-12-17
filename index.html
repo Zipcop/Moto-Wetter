@@ -1760,6 +1760,77 @@
         </div>
     </div>
 
+    <!-- RIDE DETAIL MODAL (Overlay) -->
+    <div id="rideDetailModal"
+        class="fixed inset-0 z-[99] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md pointer-events-auto" onclick="closeRideDetail()">
+        </div>
+        <div
+            class="glass-panel w-full max-w-md m-4 pointer-events-auto transform transition-transform duration-300 scale-95 rounded-3xl border border-white/10 p-6 flex flex-col gap-6 relative">
+
+            <button onclick="closeRideDetail()"
+                class="absolute top-4 right-4 p-2 bg-slate-800/50 rounded-full text-slate-400 hover:text-white"><i
+                    data-lucide="x" size="20"></i></button>
+
+            <!-- Header -->
+            <div class="text-center">
+                <div id="detailDate" class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">DATA
+                    Loading...</div>
+                <h2 id="detailTitle" class="text-2xl font-black text-white leading-none">Tour Name</h2>
+                <div id="detailTimeDuration" class="text-sm text-slate-400 mt-2 font-mono">12:30 • 45min</div>
+            </div>
+
+            <!-- Main Stats Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <div
+                    class="bg-slate-800/40 p-4 rounded-2xl flex flex-col items-center justify-center border border-slate-700/30">
+                    <div class="text-3xl font-black text-white flex items-end gap-1">
+                        <span id="detailMaxSpeed">0</span>
+                        <span class="text-sm font-bold text-slate-500 mb-1">km/h</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold mt-1">Top Speed</div>
+                </div>
+                <!-- Distance Display -->
+                <div
+                    class="bg-slate-800/40 p-4 rounded-2xl flex flex-col items-center justify-center border border-slate-700/30">
+                    <div class="text-3xl font-black text-white flex items-end gap-1">
+                        <span id="detailDistance">0.0</span>
+                        <span class="text-sm font-bold text-slate-500 mb-1">km</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold mt-1">Distanz</div>
+                </div>
+            </div>
+
+            <!-- Secondary Stats -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-800/20 p-2 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase">Max G</div>
+                    <div id="detailMaxG" class="text-lg font-bold text-white">0.0</div>
+                </div>
+                <div class="bg-slate-800/20 p-2 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase">Lean L</div>
+                    <div id="detailLeanL" class="text-lg font-bold text-blue-400">0°</div>
+                </div>
+                <div class="bg-slate-800/20 p-2 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase">Lean R</div>
+                    <div id="detailLeanR" class="text-lg font-bold text-blue-400">0°</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 mt-2">
+                <button id="btnDetailRename"
+                    class="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+                    <i data-lucide="edit-2" size="16"></i> Umbenennen
+                </button>
+                <button id="btnDetailDelete"
+                    class="flex-none w-12 py-3 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 font-bold text-sm transition flex items-center justify-center border border-red-900/30">
+                    <i data-lucide="trash-2" size="18"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- DEV MENU MODAL -->
     <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
@@ -1961,6 +2032,7 @@
         let sessionStartTime = 0;
         let sessionMaxSpeed = 0;
         let sessionMaxG = 0;
+        let sessionDistance = 0; // Meters
         let sessionMaxLeft = 0;
         let sessionMaxRight = 0;
         let radarMap = null;
@@ -3891,6 +3963,7 @@
             sessionStartTime = Date.now();
             sessionMaxSpeed = 0;
             sessionMaxG = 0;
+            sessionDistance = 0;
             // sessionMaxLeft/Right are cumulative, we keep them visible
 
             // Reset Speed Helper
@@ -3920,122 +3993,80 @@
         }
 
         function handleGPSPosition(pos) {
-            const speedMs = pos.coords.speed; // m/s, can be null
-            if (speedMs === null || speedMs < 0) return;
+            const speedMs = pos.coords.speed; // m/s
+            // GPS Speed: If null (no move), it's 0.
+            let newSpeedKmh = 0;
+            if (speedMs !== null && speedMs >= 0) {
+                newSpeedKmh = speedMs * 3.6;
+            }
 
+            // Calc Distance (approx)
             const now = Date.now();
-            const newSpeedKmh = speedMs * 3.6;
-
-            // CORRECT the fusion value towards the True GPS value
-            // If the fusion drifted too far, snap it (or lerp fast)
-            // But mainly, we set the baseline for the next integration frame
-            // We trust GPS absolute value, but it is "laggy" (from the past second)
-
-            // Simple approach: Set pure GPS speed as target, but we want "Simulation" (Fusion)
-            // Strategy: 
-            // 1. Current GPS speed is the "truth" at this moment.
-            // 2. We allow the accelerometer to push this value up/down until the next update.
-            // 3. To avoid jumps, we can blend.
-
-            lastGPSSpeed = newSpeedKmh;
+            if (sessionStartTime > 0 && lastGPSUpdate > 0) {
+                const dtSec = (now - lastGPSUpdate) / 1000;
+                if (dtSec > 0 && dtSec < 10 && speedMs > 0) {
+                    sessionDistance += speedMs * dtSec; // Add meters
+                }
+            }
             lastGPSUpdate = now;
 
-            // Sync fusion to GPS to correct drift (Soft Correct)
-            const diff = newSpeedKmh - speedFusion;
-            speedFusion += diff * 0.5; // Correct 50% of error immediately
+            // PURE GPS (No Fusion)
+            currentMotoSpeed = newSpeedKmh;
+
+            // Update Max (Session)
+            if (currentMotoSpeed > sessionMaxSpeed) sessionMaxSpeed = currentMotoSpeed;
+
+            // Update UI
+            if (motoSpeedDisplay) motoSpeedDisplay.innerText = Math.round(currentMotoSpeed);
+
+            // Gauge Update
+            const pct = Math.min(currentMotoSpeed / 200, 1);
+            const offset = 126 * (1 - pct);
+            // Assuming motoGaugeArc is still for Lean Angle primarily, but if we want speed there:
+            // if (motoGaugeArc) motoGaugeArc.style.strokeDashoffset = offset; 
         }
 
         function handleMotion(event) {
-            // 1. G-Force Logic (Keep existing)
+            // 1. G-Force Logic (ONLY)
             const ay = event.acceleration.y || 0;
             const ax = event.acceleration.x || 0;
             const az = event.acceleration.z || 0;
 
             // G-Force (Total)
             const g = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
-            // If phone is flat, Z is 1g. We want lateral/longitudinal Gs usually.
-            // Simple approx:
-            const currentG = Math.abs(g - 1); // Remove gravity roughly
-            // Peak G
+            const currentG = Math.abs(g - 1);
             if (currentG > sessionMaxG) sessionMaxG = currentG;
 
-            // UPDATE UI for G-Force Meter
-            // Map ay (Gas/Brake) to Bar
-            // ay > 0 (Gas), ay < 0 (Brake) usually if top of phone points forward
-            // Let's assume standard mount: Screen up, Top forward.
-            // Then Braking throws you forward -> Y accel is NEGATIVE? 
-            // Actually: Braking = Deceleration. Phone accelerates backwards relative to bike?
-            // Let's stick to the visual bar logic we had.
+            // G-Meter Bar (Visual feedback)
             const gMeterLine = document.getElementById('gMeterLine');
             if (gMeterLine) {
-                const barVal = (ay / 10) * 100; // 10m/s^2 = 100%
+                const barVal = (ay / 10) * 100;
                 gMeterLine.style.height = Math.min(Math.abs(barVal), 100) + '%';
-                gMeterLine.style.background = barVal > 0 ? '#10b981' : '#ef4444'; // Green=Gas, Red=Brake
+                gMeterLine.style.background = barVal > 0 ? '#10b981' : '#ef4444';
                 gMeterLine.style.top = barVal > 0 ? '50%' : '50%';
                 gMeterLine.style.transform = barVal > 0 ? 'translateY(-100%)' : 'translateY(0)';
             }
-
-            // 2. SPEED SIMULATION (The "Filling the gaps")
-            // Integrate accelY to guess speed change since last GPS frame
-            const dt = 0.016; // Approx 60hz (sensor rate varies, but good enough for visual)
-
-            // Deadzone to avoid drift when standing still
-            let effectiveAy = ay;
-            if (Math.abs(effectiveAy) < 0.3) effectiveAy = 0;
-
-            // Convert accel (m/s^2) to km/h per frame
-            // v = a * t
-            const dSpeed = (effectiveAy * dt) * 3.6;
-
-            // Apply to our fusion tracker
-            speedFusion += dSpeed;
-
-            // Prevent negative speed
-            if (speedFusion < 0) speedFusion = 0;
-
-            // Update Max
-            if (speedFusion > sessionMaxSpeed) sessionMaxSpeed = speedFusion;
-
-            // Update UI immediately (High Refresh Rate!)
-            updateSpeedUI(speedFusion);
-        }
-
-        function updateSpeedUI(val) {
-            if (motoSpeedDisplay) motoSpeedDisplay.innerText = Math.round(val);
-            // Gauge: 0-250
-            const pct = Math.min(val / 200, 1);
-            const offset = 126 * (1 - pct); // 126 is circumference approx
-            // motoGaugeArc is used for lean angle. We need a separate element for speed gauge.
-            // For now, let's assume there's another element or this is a conceptual change.
-            // If motoGaugeArc is intended for speed, then the lean angle part needs adjustment.
-            // Given the instruction, I'll apply it to motoGaugeArc, but note the potential conflict.
-            // If the HTML has a separate element for speed gauge, this should target that.
-            // For now, I'll comment out the line to avoid conflicting with lean angle arc.
-            // if (motoGaugeArc) motoGaugeArc.style.strokeDashoffset = offset;
         }
 
         // --- RIDE HISTORY FUNCTIONS ---
         function saveRideLog() {
-            // DEBUG ALERTS
-            // alert("Versuche zu speichern... StartTime: " + sessionStartTime);
-
-            if (sessionStartTime === 0) {
-                // alert("Speichern abgebrochen: Keine Session gestartet (Zeit=0)");
-                return;
-            }
-
+            if (sessionStartTime === 0) return;
             const durationMs = Date.now() - sessionStartTime;
-            // alert("Dauer der Fahrt: " + (durationMs/1000) + "s");
 
-            // REMOVE LIMIT FOR DEBUGGING (User said it doesn't save)
-            // if (durationMs < 1000) return; 
-
-            // Weather Context
+            // Weather Context (Robust Fallback)
             let weatherSummary = "Unbekannt";
             let mainTemp = "--";
+
+            // Try Data Object
             if (lastWeatherData && lastWeatherData.current_weather) {
                 mainTemp = Math.round(lastWeatherData.current_weather.temperature);
                 weatherSummary = getWeatherInfo(lastWeatherData.current_weather.weathercode).t;
+            } else {
+                // FALLBACK: Read from DOM
+                const tDom = document.getElementById('temperature');
+                const dDom = document.getElementById('weatherDesc');
+                if (tDom && tDom.innerText !== '--') mainTemp = tDom.innerText;
+                if (dDom && dDom.innerText !== '--') weatherSummary = dDom.innerText;
             }
 
             const logEntry = {
@@ -4048,7 +4079,8 @@
                     maxSpeed: Math.round(sessionMaxSpeed),
                     maxG: sessionMaxG.toFixed(2),
                     leanL: Math.round(Math.abs(maxLeft)),
-                    leanR: Math.round(Math.abs(maxRight))
+                    leanR: Math.round(Math.abs(maxRight)),
+                    distance: Math.round(sessionDistance) // Meters
                 },
                 weather: {
                     temp: mainTemp,
@@ -4103,22 +4135,26 @@
                 return;
             }
 
-            logs.forEach(log => {
+            // Reverse order (newest first)
+            logs.slice().reverse().forEach(log => {
                 const durMin = Math.floor(log.duration / 60000);
                 const durSec = Math.floor((log.duration % 60000) / 1000);
 
-                // Name Logic
                 const displayName = log.name ? log.name : `${log.date} • ${log.time}`;
                 const displayMeta = log.name ? `${log.date} • ${log.time}` : '';
 
+                // Distance Text
+                const distKm = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
+
                 const el = document.createElement('div');
-                el.className = "bg-slate-800/50 rounded-xl p-3 border border-slate-700/50";
+                el.className = "bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 cursor-pointer hover:bg-slate-800 transition active:scale-95";
+                el.onclick = () => openRideDetail(log.id); // OPEN DETAIL ON CLICK
+
                 el.innerHTML = `
-                    <div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2">
+                    <div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2 pointer-events-none">
                         <div class="flex-1">
                              <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-white">${displayName}</span>
-                                <button onclick="renameRideLog(${log.id})" class="text-slate-500 hover:text-blue-400 transition"><i data-lucide="edit-2" size="12"></i></button>
                              </div>
                             ${displayMeta ? `<div class="text-[10px] text-slate-400 font-mono">${displayMeta}</div>` : ''}
                             
@@ -4129,15 +4165,16 @@
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-slate-500 font-mono">${durMin}m ${durSec}s</div>
+                            ${log.stats.distance ? `<div class="text-[10px] text-blue-400 font-bold">${distKm}km</div>` : ''}
                         </div>
                     </div>
-                    <div class="grid grid-cols-4 gap-2 text-center">
+                    <div class="grid grid-cols-4 gap-2 text-center pointer-events-none">
                         <div>
-                            <div class="text-[8px] text-slate-500 uppercase">Speed</div>
-                            <div class="text-sm font-bold text-white">${log.stats.maxSpeed}</div>
+                            <div class="text-[8px] text-slate-500 uppercase">Max Speed</div>
+                            <div class="text-sm font-bold text-white">${log.stats.maxSpeed} <span class="text-[9px] text-slate-400 font-normal">km/h</span></div>
                         </div>
                         <div>
-                            <div class="text-[8px] text-slate-500 uppercase">G-Force</div>
+                            <div class="text-[8px] text-slate-500 uppercase">Max G</div>
                             <div class="text-sm font-bold text-white">${log.stats.maxG}</div>
                         </div>
                         <div>
@@ -4153,6 +4190,83 @@
                 list.appendChild(el);
             });
             lucide.createIcons();
+        }
+
+        // --- NEW: DETAIL VIEW LOGIC ---
+        let currentDetailId = null;
+
+        function openRideDetail(id) {
+            let logs = [];
+            try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
+            const log = logs.find(l => l.id === id);
+            if (!log) return;
+
+            currentDetailId = id;
+
+            // Fill Data
+            safeSetText('detailDate', log.date);
+            safeSetText('detailTitle', log.name || "Fahrt");
+
+            const durMin = Math.floor(log.duration / 60000);
+            const mLabel = durMin + " Min";
+            safeSetText('detailTimeDuration', `${log.time} • ${mLabel}`);
+
+            safeSetText('detailMaxSpeed', log.stats.maxSpeed);
+            safeSetText('detailMaxG', log.stats.maxG);
+            safeSetText('detailLeanL', log.stats.leanL + "°");
+            safeSetText('detailLeanR', log.stats.leanR + "°");
+
+            // Distance
+            const dist = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
+            safeSetText('detailDistance', dist);
+
+            // Weather
+            safeSetText('detailTemp', log.weather.temp);
+            safeSetText('detailWeather', log.weather.desc);
+
+            const m = document.getElementById('rideDetailModal');
+            if (m) {
+                m.classList.remove('hidden');
+                setTimeout(() => m.classList.remove('opacity-0'), 10);
+            }
+
+            // Wire buttons
+            const btnRename = document.getElementById('btnDetailRename');
+            if (btnRename) btnRename.onclick = () => {
+                renameRideLog(id);
+                // Update title immediately
+                setTimeout(() => {
+                    // Refetch
+                    let rlogs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
+                    const rlog = rlogs.find(l => l.id === id);
+                    if (rlog) safeSetText('detailTitle', rlog.name || "Fahrt");
+
+                    // Also refresh list behind
+                    renderRideHistory();
+                }, 500);
+            };
+
+            const btnDelete = document.getElementById('btnDetailDelete');
+            if (btnDelete) btnDelete.onclick = () => deleteSingleLog(id);
+        }
+
+        function closeRideDetail() {
+            const m = document.getElementById('rideDetailModal');
+            if (m) {
+                m.classList.add('opacity-0');
+                setTimeout(() => m.classList.add('hidden'), 300);
+            }
+        }
+
+        function deleteSingleLog(id) {
+            if (confirm("Diesen Eintrag löschen?")) {
+                let logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
+                logs = logs.filter(l => l.id !== id);
+                localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
+
+                closeRideDetail();
+                renderRideHistory();
+            }
         }
 
         function renameRideLog(id) {
