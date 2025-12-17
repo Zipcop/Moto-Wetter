@@ -837,351 +837,448 @@
     </style>
 </head>
 
-<body class="flex flex-col items-center">
+<body class="flex flex-col items-center overflow-hidden text-slate-100 bg-slate-900">
 
-    <!-- BACKGROUND EFFECTS -->
-    <div id="splashEffects"></div>
-    <div id="lightningLayer"></div>
-    <!-- FEATURE 7: Rain on Glass Canvas -->
-    <canvas id="rainGlassCanvas"></canvas>
+    <!-- VIEW CONTAINER -->
+    <div id="view-container"
+        class="w-screen h-[100dvh] flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth touch-pan-x no-scrollbar">
 
-    <div id="splashScreen" onclick="dismissSplash()">
-        <div id="splashLocalEffects"></div>
-        <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
-            <div
-                class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold">
-                <i data-lucide="map-pin" size="14"></i> Aktueller Standort
-            </div>
-            <h1 id="splashCity" class="text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
-        </div>
-        <div class="flex flex-col items-center justify-center opacity-0 animate-float-up delay-100 splash-content">
-            <!-- Icon Wrapper -->
-            <div class="mb-4">
-                <div id="splashIcon" class="transform scale-150 drop-shadow-2xl text-blue-200">
-                    <div class="loader border-t-white/50"></div>
-                </div>
-            </div>
-            <div class="text-8xl font-black tracking-tighter drop-shadow-xl"><span id="splashTemp">--</span><span
-                    class="text-4xl align-top text-blue-200/80">°</span></div>
-            <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
-        </div>
-        <div
-            class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content">
-            <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
-            <div class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition">
-                <i data-lucide="chevron-up" class="text-white"></i>
-            </div>
-        </div>
-    </div>
+        <!-- === VIEW 1: WEATHER === -->
+        <section id="view-weather" class="w-screen h-full flex-shrink-0 snap-center relative overflow-hidden">
+            <!-- BACKGROUND EFFECTS (Modified for Swipe) -->
+            <div id="splashEffects" style="position: absolute !important; inset: 0; z-index: 1;"></div>
+            <div id="lightningLayer" style="position: absolute !important; inset: 0; z-index: 20;"></div>
+            <!-- FEATURE 7: Rain on Glass Canvas -->
+            <canvas id="rainGlassCanvas"
+                style="position: absolute !important; inset: 0; z-index: 90; pointer-events: none;"></canvas>
 
-    <main class="w-full max-w-lg space-y-4 pt-4 pb-10 relative z-10">
-        <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
-            <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center gap-2">
-                    <!-- NEU: Zurück Button -->
-                    <button onclick="showSplash()"
-                        class="text-slate-400 hover:text-white transition p-1 rounded-full hover:bg-slate-700/50"
-                        title="Zurück zur Vorschau"><i data-lucide="arrow-left" size="18"></i></button>
-                    <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
-                    <h1 onclick="handleDevTrigger()"
-                        class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation">
-                        <i data-lucide="bike" size="16"></i> Wetter
-                    </h1>
+            <div id="splashScreen" onclick="dismissSplash()">
+                <div id="splashLocalEffects"></div>
+                <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
+                    <div
+                        class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold">
+                        <i data-lucide="map-pin" size="14"></i> Aktueller Standort
+                    </div>
+                    <h1 id="splashCity" class="text-4xl font-bold tracking-tight drop-shadow-lg">Ortung...</h1>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleSettings()"
-                        class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
-                        title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
-                    <button
-                        onclick="document.getElementById('favoritesModal').classList.remove('hidden'); renderFavoritesList()"
-                        class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50"
-                        title="Favoriten"><i data-lucide="heart" size="18"></i></button>
+                <div
+                    class="flex flex-col items-center justify-center opacity-0 animate-float-up delay-100 splash-content">
+                    <!-- Icon Wrapper -->
+                    <div class="mb-4">
+                        <div id="splashIcon" class="transform scale-150 drop-shadow-2xl text-blue-200">
+                            <div class="loader border-t-white/50"></div>
+                        </div>
+                    </div>
+                    <div class="text-8xl font-black tracking-tighter drop-shadow-xl"><span
+                            id="splashTemp">--</span><span class="text-4xl align-top text-blue-200/80">°</span></div>
+                    <div id="splashDesc" class="text-xl font-medium text-blue-100/80 mt-2">Einen Moment...</div>
                 </div>
-            </div>
-            <form onsubmit="event.preventDefault(); searchCity();" class="flex gap-2 relative">
-                <div class="relative flex-grow">
-                    <input type="search" id="cityInput" placeholder="Stadt eingeben..."
-                        class="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 px-4 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition appearance-none"
-                        autocomplete="off">
-                    <div id="suggestionsList"
-                        class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                <div
+                    class="mb-10 flex flex-col items-center gap-2 opacity-0 animate-float-up delay-200 cursor-pointer splash-content">
+                    <span class="text-xs font-medium text-white/50 uppercase tracking-wider">Zum Starten tippen</span>
+                    <div
+                        class="bg-white/10 p-3 rounded-full backdrop-blur-md animate-bounce-slow hover:bg-white/20 transition">
+                        <i data-lucide="chevron-up" class="text-white"></i>
                     </div>
                 </div>
-                <button type="submit"
-                    class="glass-btn p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i
-                        data-lucide="search"></i></button>
-                <button type="button" onclick="locateMe()"
-                    class="glass-btn p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i
-                        data-lucide="map-pin"></i></button>
-            </form>
-            <div class="flex justify-center items-center gap-3 mt-4">
-                <div id="cityName" class="text-xl font-bold tracking-wide text-blue-100">--</div>
-                <button id="favToggleBtn" onclick="toggleFavoriteCurrent()"
-                    class="transition active:scale-95 opacity-80 hover:opacity-100"><i data-lucide="heart"
-                        class="text-slate-500" size="20"></i></button>
             </div>
-            <div id="offlineBanner"
-                class="hidden flex items-center justify-center gap-2 text-[10px] text-orange-300 font-bold mb-1 bg-orange-500/20 rounded py-1 px-3 mx-auto w-fit animate-pulse cursor-pointer hover:bg-orange-500/30 transition"
-                onclick="fetchWeather(lastWeatherData?.name || 'Standort', '')"><span>OFFLINE-MODUS</span> <i
-                    data-lucide="refresh-cw" size="10"></i></div>
-            <div id="timeLabel"
-                class="text-xs text-slate-400 text-center uppercase tracking-wider mb-1 font-semibold opacity-0 transition-opacity duration-300">
-                Aktuell</div>
-            <div id="errorMessage"
-                class="hidden text-red-400 text-center text-sm mt-2 font-semibold bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-                Stadt nicht gefunden.</div>
-        </div>
 
-        <div id="loadingIndicator" class="hidden flex justify-center py-10">
-            <div class="loader"></div>
-        </div>
-        <div id="gpsErrorPrompt" class="hidden text-center py-10 animate-fade-in">
-            <div
-                class="bg-slate-800/50 p-4 rounded-2xl inline-flex flex-col items-center gap-3 border border-slate-600/50">
-                <i data-lucide="map-off" size="32" class="text-slate-400"></i>
-                <p class="text-sm text-slate-300">Standortzugriff verweigert</p><button onclick="locateMe()"
-                    class="glass-btn text-xs font-bold py-2 px-4 rounded-xl transition">Erneut versuchen</button>
-            </div>
-        </div>
-        <div id="warningContainer" class="hidden w-full max-w-lg animate-fade-in"></div>
-
-        <div id="dynamicContent" class="hidden w-full max-w-lg space-y-4 animate-fade-in">
-            <!-- BEST RIDE CARD (Feature: Best Ride Finder) -->
-            <div id="bestRideSection" onclick="showBestRideDetails()"
-                class="glass-panel rounded-2xl p-4 hidden active:scale-95 transition-transform cursor-pointer relative">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-sm font-bold text-yellow-300 flex items-center gap-2 uppercase tracking-wide">
-                        <i data-lucide="star" size="16"></i> Beste Zeit
-                    </h3>
-                    <span id="bestRideScore"
-                        class="text-xs font-black bg-yellow-400/20 text-yellow-200 px-2 py-0.5 rounded-full border border-yellow-400/30">--</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div id="bestRideTime" class="text-xl font-bold text-white mb-0.5">--:-- - --:--</div>
+            <main
+                class="w-full h-full max-w-lg mx-auto space-y-4 pt-4 pb-20 relative z-10 overflow-y-auto custom-scrollbar">
+                <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
+                    <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
-                            <div id="bestRideDay"
-                                class="text-xs text-slate-400 uppercase tracking-widest font-semibold">--</div>
-                            <div id="bestRideTemp"
-                                class="text-xs font-bold text-emerald-300 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 hidden">
-                                --°</div>
+                            <!-- NEU: Zurück Button -->
+                            <button onclick="showSplash()"
+                                class="text-slate-400 hover:text-white transition p-1 rounded-full hover:bg-slate-700/50"
+                                title="Zurück zur Vorschau"><i data-lucide="arrow-left" size="18"></i></button>
+                            <!-- TRIGGER FÜR DEV MENU: 3x Tappen für einfachere Bedienung -->
+                            <h1 onclick="handleDevTrigger()"
+                                class="text-sm font-bold text-blue-200 uppercase tracking-widest flex items-center gap-2 select-none cursor-pointer active:scale-95 transition-transform touch-manipulation">
+                                <i data-lucide="bike" size="16"></i> Wetter
+                            </h1>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="toggleSettings()"
+                                class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
+                                title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
+                            <button
+                                onclick="document.getElementById('favoritesModal').classList.remove('hidden'); renderFavoritesList()"
+                                class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50"
+                                title="Favoriten"><i data-lucide="heart" size="18"></i></button>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div id="bestRideDesc" class="text-xs text-slate-300 font-medium italic">--</div>
+                    <form onsubmit="event.preventDefault(); searchCity();" class="flex gap-2 relative">
+                        <div class="relative flex-grow">
+                            <input type="search" id="cityInput" placeholder="Stadt eingeben..."
+                                class="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 px-4 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition appearance-none"
+                                autocomplete="off">
+                            <div id="suggestionsList"
+                                class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="glass-btn p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i
+                                data-lucide="search"></i></button>
+                        <button type="button" onclick="locateMe()"
+                            class="glass-btn p-3 rounded-xl transition shadow-lg touch-manipulation flex-shrink-0"><i
+                                data-lucide="map-pin"></i></button>
+                    </form>
+                    <div class="flex justify-center items-center gap-3 mt-4">
+                        <div id="cityName" class="text-xl font-bold tracking-wide text-blue-100">--</div>
+                        <button id="favToggleBtn" onclick="toggleFavoriteCurrent()"
+                            class="transition active:scale-95 opacity-80 hover:opacity-100"><i data-lucide="heart"
+                                class="text-slate-500" size="20"></i></button>
+                    </div>
+                    <div id="offlineBanner"
+                        class="hidden flex items-center justify-center gap-2 text-[10px] text-orange-300 font-bold mb-1 bg-orange-500/20 rounded py-1 px-3 mx-auto w-fit animate-pulse cursor-pointer hover:bg-orange-500/30 transition"
+                        onclick="fetchWeather(lastWeatherData?.name || 'Standort', '')"><span>OFFLINE-MODUS</span> <i
+                            data-lucide="refresh-cw" size="10"></i></div>
+                    <div id="timeLabel"
+                        class="text-xs text-slate-400 text-center uppercase tracking-wider mb-1 font-semibold opacity-0 transition-opacity duration-300">
+                        Aktuell</div>
+                    <div id="errorMessage"
+                        class="hidden text-red-400 text-center text-sm mt-2 font-semibold bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                        Stadt nicht gefunden.</div>
+                </div>
+
+                <div id="loadingIndicator" class="hidden flex justify-center py-10">
+                    <div class="loader"></div>
+                </div>
+                <div id="gpsErrorPrompt" class="hidden text-center py-10 animate-fade-in">
+                    <div
+                        class="bg-slate-800/50 p-4 rounded-2xl inline-flex flex-col items-center gap-3 border border-slate-600/50">
+                        <i data-lucide="map-off" size="32" class="text-slate-400"></i>
+                        <p class="text-sm text-slate-300">Standortzugriff verweigert</p><button onclick="locateMe()"
+                            class="glass-btn text-xs font-bold py-2 px-4 rounded-xl transition">Erneut
+                            versuchen</button>
                     </div>
                 </div>
-            </div>
-            <div id="statusSection" class="grid grid-cols-2 gap-4 transition-all duration-300">
-                <div id="card-weather" onclick="showDailyDetails(0)"
-                    class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer relative group overflow-hidden">
+                <div id="warningContainer" class="hidden w-full max-w-lg animate-fade-in"></div>
 
-                    <!-- Hero Temperature -->
-                    <div class="relative z-10 flex flex-col items-center mt-2">
-                        <div class="flex items-start leading-none" style="text-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                            <span id="temperature" class="text-[7rem] font-[200] tracking-tighter text-white">--</span>
-                            <span class="text-4xl font-light mt-6 text-white/60">°</span>
+                <div id="dynamicContent" class="hidden w-full max-w-lg space-y-4 animate-fade-in">
+                    <!-- BEST RIDE CARD (Feature: Best Ride Finder) -->
+                    <div id="bestRideSection" onclick="showBestRideDetails()"
+                        class="glass-panel rounded-2xl p-4 hidden active:scale-95 transition-transform cursor-pointer relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3
+                                class="text-sm font-bold text-yellow-300 flex items-center gap-2 uppercase tracking-wide">
+                                <i data-lucide="star" size="16"></i> Beste Zeit
+                            </h3>
+                            <span id="bestRideScore"
+                                class="text-xs font-black bg-yellow-400/20 text-yellow-200 px-2 py-0.5 rounded-full border border-yellow-400/30">--</span>
                         </div>
-
-                        <!-- Icon & Desc -->
-                        <div
-                            class="flex items-center gap-3 mb-6 bg-white/5 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md">
-                            <div id="weatherIconContainer" class="text-white drop-shadow-lg scale-110"><i
-                                    data-lucide="cloud" size="20"></i></div>
-                            <div id="weatherDesc" class="text-sm font-bold tracking-widest uppercase text-white/90">--
-                            </div>
-                        </div>
-
-                        <!-- High / Low / Feels -->
-                        <!-- High / Low / Feels -->
-                        <!-- High / Low / Feels -->
-                        <div class="flex w-full px-2 mb-2 items-stretch justify-between">
-                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
-                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Tief</span>
-                                <span class="font-semibold text-lg leading-none"><span id="tempMin">--</span>°</span>
-                            </div>
-                            <!-- Separator -->
-                            <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
-
-                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
-                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Gefühlt</span>
-                                <span class="font-semibold text-lg leading-none"><span id="feelsLike">--</span>°</span>
-                            </div>
-
-                            <!-- Separator -->
-                            <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
-
-                            <div class="flex-1 flex flex-col items-center justify-center gap-1">
-                                <span class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Hoch</span>
-                                <span class="font-semibold text-lg leading-none"><span id="tempMax">--</span>°</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- FEATURE 5: WIND COMPASS (UPDATED v2) -->
-                    <!-- Geändert: von py-2 zu p-4 für eine größere Box -->
-                    <div
-                        class="flex gap-4 mt-2 text-xs text-slate-400 items-center justify-center bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
-                        <!-- Compass Circle -->
-                        <div class="relative w-14 h-14 shrink-0">
-                            <!-- Static Bezel (Phone orientation relative) -->
-                            <div
-                                class="absolute inset-0 rounded-full border-2 border-slate-600 bg-slate-900 shadow-inner flex items-center justify-center">
-                                <span
-                                    class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-500 font-bold">N</span>
-                                <span
-                                    class="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-600 font-bold">S</span>
-                                <span
-                                    class="absolute left-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">W</span>
-                                <span
-                                    class="absolute right-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">O</span>
-                            </div>
-
-                            <!-- Rotating Arrow Container -->
-                            <div id="windDirArrow"
-                                class="absolute inset-0 transition-transform duration-500 ease-out will-change-transform flex items-center justify-center">
-                                <!-- Red Arrow Head (Pointing Up/North relative to container) -->
-                                <div
-                                    class="absolute top-2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[14px] border-b-red-500 drop-shadow-[0_0_2px_rgba(239,68,68,0.8)]">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div id="bestRideTime" class="text-xl font-bold text-white mb-0.5">--:-- - --:--</div>
+                                <div class="flex items-center gap-2">
+                                    <div id="bestRideDay"
+                                        class="text-xs text-slate-400 uppercase tracking-widest font-semibold">--</div>
+                                    <div id="bestRideTemp"
+                                        class="text-xs font-bold text-emerald-300 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 hidden">
+                                        --°</div>
                                 </div>
-                                <!-- Tail -->
-                                <div class="absolute bottom-3 w-1 h-5 bg-slate-600 rounded-full"></div>
-                                <!-- Center Point -->
-                                <div class="w-2 h-2 bg-slate-300 rounded-full border border-slate-900 z-10"></div>
+                            </div>
+                            <div class="text-right">
+                                <div id="bestRideDesc" class="text-xs text-slate-300 font-medium italic">--</div>
                             </div>
                         </div>
+                    </div>
+                    <div id="statusSection" class="grid grid-cols-2 gap-4 transition-all duration-300">
+                        <div id="card-weather" onclick="showDailyDetails(0)"
+                            class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer relative group overflow-hidden">
 
-                        <!-- Text Info -->
-                        <div class="flex flex-col items-start gap-0.5">
-                            <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Wind</span>
-                            <div class="flex items-baseline gap-1">
-                                <span id="windSpeed" class="text-xl font-bold text-white leading-none">--</span>
-                                <span class="text-xs text-slate-400">km/h</span>
+                            <!-- Hero Temperature -->
+                            <div class="relative z-10 flex flex-col items-center mt-2">
+                                <div class="flex items-start leading-none"
+                                    style="text-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                    <span id="temperature"
+                                        class="text-[7rem] font-[200] tracking-tighter text-white">--</span>
+                                    <span class="text-4xl font-light mt-6 text-white/60">°</span>
+                                </div>
+
+                                <!-- Icon & Desc -->
+                                <div
+                                    class="flex items-center gap-3 mb-6 bg-white/5 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md">
+                                    <div id="weatherIconContainer" class="text-white drop-shadow-lg scale-110"><i
+                                            data-lucide="cloud" size="20"></i></div>
+                                    <div id="weatherDesc"
+                                        class="text-sm font-bold tracking-widest uppercase text-white/90">--
+                                    </div>
+                                </div>
+
+                                <!-- High / Low / Feels -->
+                                <!-- High / Low / Feels -->
+                                <!-- High / Low / Feels -->
+                                <div class="flex w-full px-2 mb-2 items-stretch justify-between">
+                                    <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                        <span
+                                            class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Tief</span>
+                                        <span class="font-semibold text-lg leading-none"><span
+                                                id="tempMin">--</span>°</span>
+                                    </div>
+                                    <!-- Separator -->
+                                    <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
+
+                                    <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                        <span
+                                            class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Gefühlt</span>
+                                        <span class="font-semibold text-lg leading-none"><span
+                                                id="feelsLike">--</span>°</span>
+                                    </div>
+
+                                    <!-- Separator -->
+                                    <div class="w-px bg-white/10 h-8 self-center mx-1"></div>
+
+                                    <div class="flex-1 flex flex-col items-center justify-center gap-1">
+                                        <span
+                                            class="text-[9px] opacity-60 uppercase font-bold tracking-wider">Hoch</span>
+                                        <span class="font-semibold text-lg leading-none"><span
+                                                id="tempMax">--</span>°</span>
+                                    </div>
+                                </div>
                             </div>
-                            <span id="windDirText" class="text-xs font-bold text-blue-400">--</span>
+
+                            <!-- FEATURE 5: WIND COMPASS (UPDATED v2) -->
+                            <!-- Geändert: von py-2 zu p-4 für eine größere Box -->
+                            <div
+                                class="flex gap-4 mt-2 text-xs text-slate-400 items-center justify-center bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
+                                <!-- Compass Circle -->
+                                <div class="relative w-14 h-14 shrink-0">
+                                    <!-- Static Bezel (Phone orientation relative) -->
+                                    <div
+                                        class="absolute inset-0 rounded-full border-2 border-slate-600 bg-slate-900 shadow-inner flex items-center justify-center">
+                                        <span
+                                            class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-500 font-bold">N</span>
+                                        <span
+                                            class="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-600 font-bold">S</span>
+                                        <span
+                                            class="absolute left-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">W</span>
+                                        <span
+                                            class="absolute right-1 top-1/2 -translate-y-1/2 text-[7px] text-slate-600 font-bold">O</span>
+                                    </div>
+
+                                    <!-- Rotating Arrow Container -->
+                                    <div id="windDirArrow"
+                                        class="absolute inset-0 transition-transform duration-500 ease-out will-change-transform flex items-center justify-center">
+                                        <!-- Red Arrow Head (Pointing Up/North relative to container) -->
+                                        <div
+                                            class="absolute top-2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[14px] border-b-red-500 drop-shadow-[0_0_2px_rgba(239,68,68,0.8)]">
+                                        </div>
+                                        <!-- Tail -->
+                                        <div class="absolute bottom-3 w-1 h-5 bg-slate-600 rounded-full"></div>
+                                        <!-- Center Point -->
+                                        <div class="w-2 h-2 bg-slate-300 rounded-full border border-slate-900 z-10">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Text Info -->
+                                <div class="flex flex-col items-start gap-0.5">
+                                    <span
+                                        class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Wind</span>
+                                    <div class="flex items-baseline gap-1">
+                                        <span id="windSpeed" class="text-xl font-bold text-white leading-none">--</span>
+                                        <span class="text-xs text-slate-400">km/h</span>
+                                    </div>
+                                    <span id="windDirText" class="text-xs font-bold text-blue-400">--</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-center gap-2 mt-2 text-xs text-slate-400">
+                                <i data-lucide="droplets" size="12"></i> <span id="humidity">--</span>% Feuchte
+                            </div>
+                        </div>
+                        <div id="card-moto" onclick="showMotoDetails()"
+                            class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 group">
+                            <div
+                                class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition">
+                                <i data-lucide="info" size="12"></i>
+                            </div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
+                            <!-- NEW: SVG Gauge for Moto Index -->
+                            <div class="relative w-24 h-24 mb-1">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <!-- Background Track -->
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)"
+                                        stroke-width="8" />
+                                    <!-- Progress Arc -->
+                                    <circle id="motoScoreGauge" cx="50" cy="50" r="40" fill="transparent"
+                                        stroke="url(#scoreGradient)" stroke-width="8" stroke-dasharray="251.2"
+                                        stroke-dashoffset="251.2" stroke-linecap="round"
+                                        style="transition: stroke-dashoffset 1s ease-out;" />
+                                    <!-- Gradient Definition -->
+                                    <defs>
+                                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#ef4444" />
+                                            <stop offset="50%" style="stop-color:#fbbf24" />
+                                            <stop offset="100%" style="stop-color:#10b981" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span id="motoScoreValue" class="text-3xl font-black text-white">--</span>
+                                </div>
+                            </div>
+                            <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
+
+                            <!-- NEU: Dynamisches 6er Grid -->
+                            <div id="motoDynamicGrid" class="grid grid-cols-2 gap-2 w-full mb-2 px-1"></div>
+
+                            <div class="border-t border-slate-600/50 w-full pt-2 mt-auto">
+                                <div class="flex justify-between items-center px-1 text-xs"><span
+                                        class="text-slate-400">Heute
+                                        Ø</span><span id="dailyScoreValue" class="font-bold text-blue-100">--</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-center gap-2 mt-2 text-xs text-slate-400">
-                        <i data-lucide="droplets" size="12"></i> <span id="humidity">--</span>% Feuchte
-                    </div>
-                </div>
-                <div id="card-moto" onclick="showMotoDetails()"
-                    class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer hover:bg-white/5 group">
-                    <div class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition"><i
-                            data-lucide="info" size="12"></i></div>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
-                    <!-- NEW: SVG Gauge for Moto Index -->
-                    <div class="relative w-24 h-24 mb-1">
-                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <!-- Background Track -->
-                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)"
-                                stroke-width="8" />
-                            <!-- Progress Arc -->
-                            <circle id="motoScoreGauge" cx="50" cy="50" r="40" fill="transparent"
-                                stroke="url(#scoreGradient)" stroke-width="8" stroke-dasharray="251.2"
-                                stroke-dashoffset="251.2" stroke-linecap="round"
-                                style="transition: stroke-dashoffset 1s ease-out;" />
-                            <!-- Gradient Definition -->
-                            <defs>
-                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#ef4444" />
-                                    <stop offset="50%" style="stop-color:#fbbf24" />
-                                    <stop offset="100%" style="stop-color:#10b981" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <span id="motoScoreValue" class="text-3xl font-black text-white">--</span>
+                    <div id="rainChartSection" class="glass-panel rounded-2xl p-4">
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i
+                                data-lucide="umbrella" size="16"></i> Niederschlag (1h)</h3>
+                        <div class="flex justify-between items-end h-24 gap-2" id="rainBarsContainer">
+                            <div class="text-xs text-slate-500 w-full text-center flex items-center justify-center">
+                                Keine Daten
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
+                            <span>Jetzt</span><span>15m</span><span>30m</span><span>45m</span>
                         </div>
                     </div>
-                    <div id="motoScoreText" class="text-xs font-semibold mb-2">--</div>
 
-                    <!-- NEU: Dynamisches 6er Grid -->
-                    <div id="motoDynamicGrid" class="grid grid-cols-2 gap-2 w-full mb-2 px-1"></div>
+                    <!-- RADAR SECTION -->
+                    <div id="radarSection"
+                        class="glass-panel rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col">
+                        <div
+                            class="bg-slate-800/80 p-3 flex justify-between items-center border-b border-slate-700 shrink-0">
+                            <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="map" size="16"
+                                    class="text-blue-400"></i><span id="radarTitle">Niederschlag (Live)</span></h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="toggleFullscreen()"
+                                    class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation"><i
+                                        id="fullscreenIcon" data-lucide="maximize-2" size="16"></i></button>
+                            </div>
+                        </div>
+                        <div id="radarFrameContainer"
+                            class="relative w-full h-96 bg-slate-900 transition-all duration-300 grow">
+                            <div id="radarMap" class="w-full h-full z-0 outline-none"></div>
+                            <div
+                                class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-[400]">
+                                <div class="live-dot dot-live" id="radarLiveDot"></div>
+                                <span id="radarStatusText"
+                                    class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider font-bold">Live</span>
+                            </div>
+                            <div
+                                class="absolute bottom-6 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
+                                <button onclick="toggleRadarPlayback()" id="radarPlayBtn"
+                                    class="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition shadow-lg shrink-0 touch-manipulation"><i
+                                        data-lucide="pause" size="16"></i></button>
+                                <input type="range" id="radarTimeline" min="0" value="0" step="1"
+                                    oninput="handleRadarScrub(this.value)"
+                                    class="flex-grow h-1 bg-slate-600 rounded-lg cursor-pointer touch-manipulation">
+                                <span id="radarTimeLabel"
+                                    class="text-xs font-mono font-bold text-white min-w-[40px] text-right">--:--</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div class="border-t border-slate-600/50 w-full pt-2 mt-auto">
-                        <div class="flex justify-between items-center px-1 text-xs"><span class="text-slate-400">Heute
-                                Ø</span><span id="dailyScoreValue" class="font-bold text-blue-100">--</span></div>
+                    <div id="timelineSection" class="glass-panel rounded-2xl p-4 transition-all duration-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300"><i
+                                    data-lucide="clock" size="16"></i> Vorhersage</h3>
+                            <button onclick="toggleLegend()"
+                                class="text-slate-400 hover:text-white transition p-1 bg-slate-800/50 rounded-full hover:bg-slate-700"><i
+                                    data-lucide="info" size="16"></i></button>
+                        </div>
+                        <div id="hourlyContainer"
+                            class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask">
+                        </div>
+                    </div>
+                    <div id="forecast7DaySection" class="glass-panel rounded-2xl p-4">
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i
+                                data-lucide="calendar-days" size="16"></i> 7-Tage Trend</h3>
+                        <div id="forecast7List" class="space-y-3"></div>
                     </div>
                 </div>
-            </div>
 
-            <div id="rainChartSection" class="glass-panel rounded-2xl p-4">
-                <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i data-lucide="umbrella"
-                        size="16"></i> Niederschlag (1h)</h3>
-                <div class="flex justify-between items-end h-24 gap-2" id="rainBarsContainer">
-                    <div class="text-xs text-slate-500 w-full text-center flex items-center justify-center">Keine Daten
+                <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike"
+                        class="mx-auto mb-4 h-16 w-16 opacity-30"></i>
+                    <p>Standort wird ermittelt...</p>
+                </div>
+                <!-- FOOTER ANGEPASST -->
+                <div class="text-center text-[10px] text-slate-500 mt-6 pb-4 font-medium tracking-wide opacity-60">
+                    MOTO WETTER • RIDE SAFE • N.W.
+                </div>
+            </main>
+        </section> <!-- End Weather View -->
+
+        <!-- === VIEW 2: MOTO ANGLE === -->
+        <section id="view-moto"
+            class="w-screen h-full flex-shrink-0 snap-center relative bg-slate-950 flex flex-col items-center justify-center p-4">
+            <div class="relative w-full max-w-md h-full flex flex-col items-center justify-between py-10">
+                <!-- Header -->
+                <div class="text-center space-y-1">
+                    <h2
+                        class="text-3xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500">
+                        Moto <span class="text-white">Lean</span></h2>
+                    <p class="text-xs font-mono text-slate-500">LIVE ANGLE TRACKING</p>
+                </div>
+
+                <!-- Main Gauge -->
+                <div class="relative w-64 h-64 flex items-center justify-center">
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+                        <path d="M20,100 L180,100" stroke="#334155" stroke-width="2" />
+                        <path d="M100,20 L100,180" stroke="#334155" stroke-width="2" stroke-dasharray="4 4" />
+                        <circle cx="100" cy="100" r="90" stroke="#1e293b" stroke-width="4" fill="none" />
+                        <path id="motoGaugeArc" d="M100,100 L100,10" stroke="url(#leanGradient)" stroke-width="6"
+                            stroke-linecap="round" fill="none" class="transition-all duration-100 ease-linear" />
+                        <defs>
+                            <linearGradient id="leanGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#3b82f6" />
+                                <stop offset="100%" stop-color="#ef4444" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div id="motoBikeIcon"
+                        class="transform transition-transform duration-100 ease-linear origin-center text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                        <i data-lucide="bike" size="64"></i>
                     </div>
                 </div>
-                <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
-                    <span>Jetzt</span><span>15m</span><span>30m</span><span>45m</span>
-                </div>
-            </div>
 
-            <!-- RADAR SECTION -->
-            <div id="radarSection"
-                class="glass-panel rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col">
-                <div class="bg-slate-800/80 p-3 flex justify-between items-center border-b border-slate-700 shrink-0">
-                    <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="map" size="16"
-                            class="text-blue-400"></i><span id="radarTitle">Niederschlag (Live)</span></h3>
-                    <div class="flex items-center gap-2">
-                        <button onclick="toggleFullscreen()"
-                            class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition touch-manipulation"><i
-                                id="fullscreenIcon" data-lucide="maximize-2" size="16"></i></button>
+                <!-- Digital Readout -->
+                <div class="flex flex-col items-center">
+                    <div class="text-6xl font-black text-white tabular-nums tracking-tighter" id="motoAngleDisplay">0°
+                    </div>
+                    <div class="flex gap-8 mt-4 text-sm font-bold">
+                        <div class="text-left">
+                            <span class="block text-[10px] text-slate-500 uppercase">Links Max</span>
+                            <span id="maxLeftDisplay" class="text-blue-400">0°</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-[10px] text-slate-500 uppercase">Rechts Max</span>
+                            <span id="maxRightDisplay" class="text-blue-400">0°</span>
+                        </div>
                     </div>
                 </div>
-                <div id="radarFrameContainer"
-                    class="relative w-full h-96 bg-slate-900 transition-all duration-300 grow">
-                    <div id="radarMap" class="w-full h-full z-0 outline-none"></div>
-                    <div
-                        class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center shadow-lg pointer-events-none z-[400]">
-                        <div class="live-dot dot-live" id="radarLiveDot"></div>
-                        <span id="radarStatusText"
-                            class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider font-bold">Live</span>
-                    </div>
-                    <div
-                        class="absolute bottom-6 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
-                        <button onclick="toggleRadarPlayback()" id="radarPlayBtn"
-                            class="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition shadow-lg shrink-0 touch-manipulation"><i
-                                data-lucide="pause" size="16"></i></button>
-                        <input type="range" id="radarTimeline" min="0" value="0" step="1"
-                            oninput="handleRadarScrub(this.value)"
-                            class="flex-grow h-1 bg-slate-600 rounded-lg cursor-pointer touch-manipulation">
-                        <span id="radarTimeLabel"
-                            class="text-xs font-mono font-bold text-white min-w-[40px] text-right">--:--</span>
-                    </div>
-                </div>
-            </div>
 
-            <div id="timelineSection" class="glass-panel rounded-2xl p-4 transition-all duration-300">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300"><i data-lucide="clock"
-                            size="16"></i> Vorhersage</h3>
-                    <button onclick="toggleLegend()"
-                        class="text-slate-400 hover:text-white transition p-1 bg-slate-800/50 rounded-full hover:bg-slate-700"><i
-                            data-lucide="info" size="16"></i></button>
+                <!-- Controls -->
+                <div class="flex gap-4">
+                    <button onclick="resetMotoMax()"
+                        class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700">RESET</button>
+                    <button onclick="calibrateMoto()"
+                        class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50">NULL</button>
+                    <button onclick="requestMotoPermission()"
+                        class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50"
+                        id="btnMotoStart">START</button>
                 </div>
-                <div id="hourlyContainer"
-                    class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask">
-                </div>
-            </div>
-            <div id="forecast7DaySection" class="glass-panel rounded-2xl p-4">
-                <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i
-                        data-lucide="calendar-days" size="16"></i> 7-Tage Trend</h3>
-                <div id="forecast7List" class="space-y-3"></div>
-            </div>
-        </div>
 
-        <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike"
-                class="mx-auto mb-4 h-16 w-16 opacity-30"></i>
-            <p>Standort wird ermittelt...</p>
-        </div>
-        <!-- FOOTER ANGEPASST -->
-        <div class="text-center text-[10px] text-slate-500 mt-6 pb-4 font-medium tracking-wide opacity-60">
-            MOTO WETTER • RIDE SAFE • N.W.
-        </div>
-    </main>
+                <div class="absolute bottom-4 text-[10px] text-slate-600 font-mono flex items-center gap-2">
+                    <i data-lucide="arrow-left" size="12"></i> swipe for weather
+                </div>
+            </div>
+        </section>
+    </div> <!-- End View Container -->
 
     <!-- MODALS -->
     <!-- SETTINGS MODAL (Updated with Moto Profile) -->
@@ -3466,6 +3563,105 @@
             }
         }
         function removeFavorite(n) { const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase()); if (idx > -1) { favorites.splice(idx, 1); saveFavorites(); } }
+    </script>
+    <script>
+        // --- MOTO LEAN ANGLE LOGIC ---
+        let maxLeft = 0;
+        let maxRight = 0;
+        let calibrationOffset = 0;
+        let currentGamma = 0;
+        const motoGaugeArc = document.getElementById('motoGaugeArc');
+        const motoBikeIcon = document.getElementById('motoBikeIcon');
+        const motoAngleDisplay = document.getElementById('motoAngleDisplay');
+        const maxLeftDisplay = document.getElementById('maxLeftDisplay');
+        const maxRightDisplay = document.getElementById('maxRightDisplay');
+
+        function handleOrientation(event) {
+            let tilt = event.gamma;
+            if (tilt === null) return;
+            currentGamma = tilt;
+
+            tilt = tilt - calibrationOffset;
+
+            // Clamp
+            if (tilt > 90) tilt = 90;
+            if (tilt < -90) tilt = -90;
+
+            // Update UI
+            updateMotoUI(tilt);
+
+            // Update Max
+            if (tilt < 0 && tilt < maxLeft) {
+                maxLeft = tilt;
+                maxLeftDisplay.innerText = Math.abs(Math.round(maxLeft)) + "°";
+            }
+            if (tilt > 0 && tilt > maxRight) {
+                maxRight = tilt;
+                maxRightDisplay.innerText = Math.round(maxRight) + "°";
+            }
+        }
+
+        function updateMotoUI(tilt) {
+            if (!motoAngleDisplay) return;
+            const absTilt = Math.abs(tilt);
+            motoAngleDisplay.innerText = Math.round(absTilt) + "°";
+
+            motoBikeIcon.style.transform = `rotate(${tilt}deg)`;
+
+            const startX = 100;
+            const startY = 10;
+            const angleRad = (tilt - 90) * (Math.PI / 180);
+            const r = 90;
+            const endX = 100 + r * Math.cos(angleRad);
+            const endY = 100 + r * Math.sin(angleRad);
+            const sweep = tilt >= 0 ? 1 : 0;
+
+            const d = `M${startX},${startY} A${r},${r} 0 0,${sweep} ${endX},${endY}`;
+            motoGaugeArc.setAttribute('d', d);
+
+            if (absTilt < 20) motoGaugeArc.setAttribute('stroke', '#3b82f6');
+            else if (absTilt < 40) motoGaugeArc.setAttribute('stroke', '#fbbf24');
+            else motoGaugeArc.setAttribute('stroke', '#ef4444');
+        }
+
+        function resetMotoMax() {
+            maxLeft = 0;
+            maxRight = 0;
+            if (maxLeftDisplay) maxLeftDisplay.innerText = "0°";
+            if (maxRightDisplay) maxRightDisplay.innerText = "0°";
+        }
+
+        window.calibrateMoto = function () {
+            calibrationOffset = currentGamma;
+            resetMotoMax();
+            // alert("Kalibriert!");
+        };
+
+        window.requestMotoPermission = function () {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response == 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            document.getElementById('btnMotoStart').style.display = 'none';
+                        } else {
+                            alert("Sensor-Zugriff benötigt!");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Non-iOS 13+ devices
+                window.addEventListener('deviceorientation', handleOrientation);
+                document.getElementById('btnMotoStart').style.display = 'none';
+                alert("Gestartet (Falls Sensoren verfügbar)");
+            }
+        };
+
+        // Attempt auto-start on load for non-iOS
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+            window.addEventListener('deviceorientation', handleOrientation);
+            // document.getElementById('btnMotoStart').style.display = 'none';
+        }
     </script>
 </body>
 
