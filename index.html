@@ -2298,10 +2298,20 @@
 
 
             // 2. SPEED SIMULATION (Existing)
-            if (Math.abs(ay) > 0.2) {
+            // Apply Friction / Aerodynamic Drag (Natural Deceleration)
+            // This prevents "infinite coasting" and fixes the "shaking drift" issue.
+            // Decay speed by ~20% per second if not accelerating
+            const drag = currentMotoSpeed * 0.2 * dt;
+            currentMotoSpeed -= drag;
+
+            // Apply Acceleration (with deadzone)
+            if (Math.abs(ay) > 0.3) {
                 currentMotoSpeed += (ay * dt * 3.6);
-                if (currentMotoSpeed < 0) currentMotoSpeed = 0;
             }
+
+            // Clamp
+            if (currentMotoSpeed < 0) currentMotoSpeed = 0;
+
             if (document.getElementById('motoSpeedDisplay')) {
                 document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
             }
