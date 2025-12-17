@@ -1328,14 +1328,23 @@
                     <div class="flex gap-4 z-20 mt-2">
                         <button onclick="resetMotoMax()"
                             class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
-                        <button onclick="calibrateMoto()"
-                            class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">NULL</button>
+                        <button id="btnMotoCalibrate" onclick="calibrateMoto()"
+                            class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">0°
+                            Set</button>
                         <button onclick="requestMotoPermission()"
                             class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
                             id="btnMotoStart">START</button>
                         <button onclick="stopMotoTracking()"
                             class="hidden px-6 py-3 bg-red-900/40 text-red-300 rounded-xl font-bold text-sm hover:bg-red-900/60 transition active:scale-95 border border-red-800/50 shadow-lg"
                             id="btnMotoStop">STOP</button>
+                    </div>
+
+                    <!-- GPS Status Indicator -->
+                    <div id="motoGpsStatus"
+                        class="hidden mt-4 flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/10 backdrop-blur-md transition-all">
+                        <div id="motoGpsDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                        <span id="motoGpsText"
+                            class="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Suche GPS...</span>
                     </div>
                 </div>
 
@@ -2589,7 +2598,7 @@
                 if (scoreEl) scoreEl.className = `mt-4 p-3 rounded-xl border border-slate-600/50 flex justify-between items-center bg-slate-800 ${col.bg} bg-opacity-20`;
                 safeSetText('dailyScoreDetailVal', score.score + "/10");
 
-                renderSplashEffects(d.weather_code[index], 1); // Simulate conditions for fun? No, keep it clean.
+                // renderSplashEffects(d.weather_code[index], 1); // REMOVED: Keep current weather background
 
                 showModal('dailyDetailsModal');
                 lucide.createIcons();
@@ -3891,9 +3900,27 @@
 
         window.calibrateMoto = function () {
             calibrationOffset = currentGamma;
+            localStorage.setItem('motoCalibration_v1', calibrationOffset); // PERSISTENCE
             resetMotoMax();
-            // alert("Kalibriert!");
+
+            // Visual Feedback
+            const btn = document.getElementById('btnMotoCalibrate');
+            if (btn) {
+                const oldText = btn.innerText;
+                btn.innerText = "OK!";
+                btn.classList.add('bg-green-500', 'text-white');
+                setTimeout(() => {
+                    btn.innerText = oldText;
+                    btn.classList.remove('bg-green-500', 'text-white');
+                }, 1000);
+            }
         };
+
+        // Load Calibration on Start
+        try {
+            const savedCal = localStorage.getItem('motoCalibration_v1');
+            if (savedCal !== null) calibrationOffset = parseFloat(savedCal);
+        } catch (e) { }
 
         // --- WAKE LOCK (KEEP SCREEN ON) ---
         let wakeLock = null;
@@ -3972,7 +3999,15 @@
             speedFusion = 0;
             currentMotoSpeed = 0;
 
-            alert("Messung gestartet! (Warte auf GPS...)");
+            // GPS Feedback UI
+            const st = document.getElementById('motoGpsStatus');
+            if (st) st.classList.remove('hidden');
+            const dot = document.getElementById('motoGpsDot');
+            const txt = document.getElementById('motoGpsText');
+            if (dot) { dot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; }
+            if (txt) txt.innerText = "Suche GPS...";
+
+            // alert("Messung gestartet! (Warte auf GPS...)"); // REMOVED BLOCKING ALERT
         }
 
         function stopMotoTracking() {
@@ -3998,6 +4033,15 @@
             let newSpeedKmh = 0;
             if (speedMs !== null && speedMs >= 0) {
                 newSpeedKmh = speedMs * 3.6;
+
+                // On first valid fix, update status
+                const dot = document.getElementById('motoGpsDot');
+                const txt = document.getElementById('motoGpsText');
+                if (dot && dot.classList.contains('bg-red-500')) {
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                    if (txt) txt.innerText = "GPS Aktiv";
+                    // setTimeout(() => document.getElementById('motoGpsStatus')?.classList.add('hidden'), 5000); // Optional: Hide after 5s? No, keep assurance.
+                }
             }
 
             // Calc Distance (approx)
