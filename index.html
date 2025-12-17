@@ -842,8 +842,7 @@
 <body class="flex flex-col items-center overflow-hidden text-slate-100 bg-slate-900" style="touch-action: none;">
 
     <!-- VIEW CONTAINER -->
-    <div id="view-container"
-        class="fixed inset-0 w-full h-full flex overflow-hidden snap-x snap-mandatory scroll-smooth no-scrollbar">
+    <div id="view-container" class="fixed inset-0 w-full h-full flex overflow-hidden scroll-smooth no-scrollbar">
 
         <!-- === VIEW 1: WEATHER === -->
         <section id="view-weather" class="w-screen h-full flex-shrink-0 snap-center relative overflow-hidden">
@@ -887,7 +886,7 @@
 
             <main
                 class="w-full h-full max-w-md mx-auto space-y-4 pt-12 pb-24 relative z-10 overflow-y-auto custom-scrollbar px-6 overscroll-contain"
-                style="padding-top: max(3rem, env(safe-area-inset-top)); padding-bottom: max(6rem, env(safe-area-inset-bottom));">
+                style="padding-top: max(3rem, env(safe-area-inset-top)); padding-bottom: max(6rem, env(safe-area-inset-bottom)); touch-action: pan-y;">
                 <div class="glass-panel rounded-2xl p-4 shadow-xl z-20 relative">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
@@ -1200,7 +1199,8 @@
                                     data-lucide="info" size="16"></i></button>
                         </div>
                         <div id="hourlyContainer"
-                            class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask">
+                            class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask"
+                            style="touch-action: pan-x;">
                         </div>
                     </div>
                     <div id="forecast7DaySection" class="glass-panel rounded-2xl p-4">
@@ -1228,7 +1228,7 @@
             <!-- BACKGROUND LIVE MAP REMOVED -->
 
             <div class="relative w-full max-w-md h-full flex flex-col items-center justify-between py-10 z-10 overflow-y-auto custom-scrollbar overscroll-contain px-4"
-                style="padding-top: max(2.5rem, env(safe-area-inset-top)); padding-bottom: max(2.5rem, env(safe-area-inset-bottom));">
+                style="padding-top: max(2.5rem, env(safe-area-inset-top)); padding-bottom: max(2.5rem, env(safe-area-inset-bottom)); touch-action: pan-y;">
                 <!-- Header -->
                 <div class="text-center space-y-1">
                     <h2
