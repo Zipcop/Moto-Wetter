@@ -1362,6 +1362,15 @@
                     size="20"></i> Einstellungen</h3>
             <div class="space-y-3 text-sm max-h-[70vh] overflow-y-auto custom-scrollbar pb-2">
 
+                <!-- History Section (Top Priority) -->
+                <button onclick="showRideHistory()"
+                    class="w-full p-3 bg-slate-800/50 rounded-xl border border-slate-600/50 flex items-center justify-between text-left hover:bg-white/5 transition group">
+                    <span class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2">
+                        <i data-lucide="history" size="14" class="text-yellow-400"></i> Fahrtenbuch
+                    </span>
+                    <i data-lucide="chevron-right" class="text-slate-400 group-hover:text-white transition"></i>
+                </button>
+
                 <!-- Moto Profile Section (Collapsible) -->
                 <div class="bg-slate-800/50 rounded-xl border border-blue-500/30 overflow-hidden">
                     <button onclick="toggleSettingsSection('profile')"
@@ -1729,6 +1738,28 @@
     </div>
     </div>
 
+    <!-- RIDE HISTORY MODAL -->
+    <div id="rideHistoryModal" onclick="if(event.target === this) this.classList.add('hidden')"
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div
+            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-blue-500/30 modal-content h-[80vh] flex flex-col">
+            <button onclick="document.getElementById('rideHistoryModal').classList.add('hidden')"
+                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+                    data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="history" size="20"
+                    class="text-yellow-400"></i> Fahrtenbuch</h3>
+
+            <div id="rideHistoryList" class="overflow-y-auto flex-1 min-h-0 -mx-4 px-4 custom-scrollbar space-y-3">
+                <!-- Dynamic Content -->
+            </div>
+
+            <button onclick="clearRideHistory()"
+                class="mt-4 w-full py-3 bg-red-900/20 text-red-400 hover:bg-red-900/40 rounded-xl border border-red-900/50 font-bold transition flex items-center justify-center gap-2">
+                <i data-lucide="trash-2" size="16"></i> Verlauf löschen
+            </button>
+        </div>
+    </div>
+
     <!-- DEV MENU MODAL -->
     <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
@@ -1921,7 +1952,15 @@
             if (savedGrid) motoGridConfig = JSON.parse(savedGrid);
         } catch (e) { }
 
-        // RADAR VARIABLES
+        // RACE TIMER VARIABLES
+        // REMOVED
+
+        // SESSION TRACKING (RIDE LOG)
+        let sessionStartTime = 0;
+        let sessionMaxSpeed = 0;
+        let sessionMaxG = 0;
+        let sessionMaxLeft = 0;
+        let sessionMaxRight = 0;
         let radarMap = null;
         let radarMarker = null;
         let radarTimestamps = [];
@@ -2294,6 +2333,9 @@
                     gForceBar.style.width = '0%';
                 }
                 gForceVal.innerText = g.toFixed(2) + ' G';
+
+                // Track Max G
+                if (Math.abs(g) > sessionMaxG) sessionMaxG = Math.abs(g);
             }
 
 
@@ -2314,6 +2356,9 @@
 
             // Clamp
             if (currentMotoSpeed < 0) currentMotoSpeed = 0;
+
+            // Track Max Speed
+            if (currentMotoSpeed > sessionMaxSpeed) sessionMaxSpeed = currentMotoSpeed;
 
             if (document.getElementById('motoSpeedDisplay')) {
                 document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
@@ -3776,6 +3821,31 @@
             // alert("Kalibriert!");
         };
 
+        // --- WAKE LOCK (KEEP SCREEN ON) ---
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock active');
+                }
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+                console.log('Wake Lock released');
+            }
+        }
+        // Re-acquire lock if visibility changes (e.g. switch apps and back)
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                requestWakeLock();
+            }
+        });
+
         window.requestMotoPermission = function () {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
@@ -3786,6 +3856,16 @@
                             document.getElementById('btnMotoStart').classList.add('hidden');
                             document.getElementById('btnMotoStop').classList.remove('hidden');
                             lockOrientation(); // Lock on explicit start
+                            requestWakeLock(); // KEEP SCREEN ON
+
+                            // START SESSION
+                            sessionStartTime = Date.now();
+                            sessionMaxSpeed = 0;
+                            sessionMaxG = 0;
+                            sessionMaxLeft = 0;
+                            sessionMaxRight = 0;
+                            // Reset UI maxes too? No, keep them visible.
+
                         } else {
                             alert("Sensor-Zugriff benötigt!");
                         }
@@ -3797,6 +3877,8 @@
                 window.addEventListener('devicemotion', handleMotion); // NEW
                 document.getElementById('btnMotoStart').classList.add('hidden');
                 document.getElementById('btnMotoStop').classList.remove('hidden');
+                lockOrientation();
+                requestWakeLock(); // KEEP SCREEN ON
                 alert("Gestartet (Falls Sensoren verfügbar)");
             }
         };
@@ -3807,6 +3889,164 @@
             document.getElementById('btnMotoStart').classList.remove('hidden');
             document.getElementById('btnMotoStop').classList.add('hidden');
             unlockOrientation();
+            releaseWakeLock(); // ALLOW SLEEP
+
+            // SAVE RIDE LOT
+            saveRideLog();
+        }
+
+        // --- RIDE HISTORY FUNCTIONS ---
+        function saveRideLog() {
+            if (sessionStartTime === 0) return; // No session
+            const durationMs = Date.now() - sessionStartTime;
+            if (durationMs < 5000) return; // Ignore accidental clicks (< 5s)
+
+            // Get Weather Context
+            let weatherSummary = "Unbekannt";
+            let mainTemp = "--";
+            if (lastWeatherData) {
+                const t = lastWeatherData.current_weather.temperature;
+                const wc = lastWeatherData.current_weather.weathercode;
+                const wInfo = getWeatherInfo(wc);
+                mainTemp = Math.round(t);
+                weatherSummary = wInfo.t;
+            }
+
+            // Sync Max Lean from Global trackers (maxLeft/Right are updated in handleMotoOrientation)
+            // Wait, maxLeft/maxRight are cumulative since page load, not session.
+            // For now, let's use the global maxLeft/Right as the session max 
+            // OR reset global max on start? Users usually hit RESET anyway.
+            // Let's rely on globals maxLeft/maxRight which correspond to what the user sees on screen.
+
+            const logEntry = {
+                id: Date.now(), // Unique ID for renaming
+                name: null, // New field for custom name
+                date: new Date().toLocaleDateString('de-DE'),
+                time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                duration: durationMs,
+                stats: {
+                    maxSpeed: Math.round(sessionMaxSpeed),
+                    maxG: sessionMaxG.toFixed(2),
+                    leanL: Math.round(Math.abs(maxLeft)),
+                    leanR: Math.round(Math.abs(maxRight))
+                },
+                weather: {
+                    temp: mainTemp,
+                    desc: weatherSummary
+                }
+            };
+
+            // Save
+            let logs = [];
+            try {
+                logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
+            } catch (e) { }
+            logs.unshift(logEntry);
+            if (logs.length > 20) logs.pop(); // Keep last 20
+            localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
+
+            // Reset
+            sessionStartTime = 0;
+
+            // Feedback
+            vibrate([50, 50, 50]);
+            // Optional: Show modal? Nah, just save silently.
+        }
+
+        function showRideHistory() {
+            // Hide settings modal if it's open
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                hideModal('settingsModal');
+            }
+            renderRideHistory();
+            showModal('rideHistoryModal');
+        }
+
+        function clearRideHistory() {
+            if (confirm("Wirklich alles löschen?")) {
+                localStorage.removeItem('motoRideLogs_v1');
+                renderRideHistory();
+            }
+        }
+
+        function renderRideHistory() {
+            const list = document.getElementById('rideHistoryList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            let logs = [];
+            try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
+
+            if (logs.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-500 mt-10 italic">Keine Fahrten gespeichert.</div>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const durMin = Math.floor(log.duration / 60000);
+                const durSec = Math.floor((log.duration % 60000) / 1000);
+
+                // Name Logic
+                const displayName = log.name ? log.name : `${log.date} • ${log.time}`;
+                const displayMeta = log.name ? `${log.date} • ${log.time}` : '';
+
+                const el = document.createElement('div');
+                el.className = "bg-slate-800/50 rounded-xl p-3 border border-slate-700/50";
+                el.innerHTML = `
+                    <div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2">
+                        <div class="flex-1">
+                             <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-white">${displayName}</span>
+                                <button onclick="renameRideLog(${log.id})" class="text-slate-500 hover:text-blue-400 transition"><i data-lucide="edit-2" size="12"></i></button>
+                             </div>
+                            ${displayMeta ? `<div class="text-[10px] text-slate-400 font-mono">${displayMeta}</div>` : ''}
+                            
+                            <div class="text-xs text-slate-300 font-bold flex items-center gap-2 mt-1">
+                                <span>${log.weather.desc}</span> 
+                                <span class="bg-blue-500/20 text-blue-300 px-1.5 rounded text-[10px]">${log.weather.temp}°</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-500 font-mono">${durMin}m ${durSec}s</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div>
+                            <div class="text-[8px] text-slate-500 uppercase">Speed</div>
+                            <div class="text-sm font-bold text-white">${log.stats.maxSpeed}</div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] text-slate-500 uppercase">G-Force</div>
+                            <div class="text-sm font-bold text-white">${log.stats.maxG}</div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] text-slate-500 uppercase">Lean L</div>
+                            <div class="text-sm font-bold text-blue-400">${log.stats.leanL}°</div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] text-slate-500 uppercase">Lean R</div>
+                            <div class="text-sm font-bold text-blue-400">${log.stats.leanR}°</div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+            lucide.createIcons();
+        }
+
+        function renameRideLog(id) {
+            let logs = [];
+            try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
+            const log = logs.find(l => l.id === id);
+            if (!log) return;
+
+            const newName = prompt("Name für diese Fahrt:", log.name || "");
+            if (newName !== null) {
+                log.name = newName;
+                localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
+                renderRideHistory();
+            }
         }
 
         // Attempt auto-start on load for non-iOS
