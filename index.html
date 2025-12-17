@@ -2663,6 +2663,29 @@
             }
         }
 
+        // --- CHANGELOG SYSTEM ---
+        const CURRENT_APP_VERSION = "1.2.0"; // BUMP THIS TO SHOW CHANGELOG
+
+        function checkChangelog() {
+            const lastVer = localStorage.getItem('lastRunVersion_v1');
+            if (lastVer !== CURRENT_APP_VERSION) {
+                // Show Changelog
+                setTimeout(() => {
+                    const m = document.getElementById('changelogModal');
+                    if (m) {
+                        m.classList.remove('hidden');
+                        lucide.createIcons();
+                    }
+                }, 1000); // Delay slightly so splash is gone
+
+                // Save new version
+                localStorage.setItem('lastRunVersion_v1', CURRENT_APP_VERSION);
+            }
+        }
+
+        // Call init
+        checkChangelog();
+
         // Gear Guide Removed
         function showMotoDetails() {
             if (!lastWeatherData) return;
