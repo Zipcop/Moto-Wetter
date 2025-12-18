@@ -173,7 +173,7 @@
         /* PREMIUM GLASSMORPHISM */
         /* PREMIUM GLASSMORPHISM */
         .glass-panel {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.3);
             /* Lighter base for more light interaction */
             backdrop-filter: blur(24px) saturate(140%);
             /* High blur + saturation for vibrancy */
@@ -1373,7 +1373,7 @@
     <!-- MODALS -->
     <!-- SETTINGS MODAL (Updated with Moto Profile) -->
     <div id="settingsModal" onclick="if(event.target === this) hideModal('settingsModal')"
-        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="toggleSettings()"
@@ -1498,7 +1498,7 @@
 
     <!-- BEST RIDE DETAILS MODAL -->
     <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
             <button onclick="hideModal('bestRideModal')"
                 class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
@@ -1530,7 +1530,7 @@
 
     <!-- BEST RIDE DETAILS MODAL -->
     <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] flex flex-col">
             <div class="shrink-0">
@@ -1576,7 +1576,7 @@
 
     <!-- DAILY DETAILS MODAL (Updated) -->
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[80vh] flex flex-col">
             <div class="shrink-0 mb-2">
@@ -1673,7 +1673,7 @@
     </div>
 
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')"
@@ -1687,7 +1687,7 @@
         </div>
     </div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="closeHourlyModal()"
@@ -1726,7 +1726,7 @@
         </div>
     </div>
     <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content">
             <button onclick="toggleLegend()"
@@ -1752,7 +1752,7 @@
     </div>
 
     <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div </div>
         </div>
 
@@ -1771,7 +1771,7 @@
 
     <!-- RIDE HISTORY MODAL -->
     <div id="rideHistoryModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-blue-500/30 modal-content h-[80vh] flex flex-col">
             <button onclick="document.getElementById('rideHistoryModal').classList.add('hidden')"
@@ -1793,7 +1793,7 @@
 
     <!-- CHANGELOG MODAL -->
     <div id="changelogModal"
-        class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-3xl p-6 relative shadow-2xl border border-emerald-500/30 flex flex-col items-center text-center pointer-events-auto">
 
@@ -1803,31 +1803,32 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.8 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.9 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="moon" class="text-blue-200" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="layers" class="text-blue-200" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Better Contrast</h4>
-                        <p class="text-xs text-slate-400">Kacheln sind dunkler für bessere Lesbarkeit.</p>
+                        <h4 class="text-sm font-bold text-white">Glass is Back</h4>
+                        <p class="text-xs text-slate-400">Transparenz bei Popups korrigiert (kein Black-on-Black mehr).
+                        </p>
                     </div>
                 </div>
 
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="mouse-pointer-click" class="text-purple-400"
-                            size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="scan-face" class="text-purple-400" size="18"></i>
+                    </div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">No Ghost Hover</h4>
-                        <p class="text-xs text-slate-400">Kein Highlighting beim Drüberfahren, nur beim Klick.</p>
+                        <h4 class="text-sm font-bold text-white">Ghost Touch Fix</h4>
+                        <p class="text-xs text-slate-400">Listen-Elemente bleiben nicht mehr "kleben" beim Scrollen.</p>
                     </div>
                 </div>
 
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="gauge" class="text-orange-400" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="moon" class="text-slate-400" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">G-Sensor Fix</h4>
-                        <p class="text-xs text-slate-400">Beschleunigungsmessung wieder aktiv.</p>
+                        <h4 class="text-sm font-bold text-white">Darker Tiles</h4>
+                        <p class="text-xs text-slate-400">Kontrast der Wetter-Kacheln verbessert.</p>
                     </div>
                 </div>
             </div>
@@ -1842,7 +1843,7 @@
     <!-- RIDE DETAIL MODAL (Overlay) -->
     <div id="rideDetailModal"
         class="fixed inset-0 z-[99] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 hidden">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md pointer-events-auto" onclick="closeRideDetail()">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-md pointer-events-auto" onclick="closeRideDetail()">
         </div>
         <div
             class="glass-panel w-full max-w-md m-4 pointer-events-auto transform transition-transform duration-300 scale-95 rounded-3xl border border-white/10 p-6 flex flex-col gap-6 relative">
@@ -1912,7 +1913,7 @@
 
     <!-- DEV MENU MODAL -->
     <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-red-500/30 modal-content">
             <button onclick="document.getElementById('devMenu').classList.add('hidden')"
@@ -3102,7 +3103,7 @@
                 const max = Math.round(d.temperature_2m_max[i]);
                 const info = getWeatherInfo(code);
                 // ADDED: id="day-item-${i}" for specific transition trigger
-                con.innerHTML += `<div id="day-item-${i}" onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-700/50 transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-500">/</span><span class="text-red-400">${max}°</span></div></div>`;
+                con.innerHTML += `<div id="day-item-${i}" onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-500">/</span><span class="text-red-400">${max}°</span></div></div>`;
             }
             lucide.createIcons();
         }
@@ -3595,7 +3596,7 @@
                             const flagUrl = countryCode ? `https://flagcdn.com/24x18/${countryCode}.png` : '';
 
                             const div = document.createElement('div');
-                            div.className = "p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 flex items-center justify-between transition-colors";
+                            div.className = "p-3 cursor-pointer border-b border-slate-700/50 flex items-center justify-between transition-colors";
 
                             // Left side: Name + Region
                             const infoDiv = document.createElement('div');
@@ -3669,7 +3670,7 @@
                 const act = (i === start) ? "bg-slate-700 border-blue-500/50" : "bg-slate-800/50 border-transparent";
                 const dnI = h.is_day[i] === 1 ? "sun" : "moon";
                 const dnC = h.is_day[i] === 1 ? "text-orange-100/20" : "text-slate-400/10";
-                c.innerHTML += `<div onclick="selectHour(${i})" class="relative hour-card cursor-pointer snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${act} flex flex-col items-center justify-between h-32 hover:bg-slate-700 transition-all"><div class="absolute top-1 right-1 ${dnC}"><i data-lucide="${dnI}" size="8"></i></div><span class="text-xs text-slate-400 font-mono text-center leading-tight">${hr}:00</span><div class="text-blue-200"><i data-lucide="${ic}" size="20"></i></div><span class="text-sm font-bold">${t}°</span><div class="w-full flex justify-center mt-1"><div class="h-1.5 w-8 rounded-full ${col.bg.replace('text-', 'bg-').split(' ')[1]}"></div></div></div>`;
+                c.innerHTML += `<div onclick="selectHour(${i})" class="relative hour-card cursor-pointer snap-start flex-shrink-0 w-24 p-2 rounded-xl border ${act} flex flex-col items-center justify-between h-32 transition-all"><div class="absolute top-1 right-1 ${dnC}"><i data-lucide="${dnI}" size="8"></i></div><span class="text-xs text-slate-400 font-mono text-center leading-tight">${hr}:00</span><div class="text-blue-200"><i data-lucide="${ic}" size="20"></i></div><span class="text-sm font-bold">${t}°</span><div class="w-full flex justify-center mt-1"><div class="h-1.5 w-8 rounded-full ${col.bg.replace('text-', 'bg-').split(' ')[1]}"></div></div></div>`;
             } lucide.createIcons();
         }
 
