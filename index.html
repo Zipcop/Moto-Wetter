@@ -1307,93 +1307,95 @@
 
             </div>
 
-    </div>
 
-    <!-- ZOOM CONTROLS (NEW) -->
-    <div class="absolute right-4 bottom-48 flex flex-col gap-3 z-30">
-        <button onclick="if(motoMap) motoMap.zoomIn()"
-            class="p-3 bg-slate-800/80 backdrop-blur-md rounded-full text-white border border-slate-600 shadow-lg active:scale-95 transition"><i
-                data-lucide="plus" size="24"></i></button>
-        <button onclick="if(motoMap) motoMap.zoomOut()"
-            class="p-3 bg-slate-800/80 backdrop-blur-md rounded-full text-white border border-slate-600 shadow-lg active:scale-95 transition"><i
-                data-lucide="minus" size="24"></i></button>
-    </div>
 
-    <!-- BOTTOM GROUP: Data + Controls (Lower) -->
-    <div class="flex flex-col items-center justify-end w-full mb-28 z-20">
-
-        <!-- G-Force Meter (Moved Here) -->
-        <div class="flex flex-col items-center w-48 mb-4">
-            <div class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
-                <span>Brake</span>
-                <span>Accel</span>
+            <!-- ZOOM CONTROLS (NEW) -->
+            <div class="absolute right-4 bottom-48 flex flex-col gap-3 z-30">
+                <button onclick="if(motoMap) motoMap.zoomIn()"
+                    class="p-3 bg-slate-800/80 backdrop-blur-md rounded-full text-white border border-slate-600 shadow-lg active:scale-95 transition"><i
+                        data-lucide="plus" size="24"></i></button>
+                <button onclick="if(motoMap) motoMap.zoomOut()"
+                    class="p-3 bg-slate-800/80 backdrop-blur-md rounded-full text-white border border-slate-600 shadow-lg active:scale-95 transition"><i
+                        data-lucide="minus" size="24"></i></button>
             </div>
-            <div class="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-1">
-                <!-- Center Marker -->
-                <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-500 z-10"></div>
-                <!-- Active Bar -->
-                <div id="gForceBar" class="absolute top-0 bottom-0 bg-blue-500 transition-all duration-75 ease-out"
-                    style="left: 50%; width: 0%;"></div>
-            </div>
-            <div id="gForceVal" class="text-[9px] font-mono text-slate-400 mt-1">0.0 G</div>
-        </div>
 
-        <!-- Digital Readout (Side by Side) -->
-        <div class="flex items-center justify-center gap-8 mb-6 w-full max-w-sm">
-            <!-- Angle Side -->
-            <div class="flex flex-col items-center flex-1">
-                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Neigung</span>
-                <div class="text-6xl font-black text-white tabular-nums tracking-tighter leading-none"
-                    id="motoAngleDisplay">0°</div>
-                <div class="flex gap-4 mt-2 text-[10px] font-bold text-slate-400">
-                    <span>L: <span id="maxLeftDisplay" class="text-blue-400">0°</span></span>
-                    <span>R: <span id="maxRightDisplay" class="text-blue-400">0°</span></span>
+            <!-- BOTTOM GROUP: Data + Controls (Lower) -->
+            <div class="flex flex-col items-center justify-end w-full mb-28 z-20">
+
+                <!-- G-Force Meter (Moved Here) -->
+                <div class="flex flex-col items-center w-48 mb-4">
+                    <div
+                        class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
+                        <span>Brake</span>
+                        <span>Accel</span>
+                    </div>
+                    <div class="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-1">
+                        <!-- Center Marker -->
+                        <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-500 z-10"></div>
+                        <!-- Active Bar -->
+                        <div id="gForceBar"
+                            class="absolute top-0 bottom-0 bg-blue-500 transition-all duration-75 ease-out"
+                            style="left: 50%; width: 0%;"></div>
+                    </div>
+                    <div id="gForceVal" class="text-[9px] font-mono text-slate-400 mt-1">0.0 G</div>
+                </div>
+
+                <!-- Digital Readout (Side by Side) -->
+                <div class="flex items-center justify-center gap-8 mb-6 w-full max-w-sm">
+                    <!-- Angle Side -->
+                    <div class="flex flex-col items-center flex-1">
+                        <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Neigung</span>
+                        <div class="text-6xl font-black text-white tabular-nums tracking-tighter leading-none"
+                            id="motoAngleDisplay">0°</div>
+                        <div class="flex gap-4 mt-2 text-[10px] font-bold text-slate-400">
+                            <span>L: <span id="maxLeftDisplay" class="text-blue-400">0°</span></span>
+                            <span>R: <span id="maxRightDisplay" class="text-blue-400">0°</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-px h-16 bg-slate-700/50"></div>
+
+                    <!-- Speed Side -->
+                    <div class="flex flex-col items-center flex-1">
+                        <span class="text-[10px] text-blue-500 uppercase font-bold tracking-widest mb-1">Tempo</span>
+                        <div class="text-6xl font-black text-blue-400 tabular-nums tracking-tighter leading-none"
+                            id="motoSpeedDisplay">0</div>
+                        <span class="text-[10px] text-slate-500 mt-2 font-mono">km/h</span>
+
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex gap-4 z-20 mt-2">
+                    <button onclick="resetMotoMax()"
+                        class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
+                    <button id="btnMotoCalibrate" onclick="calibrateMoto()"
+                        class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">0°
+                        Set</button>
+                    <button onclick="requestMotoPermission()"
+                        class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
+                        id="btnMotoStart">START</button>
+                    <button onclick="stopMotoTracking()"
+                        class="hidden px-6 py-3 bg-red-900/40 text-red-300 rounded-xl font-bold text-sm hover:bg-red-900/60 transition active:scale-95 border border-red-800/50 shadow-lg"
+                        id="btnMotoStop">STOP</button>
+                </div>
+
+                <!-- GPS Status Indicator -->
+                <div id="motoGpsStatus"
+                    class="hidden mt-4 flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/10 backdrop-blur-md transition-all">
+                    <div id="motoGpsDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <span id="motoGpsText" class="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Suche
+                        GPS...</span>
                 </div>
             </div>
 
-            <!-- Divider -->
-            <div class="w-px h-16 bg-slate-700/50"></div>
-
-            <!-- Speed Side -->
-            <div class="flex flex-col items-center flex-1">
-                <span class="text-[10px] text-blue-500 uppercase font-bold tracking-widest mb-1">Tempo</span>
-                <div class="text-6xl font-black text-blue-400 tabular-nums tracking-tighter leading-none"
-                    id="motoSpeedDisplay">0</div>
-                <span class="text-[10px] text-slate-500 mt-2 font-mono">km/h</span>
-
+            <div class="absolute bottom-4">
+                <button onclick="scrollToWeather()" region="navigation"
+                    class="flex items-center gap-2 text-slate-400 hover:text-white transition px-4 py-2 bg-slate-800/80 backdrop-blur-md rounded-full border border-slate-700/50 shadow-xl">
+                    <i data-lucide="arrow-left" size="16"></i> Zurück zum Wetter
+                </button>
             </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="flex gap-4 z-20 mt-2">
-            <button onclick="resetMotoMax()"
-                class="px-6 py-3 bg-slate-800 rounded-xl font-bold text-sm hover:bg-slate-700 transition active:scale-95 border border-slate-700 shadow-lg">RESET</button>
-            <button id="btnMotoCalibrate" onclick="calibrateMoto()"
-                class="px-6 py-3 bg-blue-900/40 text-blue-300 rounded-xl font-bold text-sm hover:bg-blue-900/60 transition active:scale-95 border border-blue-800/50 shadow-lg">0°
-                Set</button>
-            <button onclick="requestMotoPermission()"
-                class="px-6 py-3 bg-emerald-900/40 text-emerald-300 rounded-xl font-bold text-sm hover:bg-emerald-900/60 transition active:scale-95 border border-emerald-800/50 shadow-lg"
-                id="btnMotoStart">START</button>
-            <button onclick="stopMotoTracking()"
-                class="hidden px-6 py-3 bg-red-900/40 text-red-300 rounded-xl font-bold text-sm hover:bg-red-900/60 transition active:scale-95 border border-red-800/50 shadow-lg"
-                id="btnMotoStop">STOP</button>
-        </div>
-
-        <!-- GPS Status Indicator -->
-        <div id="motoGpsStatus"
-            class="hidden mt-4 flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/10 backdrop-blur-md transition-all">
-            <div id="motoGpsDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-            <span id="motoGpsText" class="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Suche
-                GPS...</span>
-        </div>
-    </div>
-
-    <div class="absolute bottom-4">
-        <button onclick="scrollToWeather()" region="navigation"
-            class="flex items-center gap-2 text-slate-400 hover:text-white transition px-4 py-2 bg-slate-800/80 backdrop-blur-md rounded-full border border-slate-700/50 shadow-xl">
-            <i data-lucide="arrow-left" size="16"></i> Zurück zum Wetter
-        </button>
-    </div>
     </div>
     </section>
     </div> <!-- End View Container -->
