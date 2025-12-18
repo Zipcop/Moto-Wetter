@@ -4553,8 +4553,9 @@
             // 2. SATELLITE WATCH (Precision)
             startSatWatch(true);
 
-            // Motion Sensors (Compass + G)
-            window.addEventListener('deviceorientation', handleCompass); // NEW: Compass
+            // Motion Sensors (Compass + G + Lean)
+            window.addEventListener('deviceorientation', handleCompass); // Map Rotation
+            window.addEventListener('deviceorientation', handleMotoOrientation); // Lean Angle
             window.addEventListener('devicemotion', handleMotion);
         }
 
@@ -4571,14 +4572,6 @@
 
             const mapContainer = document.getElementById('motoLiveMap');
             if (mapContainer && heading) {
-                // Rotate map opposite to heading to keep "North" correctly oriented relative to phone
-                // e.g. If phone points North (0), map rot 0.
-                // If phone points East (90), map must rotate -90 so East is Up? No.
-                // We want "Heading Up".
-                // If phone points East (90), we want map's East to be at the top.
-                // Map North is UP by default. 
-                // To bring East to Top, we must rotate -90 deg.
-                // So rotate(-heading) is correct.
                 mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
             }
         }
@@ -4666,6 +4659,7 @@
 
             if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
             window.removeEventListener('deviceorientation', handleCompass); // STOP Compass
+            window.removeEventListener('deviceorientation', handleMotoOrientation); // STOP Lean
             window.removeEventListener('devicemotion', handleMotion);
 
             saveRideLog();
