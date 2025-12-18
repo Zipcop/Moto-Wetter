@@ -4437,7 +4437,7 @@
                 el.onclick = () => openRideDetail(log.id); // OPEN DETAIL ON CLICK
 
                 el.innerHTML = `
-                < div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2 pointer-events-none" >
+                    <div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2 pointer-events-none">
                         <div class="flex-1">
                              <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-white">${displayName}</span>
@@ -4453,7 +4453,7 @@
                             <div class="text-xs text-slate-500 font-mono">${durMin}m ${durSec}s</div>
                             ${log.stats.distance ? `<div class="text-[10px] text-blue-400 font-bold">${distKm}km</div>` : ''}
                         </div>
-                    </div >
+                    </div>
                 <div class="grid grid-cols-4 gap-2 text-center pointer-events-none">
                     <div>
                         <div class="text-[8px] text-slate-500 uppercase">Max Speed</div>
