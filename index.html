@@ -4164,287 +4164,8 @@
         });
 
         // --- SENSORS & GPS FUSION ---
-        let watchId = null;
-        let lastGPSUpdate = 0;
-        let lastGPSSpeed = 0; // km/h
-        let speedFusion = 0; // The fused display speed
-        let gpsRetryMode = false; // False = High Acc, True = Low Acc/Fallback
+        // Duplicate/Old Logic Removed to favor Unified 'startMotoTracking'
 
-        function startGPSWatch(highAcc) {
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-
-            const opts = {
-                enableHighAccuracy: highAcc,
-                maximumAge: 0,
-                timeout: 7000 // Reduced to 7s for faster fallback
-            };
-
-            console.log("Starting GPS Watch. HighAcc:", highAcc);
-            const txt = document.getElementById('motoGpsText');
-            if (txt) txt.innerText = highAcc ? "Suche (Sat)..." : "Suche (Netz)...";
-
-            watchId = navigator.geolocation.watchPosition(handleGPSPosition, handleGPSError, opts);
-        }
-
-        // NEW FLOW: 1. Sensors (User Action) -> 2. Kickstart GPS -> 3. Watch Loop
-
-        window.requestMotoPermission = function () {
-            // STEP 1: Request Sensor Permission (Orientation + Motion)
-            // iOS 13+ requires requesting both if we want both.
-
-            const reqMotion = () => {
-                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                    return DeviceMotionEvent.requestPermission();
-                }
-                return Promise.resolve('granted');
-            };
-
-            const reqOrient = () => {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    return DeviceOrientationEvent.requestPermission();
-                }
-                return Promise.resolve('granted');
-            };
-
-            // Chain them
-            reqOrient()
-                .then(r1 => {
-                    if (r1 !== 'granted') alert("Warnung: Neigungssensor abgelehnt.");
-                    return reqMotion();
-                })
-                .then(r2 => {
-                    if (r2 !== 'granted') alert("Warnung: G-Sensor abgelehnt.");
-
-                    // Proceed regardless (User might have partial functionality)
-                    startGPSKickstart();
-                })
-                .catch(e => {
-                    console.error("Permission Error", e);
-                    startGPSKickstart();
-                });
-        };
-
-        function startGPSKickstart() {
-            // STEP 2: Wake up GPS Hardware
-            const st = document.getElementById('motoGpsStatus');
-            const txt = document.getElementById('motoGpsText');
-
-            if (!navigator.geolocation) {
-                alert("Kein GPS verfügbar!");
-                return;
-            }
-
-            // Show "Init" state
-            if (st) st.classList.remove('hidden');
-            if (txt) txt.innerText = "GPS Start...";
-
-            // Short timeout 4s for kickstart
-
-            // EXPLICIT CHECK: navigator.permissions (Modern Browsers)
-            if (navigator.permissions && navigator.permissions.query) {
-                navigator.permissions.query({ name: 'geolocation' }).then(result => {
-                    if (result.state === 'denied') {
-                        alert("⚠️ GPS ist blockiert!\n\nBitte in den Browser-Einstellungen (Schloss-Symbol) den Zugriff auf 'Standort' erlauben.");
-                        document.getElementById('motoGpsText').innerText = "GPS blockiert";
-                        return;
-                    }
-                    // If 'prompt' or 'granted', proceed
-                    doKickstart();
-                }).catch(() => {
-                    doKickstart(); // Fallback if query fails
-                });
-            } else {
-                doKickstart(); // Fallback for iOS/Old
-            }
-        }
-
-        function doKickstart() {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    console.log("GPS Kickstart Success", pos);
-                    startTracking();
-                },
-                (err) => {
-                    console.warn("GPS Kickstart failed", err.code, err.message);
-
-                    // Explicit handling for Permission Denied (e.g. iOS 'Don't Allow')
-                    if (err.code === 1) {
-                        alert("⚠️ GPS Zugriff verweigert!\n\nDie Messung kann ohne GPS nicht starten. Bitte erlauben.");
-                        document.getElementById('motoGpsText').innerText = "Zugriff fehlt";
-                        return; // Don't proceed
-                    }
-
-                    // For Timeout/Other (Network issues), proceed to Watch Mode (Retry Strategy)
-                    startTracking();
-                },
-                { enableHighAccuracy: true, timeout: 4000 }
-            );
-        }
-
-        function startTracking() {
-            window.addEventListener('deviceorientation', handleMotoOrientation);
-            window.addEventListener('devicemotion', handleMotion);
-
-            // Start GPS Watch (Initial: High Accuracy)
-            gpsRetryMode = false;
-            startGPSWatch(true);
-
-            document.getElementById('btnMotoStart').classList.add('hidden');
-            document.getElementById('btnMotoStop').classList.remove('hidden');
-            lockOrientation();
-            requestWakeLock();
-
-            // SESSION RESET
-            sessionStartTime = Date.now();
-            sessionMaxSpeed = 0;
-            sessionMaxG = 0;
-            sessionDistance = 0;
-            // sessionMaxLeft/Right are cumulative, we keep them visible
-
-            // Reset Speed Helper
-            lastGPSUpdate = Date.now();
-            lastGPSSpeed = 0;
-            speedFusion = 0;
-            currentMotoSpeed = 0;
-
-            // GPS Feedback UI
-            const st = document.getElementById('motoGpsStatus');
-            if (st) st.classList.remove('hidden');
-            const dot = document.getElementById('motoGpsDot');
-            const txt = document.getElementById('motoGpsText');
-            if (dot) { dot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; }
-            if (txt) txt.innerText = "Suche GPS...";
-
-            // alert("Messung gestartet! (Warte auf GPS...)"); // REMOVED BLOCKING ALERT
-        }
-
-        function stopMotoTracking() {
-            window.removeEventListener('deviceorientation', handleMotoOrientation);
-            window.removeEventListener('devicemotion', handleMotion);
-
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-
-            document.getElementById('btnMotoStart').classList.remove('hidden');
-            document.getElementById('btnMotoStop').classList.add('hidden');
-            unlockOrientation();
-            releaseWakeLock();
-            saveRideLog();
-        }
-
-        function handleGPSError(err) {
-            console.warn("GPS Error", err.code, err.message);
-            const dot = document.getElementById('motoGpsDot');
-            const txt = document.getElementById('motoGpsText');
-
-            // FALLBACK LOGIC
-            // If Timeout (3) or Unavailable (2) AND we are in HighAcc mode
-            if ((err.code === 3 || err.code === 2) && !gpsRetryMode) {
-                console.warn("GPS High Acc failed. Switching to Standard Accuracy...");
-                gpsRetryMode = true;
-                if (dot) dot.className = "w-2 h-2 rounded-full bg-orange-500 animate-pulse";
-                if (txt) txt.innerText = "Wechsle Modus...";
-
-                // Restart with Low Acc
-                setTimeout(() => startGPSWatch(false), 500);
-                return;
-            }
-
-            let msg = "GPS Fehler";
-            if (err.code === 1) msg = "Kein Zugriff";
-            if (err.code === 2) msg = "Kein Signal";
-            if (err.code === 3) msg = "Timeout";
-
-            if (dot) { dot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; }
-            if (txt) txt.innerText = msg + (gpsRetryMode ? " (Std)" : "");
-        }
-
-        function handleGPSPosition(pos) {
-            const speedMs = pos.coords.speed; // m/s
-            // GPS Speed: If null (no move), it's 0.
-            let newSpeedKmh = 0;
-            if (speedMs !== null && speedMs >= 0) {
-                newSpeedKmh = speedMs * 3.6;
-
-                // On first valid fix, update status
-                const dot = document.getElementById('motoGpsDot');
-                const txt = document.getElementById('motoGpsText');
-                if (dot && dot.classList.contains('bg-red-500') || dot.classList.contains('bg-orange-500')) {
-                    dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
-                    if (txt) txt.innerText = gpsRetryMode ? "GPS (Std)" : "GPS (Sat)";
-                    // setTimeout(() => document.getElementById('motoGpsStatus')?.classList.add('hidden'), 5000); // Optional: Hide after 5s? No, keep assurance.
-                }
-            }
-
-            // Calc Distance (approx)
-            const now = Date.now();
-            if (sessionStartTime > 0 && lastGPSUpdate > 0) {
-                const dtSec = (now - lastGPSUpdate) / 1000;
-                if (dtSec > 0 && dtSec < 10 && speedMs > 0) {
-                    sessionDistance += speedMs * dtSec; // Add meters
-                }
-            }
-            lastGPSUpdate = now;
-
-            // PURE GPS (No Fusion)
-            currentMotoSpeed = newSpeedKmh;
-
-            // Update Max (Session)
-            if (currentMotoSpeed > sessionMaxSpeed) sessionMaxSpeed = currentMotoSpeed;
-
-            // Update UI
-            if (motoSpeedDisplay) motoSpeedDisplay.innerText = Math.round(currentMotoSpeed);
-
-            // Gauge Update
-            const pct = Math.min(currentMotoSpeed / 200, 1);
-            const offset = 126 * (1 - pct);
-            // Assuming motoGaugeArc is still for Lean Angle primarily, but if we want speed there:
-            // if (motoGaugeArc) motoGaugeArc.style.strokeDashoffset = offset; 
-        }
-
-        function handleMotion(event) {
-            // 1. G-Force Logic (ONLY)
-            const ay = event.acceleration.y || 0;
-            const ax = event.acceleration.x || 0;
-            const az = event.acceleration.z || 0;
-
-            // G-Force (Total)
-            const g = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
-            const currentG = Math.abs(g - 1);
-            if (currentG > sessionMaxG) sessionMaxG = currentG;
-
-            // G-Meter Bar (Visual feedback - Detailed)
-            const gForceBar = document.getElementById('gForceBar');
-            const gForceVal = document.getElementById('gForceVal');
-
-            if (gForceBar && gForceVal) {
-                // Limit visualization to +/- 1.5G for bar scaling
-                let pct = (Math.abs(g - 1) / 0.8) * 100; // rough scale
-                if (pct > 100) pct = 100;
-
-                // Simple Bar Logic: just show magnitude for now or direction if needed
-                // Using the simpler logic from before:
-                const val = (ay / 9.81);
-                let barPct = Math.min((Math.abs(val) / 1.0) * 50, 50);
-
-                if (val > 0.1) {
-                    // Right/Accel
-                    gForceBar.style.left = '50%';
-                    gForceBar.style.width = barPct + '%';
-                    gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
-                } else if (val < -0.1) {
-                    // Left/Brake
-                    gForceBar.style.left = (50 - barPct) + '%';
-                    gForceBar.style.width = barPct + '%';
-                    gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
-                } else {
-                    gForceBar.style.width = '0%';
-                }
-                gForceVal.innerText = Math.abs(g - 1).toFixed(2) + ' G';
-            }
-        }
 
         // --- RIDE HISTORY FUNCTIONS ---
         function saveRideLog() {
@@ -4704,92 +4425,130 @@
             // document.getElementById('btnMotoStart').style.display = 'none';
         }
 
-        // --- MOTO SENSOR LOGIC ---
-        // Simplified for brevity, assume "initMotoSensors" exists or logic is inline.
-        // Merging Map logic into existing sensor loop if possible, or adding to 'startMotoTracking'
+        // --- MOTO SENSOR LOGIC (UNIFIED) ---
+        let gpsRetryMode = false; // NEW: Track high vs low accuracy
 
         function requestMotoPermission() {
-            // ... (keep existing audio/sensor interaction)
-            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission().then(response => {
-                    if (response == 'granted') {
-                        startMotoTracking();
-                    } else { alert("Ohne Sensoren kein Moto-Mode!"); }
-                }).catch(console.error);
-            } else { startMotoTracking(); }
+            const reqMotion = () => {
+                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') return DeviceMotionEvent.requestPermission();
+                return Promise.resolve('granted');
+            };
+            const reqOrient = () => {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') return DeviceOrientationEvent.requestPermission();
+                return Promise.resolve('granted');
+            };
+
+            reqOrient().then(r => reqMotion()).then(r => {
+                startMotoTracking();
+            }).catch(e => {
+                alert("Sensoren abgelehnt? GPS läuft trotzdem!");
+                startMotoTracking();
+            });
         }
 
         function startMotoTracking() {
             document.getElementById('btnMotoStart').classList.add('hidden');
             document.getElementById('btnMotoStop').classList.remove('hidden');
             document.getElementById('motoGpsStatus').classList.remove('hidden');
+            const gpsDot = document.getElementById('motoGpsDot');
+            const gpsText = document.getElementById('motoGpsText');
 
             // MAP INIT
             initMotoMap();
-
-            // Wake Lock
+            try { lockOrientation(); } catch (e) { }
             try { navigator.wakeLock.request('screen'); } catch (e) { }
 
-            // GPS Watch
-            const opts = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
-
-            // Reset Arrays
+            // Reset Session
+            sessionStartTime = Date.now();
+            sessionMaxSpeed = 0; sessionMaxG = 0; sessionDistance = 0;
             ridePathLatLons = [];
+            gpsRetryMode = false;
 
-            motoWatchId = navigator.geolocation.watchPosition(pos => {
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                const spd = pos.coords.speed; // m/s
-                const acc = pos.coords.accuracy;
+            // 1. FAST FIX (Get location IMMEDIATELY via Network)
+            if (gpsText) { gpsText.innerText = "Suche (Schnell)..."; gpsDot.className = "w-2 h-2 rounded-full bg-orange-500 animate-pulse"; }
 
-                currentLat = lat; currentLon = lon;
+            navigator.geolocation.getCurrentPosition(
+                pos => handleMotoPosition(pos, "FAST"),
+                err => console.log("Fast Fix failed (OK, waiting for Sat)", err),
+                { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 }
+            );
 
-                // Update Badge
-                const gpsDot = document.getElementById('motoGpsDot');
-                const gpsText = document.getElementById('motoGpsText');
-                if (acc < 15) {
-                    gpsDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-                    gpsText.innerText = `GPS OK (${Math.round(acc)}m)`;
-                    gpsText.className = "text-[10px] font-bold text-emerald-400 uppercase tracking-wider";
-                } else {
-                    gpsDot.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
-                    gpsText.innerText = `GPS schwach (${Math.round(acc)}m)`;
-                    gpsText.className = "text-[10px] font-bold text-yellow-500 uppercase tracking-wider";
-                }
-
-                // MAP SYNC
-                if (motoMap && motoMarker) {
-                    motoMarker.setLatLng([lat, lon]);
-                    // Offset center to show more "road ahead" (User at bottom)
-                    // 1 deg lat ~ 111km.
-                    // Zoom 16: ~500m height? 
-                    // Let's shift center North by ~0.003 degrees (tuned)
-                    motoMap.setView([lat + 0.003, lon], 16, { animate: true });
-                }
-
-                // SPEED
-                let kmh = 0;
-                if (spd && spd > 0.5) kmh = spd * 3.6;
-                document.getElementById('motoSpeedDisplay').innerText = Math.round(kmh);
-
-                // Record logic ... (omitted for map task focus, but assuming existing logic handles this or we need to preserve it if it was there)
-                // Checking previous file content... I don't see `startMotoTracking` in the grep/read before. 
-                // Ah, I see `onclick="requestMotoPermission()"` in line 1346 but I didn't read the definition of `startMotoTracking` in the previous `view_file`.
-                // It might not exist yet or was cut off.
-                // Wait, I read up to 4000. 
-                // Let me check if I missed `startMotoTracking` definition.
-                // I'll assume I am REPLACING or CREATING it.
-                // If I'm overwriting, I must be careful.
-                // I will use `view_file` to check for existing `startMotoTracking` first to be safe?
-                // No, I'll just write it conservatively.
-
-            }, err => {
-                console.warn("GPS Error", err);
-            }, opts);
+            // 2. SATELLITE WATCH (Precision)
+            startSatWatch(true);
 
             // Motion Sensors
-            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('deviceorientation', handleMotoOrientation);
             window.addEventListener('devicemotion', handleMotion);
+        }
+
+        function startSatWatch(highAcc) {
+            if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
+            const gpsText = document.getElementById('motoGpsText');
+            if (gpsText) gpsText.innerText = highAcc ? "Suche (Sat)..." : "Suche (Netz)...";
+
+            motoWatchId = navigator.geolocation.watchPosition(
+                pos => handleMotoPosition(pos, "WATCH"),
+                err => {
+                    console.warn("GPS Watch Error", err.code);
+                    const txt = document.getElementById('motoGpsText');
+                    // Fallback Logic
+                    if ((err.code === 2 || err.code === 3) && !gpsRetryMode) {
+                        gpsRetryMode = true;
+                        if (txt) txt.innerText = "Versuche Netz...";
+                        setTimeout(() => startSatWatch(false), 200); // Switch to Low Acc
+                    } else {
+                        if (txt) txt.innerText = "Kein Signal";
+                    }
+                },
+                { enableHighAccuracy: highAcc, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function handleMotoPosition(pos, source) {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const spd = pos.coords.speed;
+            const acc = pos.coords.accuracy;
+
+            currentLat = lat; currentLon = lon;
+
+            // Update Status Badge
+            const gpsDot = document.getElementById('motoGpsDot');
+            const gpsText = document.getElementById('motoGpsText');
+
+            if (acc < 20) {
+                gpsDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                gpsText.innerText = `GPS OK (${Math.round(acc)}m)`;
+                gpsText.className = "text-[10px] font-bold text-emerald-400 uppercase tracking-wider";
+            } else {
+                gpsDot.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
+                gpsText.innerText = source === "FAST" ? "Netz OK (Warte...)" : `Signal schwach (${Math.round(acc)}m)`;
+                gpsText.className = "text-[10px] font-bold text-yellow-500 uppercase tracking-wider";
+            }
+
+            // Map Update
+            if (motoMap && motoMarker) {
+                motoMarker.setLatLng([lat, lon]);
+                const offsetLat = lat + 0.003;
+                motoMap.setView([offsetLat, lon], 16, { animate: true });
+            }
+
+            // Speed Update
+            let kmh = 0;
+            if (spd && spd > 0.5) kmh = spd * 3.6;
+            document.getElementById('motoSpeedDisplay').innerText = Math.round(kmh);
+            if (kmh > sessionMaxSpeed) sessionMaxSpeed = kmh;
+
+            // Distance (Simple)
+            // ... (Omitting Distance calc for brevity here, logic was in old duplicate block, ideally revived if needed)
+            // Ideally we re-insert that small logic:
+            if (!window.lastMotoPosTime) window.lastMotoPosTime = 0;
+            const now = Date.now();
+            if (window.lastMotoPosTime > 0 && spd !== null) {
+                const dt = (now - window.lastMotoPosTime) / 1000;
+                if (dt < 10) sessionDistance += spd * dt;
+            }
+            window.lastMotoPosTime = now;
         }
 
         function stopMotoTracking() {
@@ -4798,16 +4557,49 @@
             document.getElementById('motoGpsStatus').classList.add('hidden');
 
             if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
-            window.removeEventListener('deviceorientation', handleOrientation);
+            window.removeEventListener('deviceorientation', handleMotoOrientation); // Corrected name
             window.removeEventListener('devicemotion', handleMotion);
 
-            // Map Cleanup? No, leave it for cool visual.
+            saveRideLog();
+            try { unlockOrientation(); } catch (e) { }
+            try { if (navigator.wakeLock) navigator.wakeLock.release ? navigator.wakeLock.release() : null; } catch (e) { }
         }
 
-        // Orientation Handlers (simplified placeholders if they didn't exist, but likely they do)
-        // I will NOT overwrite them if I use MultiReplace safely.
+        function handleMotion(event) {
+            // Re-inserted G-Force Logic
+            const ay = event.acceleration.y || 0;
+            const ax = event.acceleration.x || 0;
+            const az = event.acceleration.z || 0;
 
-        // ...
+            const g = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
+            const currentG = Math.abs(g - 1);
+            if (currentG > sessionMaxG) sessionMaxG = currentG;
+
+            const gForceBar = document.getElementById('gForceBar');
+            const gForceVal = document.getElementById('gForceVal');
+
+            if (gForceBar && gForceVal) {
+                let pct = (Math.abs(g - 1) / 0.8) * 100;
+                if (pct > 100) pct = 100;
+                // Bar Logic
+                const val = (ay / 9.81);
+                let barPct = Math.min((Math.abs(val) / 1.0) * 50, 50);
+
+                if (val > 0.1) {
+                    gForceBar.style.left = '50%';
+                    gForceBar.style.width = barPct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
+                } else if (val < -0.1) {
+                    gForceBar.style.left = (50 - barPct) + '%';
+                    gForceBar.style.width = barPct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
+                } else {
+                    gForceBar.style.width = '0%';
+                }
+                gForceVal.innerText = Math.abs(g - 1).toFixed(2) + ' G';
+            }
+        }
+
 
 
         // --- ORIENTATION LOCK ---
