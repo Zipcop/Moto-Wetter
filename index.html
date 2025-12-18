@@ -1791,14 +1791,14 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.0 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.1 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="map-pin" class="text-blue-400" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="crosshair" class="text-red-400" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Detail-Ansicht</h4>
-                        <p class="text-xs text-slate-400">Klicke im Fahrtenbuch auf Einträge für alle Details.</p>
+                        <h4 class="text-sm font-bold text-white">GPS Boost</h4>
+                        <p class="text-xs text-slate-400">Verbesserter Start (Kickstart) für schnelleres Signal.</p>
                     </div>
                 </div>
 
@@ -1811,10 +1811,10 @@
                 </div>
 
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="compass" class="text-purple-400" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="crosshair" class="text-red-400" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Kalibrierung</h4>
-                        <p class="text-xs text-slate-400">Neuer "0° Set" Button speichert deine Halterungs-Neigung.</p>
+                        <h4 class="text-sm font-bold text-white">GPS Boost</h4>
+                        <p class="text-xs text-slate-400">Verbesserter Start (Kickstart) für schnelleres Signal.</p>
                     </div>
                 </div>
 
@@ -1822,7 +1822,7 @@
                     <div class="mt-1 min-w-[20px]"><i data-lucide="wrench" class="text-slate-400" size="18"></i></div>
                     <div>
                         <h4 class="text-sm font-bold text-white">Fixes</h4>
-                        <p class="text-xs text-slate-400">Verbesserter GPS-Status & stabiler Wetter-Hintergrund.</p>
+                        <p class="text-xs text-slate-400">Changelog lässt sich schließen & Auto-Popup aus.</p>
                     </div>
                 </div>
             </div>
@@ -2675,7 +2675,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.0";
+        const CURRENT_APP_VERSION = "1.2.1";
 
         // Manual Open
         function showChangelog() {
@@ -4057,9 +4057,32 @@
         let speedFusion = 0; // The fused display speed
 
         window.requestMotoPermission = function () {
-            // Check GPS first
+            // Updated: Kickstart GPS before starting loop
+            const st = document.getElementById('motoGpsStatus');
+            const txt = document.getElementById('motoGpsText');
+
             if (!navigator.geolocation) { alert("Kein GPS verfügbar!"); return; }
 
+            // Show "Init" state
+            if (st) st.classList.remove('hidden');
+            if (txt) txt.innerText = "GPS Start...";
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    // Success! Hardware is awake.
+                    console.log("GPS Kickstart Success", pos);
+                    proceedToSensors();
+                },
+                (err) => {
+                    console.warn("GPS Kickstart logic failed, retrying in WatchMode...", err);
+                    // Try anyway, maybe watchPosition works better for user
+                    proceedToSensors();
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        };
+
+        function proceedToSensors() {
             // Start Sensors
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
@@ -4071,7 +4094,7 @@
             } else {
                 startTracking();
             }
-        };
+        }
 
         function startTracking() {
             window.addEventListener('deviceorientation', handleMotoOrientation);
