@@ -2488,31 +2488,15 @@
             }
 
 
-            // 2. SPEED SIMULATION (Existing)
-            // Apply Friction / Aerodynamic Drag (Natural Deceleration)
-            const drag = currentMotoSpeed * 0.5 * dt;
-            currentMotoSpeed -= drag;
+            // 2. SPEED SIMULATION REMOVED (User Request: Pure GPS Speed)
+            // if (Math.abs(ay) > 0.3) ... REMOVED
 
-            // Apply Acceleration (with Asymmetric Braking)
-            // Fix: Make braking 3x stronger than gas. 
-            // This ensures shaking (+/- oscillations) results in net speed loss.
-            if (Math.abs(ay) > 0.3) {
-                let factor = 3.6; // Km/h conversion
-                if (ay < 0) factor *= 3; // BRAKING IS STRONGER
-
-                currentMotoSpeed += (ay * dt * factor);
-            }
-
-            // Clamp
-            if (currentMotoSpeed < 0) currentMotoSpeed = 0;
-
-            // Track Max Speed
-            if (currentMotoSpeed > sessionMaxSpeed) sessionMaxSpeed = currentMotoSpeed;
-
-            if (document.getElementById('motoSpeedDisplay')) {
-                document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
-            }
+            // Just update G-Force display here
+            // Speed is handled ONLY in handleGPSPosition
         }
+
+        // DUPLICATE REMOVED
+
 
         function updateWindArrow() {
             compassTicking = false;
@@ -4064,7 +4048,7 @@
             const opts = {
                 enableHighAccuracy: highAcc,
                 maximumAge: 0,
-                timeout: 10000
+                timeout: 7000 // Reduced to 7s for faster fallback
             };
 
             console.log("Starting GPS Watch. HighAcc:", highAcc);
@@ -4324,15 +4308,16 @@
 
             const logEntry = {
                 id: Date.now(),
-                name: null,
                 date: new Date().toLocaleDateString('de-DE'),
                 time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                // NEW: Explicit Name Generation
+                name: `Tour am ${new Date().toLocaleDateString('de-DE')} - ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`,
                 duration: durationMs,
                 stats: {
                     maxSpeed: Math.round(sessionMaxSpeed),
                     maxG: sessionMaxG.toFixed(2),
-                    leanL: Math.round(Math.abs(maxLeft)),
-                    leanR: Math.round(Math.abs(maxRight)),
+                    leanL: Math.round(Math.abs(maxLeft || 0)),
+                    leanR: Math.round(Math.abs(maxRight || 0)),
                     distance: Math.round(sessionDistance) // Meters
                 },
                 weather: {
