@@ -1756,8 +1756,8 @@
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-red-500/30 modal-content max-h-[70vh] flex flex-col">
 
-            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
-                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+            <button onclick="this.closest('#favoritesModal').classList.add('hidden')"
+                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full z-50 cursor-pointer"><i
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-4 text-red-200 flex items-center gap-2"><i data-lucide="heart" size="20"
                     class="text-red-500 fill-red-500"></i> Favoriten</h3>
@@ -1765,8 +1765,8 @@
                 <!-- List -->
             </div>
 
-            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
-                class="w-full mt-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">Schließen</button>
+            <button onclick="this.closest('#favoritesModal').classList.add('hidden')"
+                class="w-full mt-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition z-50 cursor-pointer">Schließen</button>
         </div>
     </div>
 
