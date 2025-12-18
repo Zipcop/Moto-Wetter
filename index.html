@@ -1373,7 +1373,7 @@
     <!-- MODALS -->
     <!-- SETTINGS MODAL (Updated with Moto Profile) -->
     <div id="settingsModal" onclick="if(event.target === this) hideModal('settingsModal')"
-        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="toggleSettings()"
@@ -1498,7 +1498,7 @@
 
     <!-- BEST RIDE DETAILS MODAL -->
     <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
             <button onclick="hideModal('bestRideModal')"
                 class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
@@ -1530,7 +1530,7 @@
 
     <!-- BEST RIDE DETAILS MODAL -->
     <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] flex flex-col">
             <div class="shrink-0">
@@ -1576,7 +1576,7 @@
 
     <!-- DAILY DETAILS MODAL (Updated) -->
     <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[80vh] flex flex-col">
             <div class="shrink-0 mb-2">
@@ -1673,7 +1673,7 @@
     </div>
 
     <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')"
@@ -1687,7 +1687,7 @@
         </div>
     </div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="closeHourlyModal()"
@@ -1726,7 +1726,7 @@
         </div>
     </div>
     <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content">
             <button onclick="toggleLegend()"
@@ -1752,7 +1752,7 @@
     </div>
 
     <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-red-500/30 modal-content max-h-[70vh] flex flex-col">
 
@@ -1764,12 +1764,15 @@
             <div id="favoritesListContent" class="overflow-y-auto custom-scrollbar flex-1 min-h-0">
                 <!-- List -->
             </div>
+
+            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
+                class="w-full mt-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">Schließen</button>
         </div>
     </div>
 
     <!-- RIDE HISTORY MODAL -->
     <div id="rideHistoryModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-blue-500/30 modal-content h-[80vh] flex flex-col">
             <button onclick="document.getElementById('rideHistoryModal').classList.add('hidden')"
