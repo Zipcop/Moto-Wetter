@@ -1467,6 +1467,16 @@
                     </div>
                 </div>
 
+                <!-- Changelog Button (Manual) -->
+                <button onclick="showChangelog()"
+                    class="w-full p-3 mt-4 bg-slate-800/50 rounded-xl border border-emerald-500/30 flex items-center justify-between text-left hover:bg-emerald-500/10 transition group">
+                    <span class="text-xs font-bold uppercase text-emerald-400 flex items-center gap-2">
+                        <i data-lucide="sparkles" size="14"></i> Was ist neu?
+                    </span>
+                    <i data-lucide="chevron-right" class="text-slate-400 group-hover:text-white transition"></i>
+                </button>
+
+
                 <button onclick="resetLayout()"
                     class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Reset
                     App</button>
@@ -1771,9 +1781,9 @@
 
     <!-- CHANGELOG MODAL -->
     <div id="changelogModal"
-        class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl animate-fade-in modal-overlay">
         <div
-            class="glass-panel w-full max-w-sm rounded-3xl p-6 relative shadow-2xl border border-emerald-500/30 flex flex-col items-center text-center">
+            class="glass-panel w-full max-w-sm rounded-3xl p-6 relative shadow-2xl border border-emerald-500/30 flex flex-col items-center text-center pointer-events-auto">
 
             <div
                 class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 border border-emerald-500/50 shadow-lg glow-icon">
@@ -1817,8 +1827,8 @@
                 </div>
             </div>
 
-            <button onclick="document.getElementById('changelogModal').classList.add('hidden')"
-                class="w-full py-3.5 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition active:scale-95 shadow-lg">
+            <button onclick="closeChangelog()"
+                class="w-full py-3.5 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition active:scale-95 shadow-lg relative z-[201]">
                 Cool, verstanden! 🚀
             </button>
         </div>
@@ -2664,27 +2674,42 @@
         }
 
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.0"; // BUMP THIS TO SHOW CHANGELOG
+        // --- CHANGELOG SYSTEM ---
+        const CURRENT_APP_VERSION = "1.2.0";
+
+        // Manual Open
+        function showChangelog() {
+            const m = document.getElementById('changelogModal');
+            if (m) {
+                m.classList.remove('hidden');
+                lucide.createIcons();
+            }
+        }
 
         function checkChangelog() {
-            const lastVer = localStorage.getItem('lastRunVersion_v1');
-            if (lastVer !== CURRENT_APP_VERSION) {
-                // Show Changelog
-                setTimeout(() => {
-                    const m = document.getElementById('changelogModal');
-                    if (m) {
-                        m.classList.remove('hidden');
-                        lucide.createIcons();
-                    }
-                }, 1000); // Delay slightly so splash is gone
+            // DISABLED AUTO-SHOW per User Request
+            /*
+             const lastVer = localStorage.getItem('lastRunVersion_v1');
+             if(lastVer !== CURRENT_APP_VERSION) {
+                  showChangelog();
+                  localStorage.setItem('lastRunVersion_v1', CURRENT_APP_VERSION);
+             }
+             */
+            // Still update version silently so we track it? No, irrelevant if we don't show it.
+        }
 
-                // Save new version
-                localStorage.setItem('lastRunVersion_v1', CURRENT_APP_VERSION);
+        function closeChangelog() {
+            const m = document.getElementById('changelogModal');
+            if (m) {
+                m.classList.add('hidden');
+                // Safety: Ensure splash is gone
+                const s = document.getElementById('splashScreen');
+                if (s) s.classList.add('splash-hidden');
             }
         }
 
         // Call init
-        checkChangelog();
+        // checkChangelog(); // DISABLED
 
         // Gear Guide Removed
         function showMotoDetails() {
