@@ -1798,9 +1798,18 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.5 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.7 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
+                <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="shield-alert" class="text-red-400" size="18"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">GPS-Check</h4>
+                        <p class="text-xs text-slate-400">Strict mode: App besteht jetzt auf GPS-Rechte beim Start.</p>
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="zap" class="text-yellow-400" size="18"></i></div>
                     <div>
@@ -1815,14 +1824,6 @@
                     <div>
                         <h4 class="text-sm font-bold text-white">Touch-Fix</h4>
                         <p class="text-xs text-slate-400">Kein "Aufleuchten" mehr beim Scrollen.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="signal" class="text-green-400" size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Smart GPS</h4>
-                        <p class="text-xs text-slate-400">Automatischer Wechsel auf Netz-Ortung.</p>
                     </div>
                 </div>
             </div>
@@ -2675,7 +2676,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.5";
+        const CURRENT_APP_VERSION = "1.2.6";
 
         // Manual Open
         function showChangelog() {
@@ -4113,13 +4114,42 @@
             if (txt) txt.innerText = "GPS Start...";
 
             // Short timeout 4s for kickstart
+
+            // EXPLICIT CHECK: navigator.permissions (Modern Browsers)
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                    if (result.state === 'denied') {
+                        alert("⚠️ GPS ist blockiert!\n\nBitte in den Browser-Einstellungen (Schloss-Symbol) den Zugriff auf 'Standort' erlauben.");
+                        document.getElementById('motoGpsText').innerText = "GPS blockiert";
+                        return;
+                    }
+                    // If 'prompt' or 'granted', proceed
+                    doKickstart();
+                }).catch(() => {
+                    doKickstart(); // Fallback if query fails
+                });
+            } else {
+                doKickstart(); // Fallback for iOS/Old
+            }
+        }
+
+        function doKickstart() {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     console.log("GPS Kickstart Success", pos);
                     startTracking();
                 },
                 (err) => {
-                    console.warn("GPS Kickstart logic failed, proceeding to WatchMode...", err);
+                    console.warn("GPS Kickstart failed", err.code, err.message);
+
+                    // Explicit handling for Permission Denied (e.g. iOS 'Don't Allow')
+                    if (err.code === 1) {
+                        alert("⚠️ GPS Zugriff verweigert!\n\nDie Messung kann ohne GPS nicht starten. Bitte erlauben.");
+                        document.getElementById('motoGpsText').innerText = "Zugriff fehlt";
+                        return; // Don't proceed
+                    }
+
+                    // For Timeout/Other (Network issues), proceed to Watch Mode (Retry Strategy)
                     startTracking();
                 },
                 { enableHighAccuracy: true, timeout: 4000 }
