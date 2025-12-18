@@ -1301,8 +1301,9 @@
 
                 </div>
 
+
                 <!-- G-Force Meter (Attached to Gauge) -->
-                <div class="flex flex-col items-center w-48 -mt-2 z-20">
+                <div class="flex flex-col items-center w-48 mt-4 z-20">
                     <div
                         class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
                         <span>Brake</span>
@@ -2859,7 +2860,6 @@
                                     const todayStr = new Date().toISOString().slice(0, 10);
 
                                     // Look back up to 4 hours (within same day for simplicity with index)
-                                    // Complex index match not needed if we iterate carefully, but let's approximate
                                     // Find current hour index
                                     let currentIdx = -1;
                                     for (let k = 0; k < h.time.length; k++) {
@@ -4529,7 +4529,8 @@
             // Map Update
             if (motoMap && motoMarker) {
                 motoMarker.setLatLng([lat, lon]);
-                const offsetLat = lat + 0.003;
+                // Reduced offset to 0.001 (User closer to center)
+                const offsetLat = lat + 0.001;
                 motoMap.setView([offsetLat, lon], 16, { animate: true });
             }
 
