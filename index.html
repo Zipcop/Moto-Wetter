@@ -1249,8 +1249,11 @@
             class="w-screen h-full flex-shrink-0 snap-center relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
 
             <!-- BACKGROUND LIVE MAP -->
-            <div id="motoLiveMapRefContainer" class="absolute inset-0 z-0">
-                <div id="motoLiveMap" class="w-full h-full opacity-60 grayscale-[80%] transition-opacity duration-1000">
+            <!-- BACKGROUND LIVE MAP -->
+            <div id="motoLiveMapRefContainer" class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                <!-- Oversized container for rotation -->
+                <div id="motoLiveMap"
+                    class="absolute w-[300vw] h-[300vh] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50 grayscale-[80%] transition-transform duration-300 ease-linear origin-center will-change-transform">
                 </div>
                 <!-- Gradient Overlay for readability -->
                 <div
@@ -1302,8 +1305,13 @@
                 </div>
 
 
-                <!-- G-Force Meter (Attached to Gauge) -->
-                <div class="flex flex-col items-center w-48 mt-4 z-20">
+            </div>
+
+            <!-- BOTTOM GROUP: Data + Controls (Lower) -->
+            <div class="flex flex-col items-center justify-end w-full mb-28 z-20">
+
+                <!-- G-Force Meter (Moved Here) -->
+                <div class="flex flex-col items-center w-48 mb-4">
                     <div
                         class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
                         <span>Brake</span>
@@ -1319,10 +1327,6 @@
                     </div>
                     <div id="gForceVal" class="text-[9px] font-mono text-slate-400 mt-1">0.0 G</div>
                 </div>
-            </div>
-
-            <!-- BOTTOM GROUP: Data + Controls (Lower) -->
-            <div class="flex flex-col items-center justify-end w-full mb-28 z-20">
 
                 <!-- Digital Readout (Side by Side) -->
                 <div class="flex items-center justify-center gap-8 mb-6 w-full max-w-sm">
@@ -1421,7 +1425,7 @@
                                     (Wohlfühl)</span><span id="dispMinTemp" class="font-bold text-white">10°C</span>
                             </div>
                             <input type="range" min="0" max="25" step="1" id="inputMinTemp"
-                                oninput="updateMotoProfile('minTemp', this.value)"
+                                oninput="updateMotoSettings('minTemp', this.value)"
                                 class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
                             <div class="flex justify-between text-[10px] text-slate-500 mt-1">
                                 <span>0°</span><span>25°</span>
@@ -1433,7 +1437,7 @@
                                     (Böen)</span><span id="dispMaxWind" class="font-bold text-white">40 km/h</span>
                             </div>
                             <input type="range" min="20" max="100" step="5" id="inputMaxWind"
-                                oninput="updateMotoProfile('maxWind', this.value)"
+                                oninput="updateMotoSettings('maxWind', this.value)"
                                 class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
                             <div class="flex justify-between text-[10px] text-slate-500 mt-1">
                                 <span>20</span><span>100</span>
@@ -1446,6 +1450,20 @@
                                 class="px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500">Streng</button>
                         </div>
                         <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!
+                        </div>
+
+                        <!-- NEW: Map Opacity -->
+                        <div class="mb-4 mt-4">
+                            <div class="flex justify-between text-xs text-slate-300 mb-1">
+                                <span>Karten-Deckkraft</span><span id="dispMapOpacity"
+                                    class="font-bold text-white">50%</span>
+                            </div>
+                            <input type="range" min="0" max="100" step="5" id="inputMapOpacity"
+                                oninput="updateMotoMapSettings('opacity', this.value)"
+                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>0%</span><span>100%</span>
+                            </div>
                         </div>
 
 
@@ -2162,7 +2180,7 @@
         }
 
         // --- MOTO PROFILE FUNCTIONS ---
-        function updateMotoProfile(key, value) {
+        function updateMotoSettings(key, value) {
             if (key === 'minTemp') {
                 motoProfile.minTemp = parseInt(value);
                 safeSetText('dispMinTemp', motoProfile.minTemp + "°C");
@@ -2272,6 +2290,10 @@
                     safeSetText('rainTolDesc', "Leichter Regen okay.");
                 }
             }
+
+            // Map Opacity UI init
+            const dOp = document.getElementById('dispMapOpacity'); if (dOp) dOp.innerText = Math.round(motoProfile.mapOpacity * 100) + "%";
+            const iOp = document.getElementById('inputMapOpacity'); if (iOp) iOp.value = Math.round(motoProfile.mapOpacity * 100);
         }
 
         // --- DEV MENU TRIGGER (ROBUST VERSION) ---
@@ -3405,7 +3427,7 @@
                     if (endH > 23) endH = 0; // overflow check not critical for display
 
                     // Simple hack: if end is same as start (length 1), show single hour. But we filtered for length >= 2
-                    const tEnd = (dEnd.getHours() + 1).toString().padStart(2, '0') + ":00";
+                    const tEnd = (endH).toString().padStart(2, '0') + ":00";
 
                     document.getElementById('bestRideTime').innerText = `${tStart} - ${tEnd}`;
                     document.getElementById('bestRideDay').innerText = displayDay;
@@ -3717,19 +3739,26 @@
         startClock(); document.addEventListener('DOMContentLoaded', () => { if (typeof locateMe === 'function') locateMe(true); });
 
         // --- INTELLIGENT GARAGE LOGIC ---
-        let motoProfile = { minTemp: 10, maxWind: 40, rainTolerance: false };
+        let motoProfile = {
+            minTemp: 10,
+            maxWind: 30,
+            rainTolerance: false,
+            mapOpacity: 0.5 // Default Opacity
+        };
+        try { const saved = localStorage.getItem('motoWeather_profile'); if (saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) }; } catch (e) { }
 
-        // Load Settings
-        try {
-            const saved = localStorage.getItem('motoWeather_profile');
-            if (saved) motoProfile = { ...motoProfile, ...JSON.parse(saved) };
+        function updateMotoMapSettings(key, val) {
+            if (key === 'opacity') {
+                motoProfile.mapOpacity = parseInt(val) / 100;
+                document.getElementById('dispMapOpacity').innerText = val + "%";
+                // Apply immediately
+                const mapEl = document.getElementById('motoLiveMap');
+                if (mapEl) mapEl.style.opacity = motoProfile.mapOpacity;
+            }
+            saveMotoProfile();
+        }
 
-
-        } catch (e) { }
-
-
-
-        function updateMotoProfile(key, val) {
+        function updateMotoSettings(key, val) {
             if (key === 'minTemp') motoProfile.minTemp = parseInt(val);
             if (key === 'maxWind') motoProfile.maxWind = parseInt(val);
             saveMotoProfile();
@@ -3742,6 +3771,11 @@
             const dWind = document.getElementById('dispMaxWind'); if (dWind) dWind.innerText = motoProfile.maxWind + " km/h";
             const iMin = document.getElementById('inputMinTemp'); if (iMin) iMin.value = motoProfile.minTemp;
             const iWind = document.getElementById('inputMaxWind'); if (iWind) iWind.value = motoProfile.maxWind;
+
+            // Map Opacity UI init
+            const dOp = document.getElementById('dispMapOpacity'); if (dOp) dOp.innerText = Math.round(motoProfile.mapOpacity * 100) + "%";
+            const iOp = document.getElementById('inputMapOpacity'); if (iOp) iOp.value = Math.round(motoProfile.mapOpacity * 100);
+            const mapEl = document.getElementById('motoLiveMap'); if (mapEl) mapEl.style.opacity = motoProfile.mapOpacity;
 
             const btn = document.getElementById('btnRainTol');
             const desc = document.getElementById('rainTolDesc');
@@ -3800,55 +3834,36 @@
             // Move marker
             motoMarker.setLatLng([lat, lon]);
 
-            // Re-center map (Offset: slight shift up so user is lower? No, user requested "Position des Users ... Unterhalb der Karte")
-            // Leaflet center is center. To put user "lower", we need to center the map on a point "above" the user.
-            // But Map moves "around" the user.
-            // If we center the map on [lat + offset, lon], the map center is North of user -> User appears South (Bottom).
+            // Strict Centering
+            motoMap.setView([lat, lon], 16, { animate: true });
 
-            // 0.005 deg is roughly 500m. At zoom 15, let's try a smaller offset.
-            // Map height in deg approx?
-            // Let's just strict center first, then offset.
-            // Offset logic:
-            // The map projection "center" should be target.
-            // user is at `lat`. We want user at, say, 75% height (bottom quarter).
-            // So center should be `lat + delta`.
+            // ROTATION (Heading Up)
+            const heading = pos.coords.heading;
+            const mapContainer = document.getElementById('motoLiveMap');
+            if (heading !== null && heading !== undefined && !isNaN(heading)) {
+                // Rotate container opposite to heading
+                if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+            } else {
+                // No Heading? Reset rotation (North Up)
+                if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+            }
 
-            // Simple approach for now:
-            const offsetLat = lat + 0.003; // Approx 300m North shift -> User is ~300m South (Bottom)
-            motoMap.setView([offsetLat, lon], 16, { animate: true, duration: 1 });
+            // Speed Update
+            let kmh = 0;
+            if (spd && spd > 0.5) kmh = spd * 3.6;
+            document.getElementById('motoSpeedDisplay').innerText = Math.round(kmh);
+            if (kmh > sessionMaxSpeed) sessionMaxSpeed = kmh;
 
-            // To implement "User at bottom":
-            // We can pan the map slightly North.
-            // But lets verify basic tracking first.
-
-            // ATTEMPT OFFSET: 
-            // Get map bounds? No, just hardcode a small delta for 'North' shift
-            // motoMap.panBy([0, -150], {animate: true}); // px offset
-            // But panBy is relative to current. setView resets.
-
-            // Better: use setView but with a calculated center
-            // We need to convert LatLng to Point, shift Point, convert back to LatLng.
-            // Too complex for first pass without testing visual.
-            // Sticking to Center for now, user can refine "Unterhalb" if center isn't good enough.
-            // ACTUALLY: User explicitly asked for "Mittig aber eher unterhalb".
-            // Let's try `motoMap.panBy([0, -100])` after setView? No that jitters.
-
-            // We will stick to setView([lat, lon]) for stability, then maybe CSS transform the container?
-            // Or just padding?
-            // Leaflet has `paddingBottomRight`.
-            motoMap.fitBounds(motoMap.getBounds(), {
-                paddingBottomRight: [0, 200], // Fake padding to push center up?
-                animate: true
-            });
-            // fitBounds is for bounds. setView is for center.
-
-            // Let's just do:
-            // motoMap.setView([lat, lon], 16);
-            // And use CSS to clip the top? No.
-
-            // Just offset the lat slightly.
-            // rough approx: 0.002 deg lat is ~200m.
-            // motoMap.setView([lat + 0.002, lon], 16);
+            // Distance (Simple)
+            // ... (Omitting Distance calc for brevity here, logic was in old duplicate block, ideally revived if needed)
+            // Ideally we re-insert that small logic:
+            if (!window.lastMotoPosTime) window.lastMotoPosTime = 0;
+            const now = Date.now();
+            if (window.lastMotoPosTime > 0 && spd !== null) {
+                const dt = (now - window.lastMotoPosTime) / 1000;
+                if (dt < 10) sessionDistance += spd * dt;
+            }
+            window.lastMotoPosTime = now;
         }
 
         // --- ROUTE WEATHER LOGIC ---
@@ -4529,9 +4544,20 @@
             // Map Update
             if (motoMap && motoMarker) {
                 motoMarker.setLatLng([lat, lon]);
-                // Reduced offset to 0.001 (User closer to center)
-                const offsetLat = lat + 0.001;
-                motoMap.setView([offsetLat, lon], 16, { animate: true });
+
+                // Strict Centering
+                motoMap.setView([lat, lon], 16, { animate: true });
+
+                // ROTATION (Heading Up)
+                const heading = pos.coords.heading;
+                const mapContainer = document.getElementById('motoLiveMap');
+                if (heading !== null && heading !== undefined && !isNaN(heading)) {
+                    // Rotate container opposite to heading
+                    if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+                } else {
+                    // No Heading? Reset rotation (North Up)
+                    if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                }
             }
 
             // Speed Update
@@ -4583,14 +4609,22 @@
                 let pct = (Math.abs(g - 1) / 0.8) * 100;
                 if (pct > 100) pct = 100;
                 // Bar Logic
-                const val = (ay / 9.81);
-                let barPct = Math.min((Math.abs(val) / 1.0) * 50, 50);
+                // NEW: Inverted Logic (Accel is Positive Y in phone frame usually, but depends on mount)
+                // User said "Accel shows as Brake". 
+                // Previous Logic: val > 0.1 -> Green (Accel).
+                // If user saw Red, then val was negative.
+                // Fix: Invert val.
+                const val = -(ay / 9.81);
 
-                if (val > 0.1) {
+                let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50); // Scale 0.8G = Full Bar half
+
+                if (val > 0.05) { // Threshold
+                    // Accel (Green/Right)
                     gForceBar.style.left = '50%';
                     gForceBar.style.width = barPct + '%';
                     gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
-                } else if (val < -0.1) {
+                } else if (val < -0.05) {
+                    // Brake (Red/Left)
                     gForceBar.style.left = (50 - barPct) + '%';
                     gForceBar.style.width = barPct + '%';
                     gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
