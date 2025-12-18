@@ -173,7 +173,7 @@
         /* PREMIUM GLASSMORPHISM */
         /* PREMIUM GLASSMORPHISM */
         .glass-panel {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.4);
             /* Lighter base for more light interaction */
             backdrop-filter: blur(24px) saturate(140%);
             /* High blur + saturation for vibrancy */
@@ -188,7 +188,7 @@
         }
 
         .glass-btn {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
@@ -198,13 +198,13 @@
         /* Hover effects for Desktop ONLY */
         @media (hover: hover) {
             .glass-panel:hover {
-                background: rgba(0, 0, 0, 0.3);
+                /* background: rgba(0, 0, 0, 0.3); REMOVED per user request */
                 transform: translateY(-2px);
                 box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.3);
             }
 
             .glass-btn:hover {
-                background: rgba(0, 0, 0, 0.3);
+                /* background: rgba(0, 0, 0, 0.3); REMOVED per user request */
                 transform: translateY(-1px);
             }
 
@@ -1803,40 +1803,31 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.7 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.8 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
+                <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="moon" class="text-blue-200" size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Better Contrast</h4>
+                        <p class="text-xs text-slate-400">Kacheln sind dunkler für bessere Lesbarkeit.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="mouse-pointer-click" class="text-purple-400"
+                            size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">No Ghost Hover</h4>
+                        <p class="text-xs text-slate-400">Kein Highlighting beim Drüberfahren, nur beim Klick.</p>
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="gauge" class="text-orange-400" size="18"></i></div>
                     <div>
                         <h4 class="text-sm font-bold text-white">G-Sensor Fix</h4>
                         <p class="text-xs text-slate-400">Beschleunigungsmessung wieder aktiv.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="shield-alert" class="text-red-400" size="18"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">GPS-Check</h4>
-                        <p class="text-xs text-slate-400">Strict mode: App besteht jetzt auf GPS-Rechte beim Start.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="zap" class="text-yellow-400" size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Start-Probleme</h4>
-                        <p class="text-xs text-slate-400">Behoben: Messung startet jetzt zuverlässig.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="mouse-pointer-2" class="text-purple-400"
-                            size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Touch-Fix</h4>
-                        <p class="text-xs text-slate-400">Kein "Aufleuchten" mehr beim Scrollen.</p>
                     </div>
                 </div>
             </div>
