@@ -3785,11 +3785,60 @@
             }
         }
 
+        // --- SETTINGS LIST RENDER ---
+        function renderSettingsLists() {
+            // 1. Grid Config (Moto Index Factors)
+            const gridList = document.getElementById('gridConfigList');
+            if (gridList) {
+                gridList.innerHTML = '';
+                const factors = [
+                    { id: 'f_temp', label: 'Temperatur', active: true, desc: 'Einfluss auf Grip' },
+                    { id: 'f_wind', label: 'Wind/Böen', active: true, desc: 'Stabilität' },
+                    { id: 'f_rain', label: 'Niederschlag', active: true, desc: 'Rutschgefahr' },
+                    { id: 'f_day', label: 'Tageszeit', active: true, desc: 'Sichtbarkeit' }
+                ];
+                factors.forEach(f => {
+                    gridList.innerHTML += `
+                        <div class="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg">
+                            <div>
+                                <div class="text-xs font-bold text-slate-300">${f.label}</div>
+                                <div class="text-[10px] text-slate-500">${f.desc}</div>
+                            </div>
+                            <div class="h-4 w-4 rounded border ${f.active ? 'bg-blue-500 border-blue-500' : 'border-slate-500'} flex items-center justify-center">
+                                ${f.active ? '<i data-lucide="check" size="10" class="text-white"></i>' : ''}
+                            </div>
+                        </div>`;
+                });
+                lucide.createIcons();
+            }
+
+            // 2. Layout List
+            const layoutList = document.getElementById('layoutList');
+            if (layoutList) {
+                layoutList.innerHTML = '';
+                const layouts = [
+                    { id: 'l_weather', label: 'Wetter Dashboard', icon: 'cloud-sun', active: true },
+                    { id: 'l_moto', label: 'Moto Dashboard', icon: 'gauge', active: true }
+                ];
+                layouts.forEach(l => {
+                    layoutList.innerHTML += `
+                        <div class="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="${l.icon}" size="14" class="text-slate-400"></i>
+                                <span class="text-xs font-bold text-slate-300">${l.label}</span>
+                            </div>
+                            <button class="text-green-400"><i data-lucide="eye" size="16"></i></button>
+                        </div>`;
+                });
+                lucide.createIcons();
+            }
+        }
+
         // Init UI on load
         document.addEventListener('DOMContentLoaded', () => {
             saveMotoProfile();
-            // Try init map if we have coords, but usually we wait for "Start" or "Locate"
-            // But we can init the container
+            renderSettingsLists(); // NEW: Populate settings
+            try { initMotoMap(); } catch (e) { }
         });
 
         function initMotoMap() {
@@ -4491,9 +4540,34 @@
             // 2. SATELLITE WATCH (Precision)
             startSatWatch(true);
 
-            // Motion Sensors
-            window.addEventListener('deviceorientation', handleMotoOrientation);
+            // Motion Sensors (Compass + G)
+            window.addEventListener('deviceorientation', handleCompass); // NEW: Compass
             window.addEventListener('devicemotion', handleMotion);
+        }
+
+        function handleCompass(e) {
+            // Handle Map Rotation based on Phone Heading
+            let heading = 0;
+
+            // iOS vs Android
+            if (e.webkitCompassHeading) {
+                heading = e.webkitCompassHeading;
+            } else if (e.alpha) {
+                heading = 360 - e.alpha; // Android (roughly)
+            }
+
+            const mapContainer = document.getElementById('motoLiveMap');
+            if (mapContainer && heading) {
+                // Rotate map opposite to heading to keep "North" correctly oriented relative to phone
+                // e.g. If phone points North (0), map rot 0.
+                // If phone points East (90), map must rotate -90 so East is Up? No.
+                // We want "Heading Up".
+                // If phone points East (90), we want map's East to be at the top.
+                // Map North is UP by default. 
+                // To bring East to Top, we must rotate -90 deg.
+                // So rotate(-heading) is correct.
+                mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+            }
         }
 
         function startSatWatch(highAcc) {
@@ -4548,16 +4622,9 @@
                 // Strict Centering
                 motoMap.setView([lat, lon], 16, { animate: true });
 
-                // ROTATION (Heading Up)
-                const heading = pos.coords.heading;
-                const mapContainer = document.getElementById('motoLiveMap');
-                if (heading !== null && heading !== undefined && !isNaN(heading)) {
-                    // Rotate container opposite to heading
-                    if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
-                } else {
-                    // No Heading? Reset rotation (North Up)
-                    if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-                }
+                // ROTATION: Handled by Compass (handleCompass) for smoother "Phone" orientation
+                // But if no compass, we could fallback to GPS heading.
+                // For now, let's let handleCompass take priority.
             }
 
             // Speed Update
@@ -4584,7 +4651,7 @@
             document.getElementById('motoGpsStatus').classList.add('hidden');
 
             if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
-            window.removeEventListener('deviceorientation', handleMotoOrientation); // Corrected name
+            window.removeEventListener('deviceorientation', handleCompass); // STOP Compass
             window.removeEventListener('devicemotion', handleMotion);
 
             saveRideLog();
