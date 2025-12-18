@@ -1791,9 +1791,18 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.2 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.3 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
+                <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="signal" class="text-green-400" size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Smart GPS</h4>
+                        <p class="text-xs text-slate-400">Automatischer Wechsel auf Netz-Ortung, wenn Satellit klemmt.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="clock" class="text-blue-400" size="18"></i></div>
                     <div>
@@ -1803,18 +1812,10 @@
                 </div>
 
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="crosshair" class="text-red-400" size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">GPS Boost</h4>
-                        <p class="text-xs text-slate-400">Verbesserter Start (Kickstart) für schnelleres Signal.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="wrench" class="text-slate-400" size="18"></i></div>
                     <div>
                         <h4 class="text-sm font-bold text-white">Fixes</h4>
-                        <p class="text-xs text-slate-400">Optimierungen & Bugfixes im Hintergrund.</p>
+                        <p class="text-xs text-slate-400">Stabilität & Performance verbessert.</p>
                     </div>
                 </div>
             </div>
@@ -2667,7 +2668,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.2";
+        const CURRENT_APP_VERSION = "1.2.3";
 
         // Manual Open
         function showChangelog() {
@@ -4047,6 +4048,23 @@
         let lastGPSUpdate = 0;
         let lastGPSSpeed = 0; // km/h
         let speedFusion = 0; // The fused display speed
+        let gpsRetryMode = false; // False = High Acc, True = Low Acc/Fallback
+
+        function startGPSWatch(highAcc) {
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+            const opts = {
+                enableHighAccuracy: highAcc,
+                maximumAge: 0,
+                timeout: 10000
+            };
+
+            console.log("Starting GPS Watch. HighAcc:", highAcc);
+            const txt = document.getElementById('motoGpsText');
+            if (txt) txt.innerText = highAcc ? "Suche (Sat)..." : "Suche (Netz)...";
+
+            watchId = navigator.geolocation.watchPosition(handleGPSPosition, handleGPSError, opts);
+        }
 
         window.requestMotoPermission = function () {
             // Updated: Kickstart GPS before starting loop
@@ -4092,12 +4110,9 @@
             window.addEventListener('deviceorientation', handleMotoOrientation);
             window.addEventListener('devicemotion', handleMotion);
 
-            // Start GPS Watch
-            watchId = navigator.geolocation.watchPosition(handleGPSPosition, handleGPSError, {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 10000 // Increased to 10s
-            });
+            // Start GPS Watch (Initial: High Accuracy)
+            gpsRetryMode = false;
+            startGPSWatch(true);
 
             document.getElementById('btnMotoStart').classList.add('hidden');
             document.getElementById('btnMotoStop').classList.remove('hidden');
@@ -4141,22 +4156,34 @@
             document.getElementById('btnMotoStop').classList.add('hidden');
             unlockOrientation();
             releaseWakeLock();
-
             saveRideLog();
         }
 
         function handleGPSError(err) {
-            console.warn("GPS Error", err);
+            console.warn("GPS Error", err.code, err.message);
             const dot = document.getElementById('motoGpsDot');
             const txt = document.getElementById('motoGpsText');
+
+            // FALLBACK LOGIC
+            // If Timeout (3) or Unavailable (2) AND we are in HighAcc mode
+            if ((err.code === 3 || err.code === 2) && !gpsRetryMode) {
+                console.warn("GPS High Acc failed. Switching to Standard Accuracy...");
+                gpsRetryMode = true;
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-orange-500 animate-pulse";
+                if (txt) txt.innerText = "Wechsle Modus...";
+
+                // Restart with Low Acc
+                setTimeout(() => startGPSWatch(false), 500);
+                return;
+            }
 
             let msg = "GPS Fehler";
             if (err.code === 1) msg = "Kein Zugriff";
             if (err.code === 2) msg = "Kein Signal";
             if (err.code === 3) msg = "Timeout";
 
-            if (dot) { dot.className = "w-2 h-2 rounded-full bg-orange-500 animate-pulse"; }
-            if (txt) txt.innerText = msg;
+            if (dot) { dot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; }
+            if (txt) txt.innerText = msg + (gpsRetryMode ? " (Std)" : "");
         }
 
         function handleGPSPosition(pos) {
@@ -4169,9 +4196,9 @@
                 // On first valid fix, update status
                 const dot = document.getElementById('motoGpsDot');
                 const txt = document.getElementById('motoGpsText');
-                if (dot && dot.classList.contains('bg-red-500')) {
+                if (dot && dot.classList.contains('bg-red-500') || dot.classList.contains('bg-orange-500')) {
                     dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
-                    if (txt) txt.innerText = "GPS Aktiv";
+                    if (txt) txt.innerText = gpsRetryMode ? "GPS (Std)" : "GPS (Sat)";
                     // setTimeout(() => document.getElementById('motoGpsStatus')?.classList.add('hidden'), 5000); // Optional: Hide after 5s? No, keep assurance.
                 }
             }
@@ -4321,10 +4348,10 @@
                 const endTime = new Date(log.id);
                 const startTime = new Date(log.id - log.duration);
                 const formatTime = (d) => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+                const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)} `;
 
-                const displayName = log.name ? log.name : `${log.date} • ${timeRange}`;
-                const displayMeta = log.name ? `${log.date} • ${timeRange}` : '';
+                const displayName = log.name ? log.name : `${log.date} • ${timeRange} `;
+                const displayMeta = log.name ? `${log.date} • ${timeRange} ` : '';
 
                 // Distance Text
                 const distKm = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
@@ -4334,7 +4361,7 @@
                 el.onclick = () => openRideDetail(log.id); // OPEN DETAIL ON CLICK
 
                 el.innerHTML = `
-                    <div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2 pointer-events-none">
+                < div class="flex justify-between items-start mb-2 border-b border-slate-700/50 pb-2 pointer-events-none" >
                         <div class="flex-1">
                              <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-white">${displayName}</span>
@@ -4350,26 +4377,26 @@
                             <div class="text-xs text-slate-500 font-mono">${durMin}m ${durSec}s</div>
                             ${log.stats.distance ? `<div class="text-[10px] text-blue-400 font-bold">${distKm}km</div>` : ''}
                         </div>
+                    </div >
+                <div class="grid grid-cols-4 gap-2 text-center pointer-events-none">
+                    <div>
+                        <div class="text-[8px] text-slate-500 uppercase">Max Speed</div>
+                        <div class="text-sm font-bold text-white">${log.stats.maxSpeed} <span class="text-[9px] text-slate-400 font-normal">km/h</span></div>
                     </div>
-                    <div class="grid grid-cols-4 gap-2 text-center pointer-events-none">
-                        <div>
-                            <div class="text-[8px] text-slate-500 uppercase">Max Speed</div>
-                            <div class="text-sm font-bold text-white">${log.stats.maxSpeed} <span class="text-[9px] text-slate-400 font-normal">km/h</span></div>
-                        </div>
-                        <div>
-                            <div class="text-[8px] text-slate-500 uppercase">Max G</div>
-                            <div class="text-sm font-bold text-white">${log.stats.maxG}</div>
-                        </div>
-                        <div>
-                            <div class="text-[8px] text-slate-500 uppercase">Lean L</div>
-                            <div class="text-sm font-bold text-blue-400">${log.stats.leanL}°</div>
-                        </div>
-                        <div>
-                            <div class="text-[8px] text-slate-500 uppercase">Lean R</div>
-                            <div class="text-sm font-bold text-blue-400">${log.stats.leanR}°</div>
-                        </div>
+                    <div>
+                        <div class="text-[8px] text-slate-500 uppercase">Max G</div>
+                        <div class="text-sm font-bold text-white">${log.stats.maxG}</div>
                     </div>
-                `;
+                    <div>
+                        <div class="text-[8px] text-slate-500 uppercase">Lean L</div>
+                        <div class="text-sm font-bold text-blue-400">${log.stats.leanL}°</div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] text-slate-500 uppercase">Lean R</div>
+                        <div class="text-sm font-bold text-blue-400">${log.stats.leanR}°</div>
+                    </div>
+                </div>
+            `;
                 list.appendChild(el);
             });
             lucide.createIcons();
@@ -4397,7 +4424,7 @@
             const endTime = new Date(log.id);
             const startTime = new Date(log.id - log.duration);
             const formatTime = (d) => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+            const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)} `;
 
             safeSetText('detailTimeDuration', `${timeRange} • ${mLabel}`);
 
