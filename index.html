@@ -1802,6 +1802,14 @@
 
             <div class="w-full text-left space-y-4 mb-8">
                 <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="zap" class="text-yellow-400" size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Start-Probleme</h4>
+                        <p class="text-xs text-slate-400">Behoben: Messung startet jetzt zuverlässig.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="mouse-pointer-2" class="text-purple-400"
                             size="18"></i></div>
                     <div>
@@ -1814,16 +1822,7 @@
                     <div class="mt-1 min-w-[20px]"><i data-lucide="signal" class="text-green-400" size="18"></i></div>
                     <div>
                         <h4 class="text-sm font-bold text-white">Smart GPS</h4>
-                        <p class="text-xs text-slate-400">Automatischer Wechsel auf Netz-Ortung, wenn Satellit klemmt.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="clock" class="text-blue-400" size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Fahrzeit-Anzeige</h4>
-                        <p class="text-xs text-slate-400">Fahrtenbuch zeigt jetzt Start- & Endzeit an.</p>
+                        <p class="text-xs text-slate-400">Automatischer Wechsel auf Netz-Ortung.</p>
                     </div>
                 </div>
             </div>
@@ -2676,7 +2675,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.4";
+        const CURRENT_APP_VERSION = "1.2.5";
 
         // Manual Open
         function showChangelog() {
@@ -4074,44 +4073,57 @@
             watchId = navigator.geolocation.watchPosition(handleGPSPosition, handleGPSError, opts);
         }
 
+        // NEW FLOW: 1. Sensors (User Action) -> 2. Kickstart GPS -> 3. Watch Loop
+
         window.requestMotoPermission = function () {
-            // Updated: Kickstart GPS before starting loop
+            // STEP 1: Request Sensor Permission (MUST be direct user interaction)
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(r => {
+                        if (r == 'granted') {
+                            startGPSKickstart();
+                        } else {
+                            alert("Ohne Sensor-Zugriff keine Schräglage!");
+                            startGPSKickstart(); // Try anyway for GPS speed?
+                        }
+                    })
+                    .catch(e => {
+                        console.error("Sensor Perm Error", e);
+                        // Fallback
+                        startGPSKickstart();
+                    });
+            } else {
+                // Non-iOS or no permission needed
+                startGPSKickstart();
+            }
+        };
+
+        function startGPSKickstart() {
+            // STEP 2: Wake up GPS Hardware
             const st = document.getElementById('motoGpsStatus');
             const txt = document.getElementById('motoGpsText');
 
-            if (!navigator.geolocation) { alert("Kein GPS verfügbar!"); return; }
+            if (!navigator.geolocation) {
+                alert("Kein GPS verfügbar!");
+                return;
+            }
 
             // Show "Init" state
             if (st) st.classList.remove('hidden');
             if (txt) txt.innerText = "GPS Start...";
 
+            // Short timeout 4s for kickstart
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    // Success! Hardware is awake.
                     console.log("GPS Kickstart Success", pos);
-                    proceedToSensors();
+                    startTracking();
                 },
                 (err) => {
-                    console.warn("GPS Kickstart logic failed, retrying in WatchMode...", err);
-                    // Try anyway, maybe watchPosition works better for user
-                    proceedToSensors();
+                    console.warn("GPS Kickstart logic failed, proceeding to WatchMode...", err);
+                    startTracking();
                 },
-                { enableHighAccuracy: true, timeout: 5000 }
+                { enableHighAccuracy: true, timeout: 4000 }
             );
-        };
-
-        function proceedToSensors() {
-            // Start Sensors
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(r => {
-                        if (r == 'granted') startTracking();
-                        else alert("Sensor-Zugriff benötigt!");
-                    })
-                    .catch(console.error);
-            } else {
-                startTracking();
-            }
         }
 
         function startTracking() {
