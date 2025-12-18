@@ -211,6 +211,11 @@
             .leaflet-bar a:hover {
                 background-color: #3b82f6 !important;
             }
+
+            .ride-item-hover:hover {
+                background-color: #1e293b;
+                /* slate-800 */
+            }
         }
 
         /* TACTILE FEEDBACK (Global) */
@@ -4433,7 +4438,8 @@
                 const distKm = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
 
                 const el = document.createElement('div');
-                el.className = "bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 cursor-pointer hover:bg-slate-800 transition active:scale-95";
+                // Removed 'hover:bg-slate-800' -> using 'ride-item-hover' via CSS
+                el.className = "bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 cursor-pointer ride-item-hover transition active:scale-95";
                 el.onclick = () => openRideDetail(log.id); // OPEN DETAIL ON CLICK
 
                 el.innerHTML = `
