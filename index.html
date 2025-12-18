@@ -1802,6 +1802,14 @@
 
             <div class="w-full text-left space-y-4 mb-8">
                 <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="gauge" class="text-orange-400" size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">G-Sensor Fix</h4>
+                        <p class="text-xs text-slate-400">Beschleunigungsmessung wieder aktiv.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="shield-alert" class="text-red-400" size="18"></i>
                     </div>
                     <div>
@@ -2660,7 +2668,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.6";
+        const CURRENT_APP_VERSION = "1.2.7";
 
         // Manual Open
         function showChangelog() {
@@ -4061,26 +4069,39 @@
         // NEW FLOW: 1. Sensors (User Action) -> 2. Kickstart GPS -> 3. Watch Loop
 
         window.requestMotoPermission = function () {
-            // STEP 1: Request Sensor Permission (MUST be direct user interaction)
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(r => {
-                        if (r == 'granted') {
-                            startGPSKickstart();
-                        } else {
-                            alert("Ohne Sensor-Zugriff keine Schräglage!");
-                            startGPSKickstart(); // Try anyway for GPS speed?
-                        }
-                    })
-                    .catch(e => {
-                        console.error("Sensor Perm Error", e);
-                        // Fallback
-                        startGPSKickstart();
-                    });
-            } else {
-                // Non-iOS or no permission needed
-                startGPSKickstart();
-            }
+            // STEP 1: Request Sensor Permission (Orientation + Motion)
+            // iOS 13+ requires requesting both if we want both.
+
+            const reqMotion = () => {
+                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                    return DeviceMotionEvent.requestPermission();
+                }
+                return Promise.resolve('granted');
+            };
+
+            const reqOrient = () => {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    return DeviceOrientationEvent.requestPermission();
+                }
+                return Promise.resolve('granted');
+            };
+
+            // Chain them
+            reqOrient()
+                .then(r1 => {
+                    if (r1 !== 'granted') alert("Warnung: Neigungssensor abgelehnt.");
+                    return reqMotion();
+                })
+                .then(r2 => {
+                    if (r2 !== 'granted') alert("Warnung: G-Sensor abgelehnt.");
+
+                    // Proceed regardless (User might have partial functionality)
+                    startGPSKickstart();
+                })
+                .catch(e => {
+                    console.error("Permission Error", e);
+                    startGPSKickstart();
+                });
         };
 
         function startGPSKickstart() {
@@ -4274,14 +4295,34 @@
             const currentG = Math.abs(g - 1);
             if (currentG > sessionMaxG) sessionMaxG = currentG;
 
-            // G-Meter Bar (Visual feedback)
-            const gMeterLine = document.getElementById('gMeterLine');
-            if (gMeterLine) {
-                const barVal = (ay / 10) * 100;
-                gMeterLine.style.height = Math.min(Math.abs(barVal), 100) + '%';
-                gMeterLine.style.background = barVal > 0 ? '#10b981' : '#ef4444';
-                gMeterLine.style.top = barVal > 0 ? '50%' : '50%';
-                gMeterLine.style.transform = barVal > 0 ? 'translateY(-100%)' : 'translateY(0)';
+            // G-Meter Bar (Visual feedback - Detailed)
+            const gForceBar = document.getElementById('gForceBar');
+            const gForceVal = document.getElementById('gForceVal');
+
+            if (gForceBar && gForceVal) {
+                // Limit visualization to +/- 1.5G for bar scaling
+                let pct = (Math.abs(g - 1) / 0.8) * 100; // rough scale
+                if (pct > 100) pct = 100;
+
+                // Simple Bar Logic: just show magnitude for now or direction if needed
+                // Using the simpler logic from before:
+                const val = (ay / 9.81);
+                let barPct = Math.min((Math.abs(val) / 1.0) * 50, 50);
+
+                if (val > 0.1) {
+                    // Right/Accel
+                    gForceBar.style.left = '50%';
+                    gForceBar.style.width = barPct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
+                } else if (val < -0.1) {
+                    // Left/Brake
+                    gForceBar.style.left = (50 - barPct) + '%';
+                    gForceBar.style.width = barPct + '%';
+                    gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
+                } else {
+                    gForceBar.style.width = '0%';
+                }
+                gForceVal.innerText = Math.abs(g - 1).toFixed(2) + ' G';
             }
         }
 
