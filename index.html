@@ -4667,33 +4667,45 @@
             try { if (navigator.wakeLock) navigator.wakeLock.release ? navigator.wakeLock.release() : null; } catch (e) { }
         }
 
+        // SMOOTHING VARS
+        let smoothAx = 0, smoothAy = 0, smoothAz = 0;
+        const alpha = 0.15; // Low-Pass Filter Factor
+
         function handleMotion(event) {
-            // Re-inserted G-Force Logic
+            // Raw Inputs
             const ay = event.acceleration.y || 0;
             const ax = event.acceleration.x || 0;
             const az = event.acceleration.z || 0;
 
-            const g = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
-            const currentG = Math.abs(g - 1);
-            if (currentG > sessionMaxG) sessionMaxG = currentG;
+            // Low-Pass Filter operation
+            smoothAx = smoothAx + alpha * (ax - smoothAx);
+            smoothAy = smoothAy + alpha * (ay - smoothAy);
+            smoothAz = smoothAz + alpha * (az - smoothAz);
+
+            // 1. Total G-Force (Linear Acceleration Magnitude)
+            // event.acceleration EXCLUDES gravity, so 0 when still.
+            // No need to subtract 1G again.
+            const g = Math.sqrt(smoothAx * smoothAx + smoothAy * smoothAy + smoothAz * smoothAz) / 9.81;
+
+            // Update Session Max
+            if (g > sessionMaxG) sessionMaxG = g;
 
             const gForceBar = document.getElementById('gForceBar');
             const gForceVal = document.getElementById('gForceVal');
 
             if (gForceBar && gForceVal) {
-                let pct = (Math.abs(g - 1) / 0.8) * 100;
-                if (pct > 100) pct = 100;
-                // Bar Logic
-                // NEW: Inverted Logic (Accel is Positive Y in phone frame usually, but depends on mount)
-                // User said "Accel shows as Brake". 
-                // Previous Logic: val > 0.1 -> Green (Accel).
-                // If user saw Red, then val was negative.
-                // Fix: Invert val.
-                const val = -(ay / 9.81);
+                // UI: Acceleration / Braking (longitudinal G)
+                // Using Smoothed Y
+                // Phone Orientation assumption: Top forward.
+                // Braking -> Phone tends to continue forward -> +Y acceleration (if excluding gravity) ? 
+                // Let's rely on previous polarity logic: "User said Accel shows as Brake -> Inverted val".
 
-                let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50); // Scale 0.8G = Full Bar half
+                const val = -(smoothAy / 9.81);
 
-                if (val > 0.05) { // Threshold
+                // Bar Width Logic
+                let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50);
+
+                if (val > 0.05) {
                     // Accel (Green/Right)
                     gForceBar.style.left = '50%';
                     gForceBar.style.width = barPct + '%';
@@ -4706,7 +4718,9 @@
                 } else {
                     gForceBar.style.width = '0%';
                 }
-                gForceVal.innerText = Math.abs(g - 1).toFixed(2) + ' G';
+
+                // Display Total G Magnitude
+                gForceVal.innerText = g.toFixed(2) + ' G';
             }
         }
 
