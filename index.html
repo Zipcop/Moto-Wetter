@@ -195,7 +195,7 @@
             transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* Hover effects for Desktop */
+        /* Hover effects for Desktop ONLY */
         @media (hover: hover) {
             .glass-panel:hover {
                 background: rgba(255, 255, 255, 0.12);
@@ -206,6 +206,10 @@
             .glass-btn:hover {
                 background: rgba(255, 255, 255, 0.2);
                 transform: translateY(-1px);
+            }
+
+            .leaflet-bar a:hover {
+                background-color: #3b82f6 !important;
             }
         }
 
@@ -439,8 +443,11 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        .leaflet-bar a:hover {
-            background-color: #3b82f6 !important;
+        /* LEAFLET BAR STYLES (MOVED TO MEDIA QUERY ABOVE) */
+        .leaflet-bar a {
+            background-color: rgba(30, 41, 59, 0.9) !important;
+            color: white !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
         /* TIMELINE SLIDER STYLES */
@@ -1791,9 +1798,18 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.3 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.2.5 Update</p>
 
             <div class="w-full text-left space-y-4 mb-8">
+                <div class="flex gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="mouse-pointer-2" class="text-purple-400"
+                            size="18"></i></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Touch-Fix</h4>
+                        <p class="text-xs text-slate-400">Kein "Aufleuchten" mehr beim Scrollen.</p>
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <div class="mt-1 min-w-[20px]"><i data-lucide="signal" class="text-green-400" size="18"></i></div>
                     <div>
@@ -1808,14 +1824,6 @@
                     <div>
                         <h4 class="text-sm font-bold text-white">Fahrzeit-Anzeige</h4>
                         <p class="text-xs text-slate-400">Fahrtenbuch zeigt jetzt Start- & Endzeit an.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="wrench" class="text-slate-400" size="18"></i></div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Fixes</h4>
-                        <p class="text-xs text-slate-400">Stabilität & Performance verbessert.</p>
                     </div>
                 </div>
             </div>
@@ -2668,7 +2676,7 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.3";
+        const CURRENT_APP_VERSION = "1.2.4";
 
         // Manual Open
         function showChangelog() {
