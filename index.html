@@ -2947,23 +2947,42 @@
                             }
                         }
                         else if (metricId === 'rain') { // Next Rain
-                            valTxt = "Keiner"; valCls = "text-emerald-400";
+                            valTxt = "---"; valCls = "text-emerald-400";
                             if (r > 0) {
                                 valTxt = "Jetzt!"; valCls = "text-red-400 animate-pulse";
                             } else if (lastWeatherData.hourly && lastWeatherData.hourly.precipitation) {
                                 const h = lastWeatherData.hourly;
                                 const now = Date.now();
+                                let foundRain = false;
+
+                                // 1. Check Hourly (Prefix)
                                 for (let j = 0; j < h.time.length; j++) {
                                     const tTime = new Date(h.time[j]).getTime();
                                     if (tTime > now && h.precipitation[j] > 0.1) {
                                         const diffHours = (tTime - now) / (1000 * 60 * 60);
                                         if (diffHours > 24) {
-                                            valTxt = ">1T";
+                                            const d = Math.round(diffHours / 24);
+                                            valTxt = d + " Tg";
                                         } else {
                                             valTxt = (diffHours < 1) ? "Gleich" : Math.round(diffHours) + " Std";
                                         }
                                         valCls = "text-blue-300";
+                                        foundRain = true;
                                         break;
+                                    }
+                                }
+
+                                // 2. Fallback to Daily if not found in hourly (and daily available)
+                                if (!foundRain && lastWeatherData.daily && lastWeatherData.daily.precipitation_sum) {
+                                    const d = lastWeatherData.daily;
+                                    // Check from index 1 (Tomorrow) onwards, as Today should be covered by hourly/current
+                                    for (let k = 1; k < d.time.length; k++) {
+                                        if (d.precipitation_sum[k] > 0.5) {
+                                            valTxt = k + " Tg";
+                                            valCls = "text-blue-300";
+                                            foundRain = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
