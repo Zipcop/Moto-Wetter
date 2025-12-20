@@ -4554,20 +4554,27 @@
         }
 
         // --- NEW: FULLSCREEN LOGIC ---
-        function openFullscreenRide(id) {
+        // --- NEW: FULLSCREEN LOGIC ---
+        window.openFullscreenRide = function (id) {
             const modal = document.getElementById('fullscreenRideModal');
             let logs = [];
             try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
-            const log = logs.find(l => l.id === id);
 
-            if (!log || !log.gpsTrack || log.gpsTrack.length < 2) return;
+            // Loose compare for safety
+            const log = logs.find(l => l.id == id);
+
+            if (!log || !log.gpsTrack || log.gpsTrack.length < 2) {
+                alert("Keine GPS-Route für diese Fahrt vorhanden.");
+                return;
+            }
 
             modal.classList.remove('hidden');
 
-            // Set Title Stats
+            // Set Title Stats (Defensive)
+            const stats = log.stats || {};
             document.getElementById('fsMapTitle').innerText = log.name || "Fahrt " + log.date;
-            document.getElementById('fsMapDist').innerText = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
-            document.getElementById('fsMapSpeed').innerText = Math.round(log.stats.maxSpeed);
+            document.getElementById('fsMapDist').innerText = stats.distance ? (stats.distance / 1000).toFixed(1) : "0.0";
+            document.getElementById('fsMapSpeed').innerText = Math.round(stats.maxSpeed || 0);
 
 
             // Init Map if needed
