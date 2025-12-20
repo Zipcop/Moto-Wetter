@@ -2324,13 +2324,13 @@
             const btn = document.getElementById('btnRainTol');
             const desc = document.getElementById('rainTolDesc');
             if (btn) {
-                if (motoProfile.strictRain) {
+                if (!motoProfile.rainTolerance) {
                     btn.innerText = "Streng";
                     btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500";
                     safeSetText('rainTolDesc', "Kein Tropfen erlaubt!");
                 } else {
                     btn.innerText = "Locker";
-                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-600 text-slate-300 border border-slate-500";
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-700 text-slate-300 border border-slate-600";
                     safeSetText('rainTolDesc', "Leichter Regen okay.");
                 }
             }
@@ -3851,7 +3851,7 @@
             const btn = document.getElementById('btnRainTol');
             const desc = document.getElementById('rainTolDesc');
             if (btn && desc) {
-                if (motoProfile.rainTolerance) { btn.innerText = "Egal"; btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-700 text-slate-300 border border-slate-600"; desc.innerText = "Regenkombi am Start!"; }
+                if (motoProfile.rainTolerance) { btn.innerText = "Locker"; btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-700 text-slate-300 border border-slate-600"; desc.innerText = "Leichter Regen okay."; }
                 else { btn.innerText = "Streng"; btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500"; desc.innerText = "Kein Tropfen erlaubt!"; }
             }
         }
