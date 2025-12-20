@@ -4498,7 +4498,8 @@
                     setTimeout(() => {
                         // Refetch
                         let rlogs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
-                        const rlog = rlogs.find(l => l.id === id);
+                        // Loose compare
+                        const rlog = rlogs.find(l => l.id == id);
                         if (rlog) safeSetText('detailTitle', rlog.name || "Fahrt");
 
                         // Also refresh list behind
@@ -4645,7 +4646,8 @@
         function deleteSingleLog(id) {
             if (confirm("Diesen Eintrag löschen?")) {
                 let logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]');
-                logs = logs.filter(l => l.id !== id);
+                // Loose inequality for robustness
+                logs = logs.filter(l => l.id != id);
                 localStorage.setItem('motoRideLogs_v1', JSON.stringify(logs));
 
                 closeRideDetail();
@@ -4656,8 +4658,12 @@
         function renameRideLog(id) {
             let logs = [];
             try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
-            const log = logs.find(l => l.id === id);
-            if (!log) return;
+            // Loose compare
+            const log = logs.find(l => l.id == id);
+            if (!log) {
+                alert("Fehler: Kann Eintrag zum Umbenennen nicht finden (" + id + ")");
+                return;
+            }
 
             const newName = prompt("Name für diese Fahrt:", log.name || "");
             if (newName !== null) {
