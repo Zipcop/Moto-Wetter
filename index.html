@@ -3881,7 +3881,11 @@
         });
 
         function initMotoMap() {
-            if (motoMap || !document.getElementById('motoLiveMap')) return;
+            if (motoMap) {
+                motoMap.invalidateSize();
+                return;
+            }
+            if (!document.getElementById('motoLiveMap')) return;
 
             // Create Map
             motoMap = L.map('motoLiveMap', {
