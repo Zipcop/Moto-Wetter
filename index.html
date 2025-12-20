@@ -4140,6 +4140,7 @@
         // --- SENSOR VARIABLES (SHARED) ---
         let latestTilt = 0;
         let latestHeading = 0;
+        let currentVisualHeading = 0; // NEW: Cumulative heading for smooth rotation
         let latestGForce = 0;
         let latestAccelY = 0;
         let sensorRafId = null;
@@ -4867,8 +4868,16 @@
 
             // 2. MAP ROTATION
             const mapContainer = document.getElementById('motoLiveMap');
-            if (mapContainer && latestHeading) {
-                mapContainer.style.transform = `translate(-50%, -50%) rotate(${-latestHeading}deg)`;
+            if (mapContainer && latestHeading !== undefined) {
+                // Shortest path logic
+                let diff = latestHeading - (currentVisualHeading % 360);
+                // Fix 360 wrap-around
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+
+                currentVisualHeading += diff;
+
+                mapContainer.style.transform = `translate(-50%, -50%) rotate(${-currentVisualHeading}deg)`;
             }
 
             // 3. G-FORCE UI
