@@ -4673,6 +4673,10 @@
             }
 
             function startMotoTracking() {
+                // IDEMPOTENCY CHECK (Prevent Double Start)
+                if (motoWatchId || window.isTrackingActive) return;
+                window.isTrackingActive = true;
+
                 document.getElementById('btnMotoStart').classList.add('hidden');
                 document.getElementById('btnMotoStop').classList.remove('hidden');
                 document.getElementById('motoGpsStatus').classList.remove('hidden');
@@ -4704,6 +4708,11 @@
                 startSatWatch(true);
 
                 // Motion Sensors (Compass + G + Lean)
+                // Remove first to be safe
+                window.removeEventListener('deviceorientation', handleCompass);
+                window.removeEventListener('deviceorientation', handleMotoOrientation);
+                window.removeEventListener('devicemotion', handleMotion);
+
                 window.addEventListener('deviceorientation', handleCompass); // Map Rotation
                 window.addEventListener('deviceorientation', handleMotoOrientation); // Lean Angle
                 window.addEventListener('devicemotion', handleMotion);
@@ -4775,13 +4784,8 @@
                 if (motoMap && motoMarker) {
                     motoMarker.setLatLng([lat, lon]);
 
-                    // Strict Centering
-                    // Strict Centering (Preserve Zoom)
-                    motoMap.setView([lat, lon], motoMap.getZoom(), { animate: true });
-
-                    // ROTATION: Handled by Compass (handleCompass) for smoother "Phone" orientation
-                    // But if no compass, we could fallback to GPS heading.
-                    // For now, let's let handleCompass take priority.
+                    // Strict Centering (No Animation to prevent crash with CSS rotation)
+                    motoMap.setView([lat, lon], motoMap.getZoom(), { animate: false });
                 }
 
                 // Speed Update
@@ -4814,16 +4818,20 @@
             }
 
             function stopMotoTracking() {
+                window.isTrackingActive = false;
                 document.getElementById('btnMotoStart').classList.remove('hidden');
                 document.getElementById('btnMotoStop').classList.add('hidden');
                 document.getElementById('motoGpsStatus').classList.add('hidden');
 
                 if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
+                motoWatchId = null; // Ensure clear
+
                 window.removeEventListener('deviceorientation', handleCompass); // STOP Compass
                 window.removeEventListener('deviceorientation', handleMotoOrientation); // STOP Lean
                 window.removeEventListener('devicemotion', handleMotion);
 
                 cancelAnimationFrame(sensorRafId); // STOP RENDER LOOP
+                sensorRafId = null;
 
                 saveRideLog();
                 try { unlockOrientation(); } catch (e) { }
@@ -4863,51 +4871,57 @@
             }
 
             function updateSensorVisuals() {
-                // 1. TILT (Lean Angle)
-                updateMotoUI(latestTilt);
+                try {
+                    // 1. TILT (Lean Angle)
+                    updateMotoUI(latestTilt);
 
-                // 2. MAP ROTATION
-                const mapContainer = document.getElementById('motoLiveMap');
-                if (mapContainer && latestHeading !== undefined) {
-                    // Shortest path logic
-                    let diff = latestHeading - (currentVisualHeading % 360);
-                    // Fix 360 wrap-around
-                    if (diff > 180) diff -= 360;
-                    if (diff < -180) diff += 360;
+                    // 2. MAP ROTATION
+                    const mapContainer = document.getElementById('motoLiveMap');
+                    if (mapContainer && latestHeading !== undefined) {
+                        // Shortest path logic
+                        let diff = latestHeading - (currentVisualHeading % 360);
+                        // Fix 360 wrap-around
+                        if (diff > 180) diff -= 360;
+                        if (diff < -180) diff += 360;
 
-                    currentVisualHeading += diff;
+                        currentVisualHeading += diff;
 
-                    mapContainer.style.transform = `translate(-50%, -50%) rotate(${-currentVisualHeading}deg)`;
-                }
-
-                // 3. G-FORCE UI
-                const gForceBar = document.getElementById('gForceBar');
-                const gForceVal = document.getElementById('gForceVal');
-
-                if (gForceBar && gForceVal) {
-                    const val = -(latestAccelY / 9.81);
-                    // Bar Width Logic
-                    let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50);
-
-                    if (val > 0.05) {
-                        // Accel (Green/Right)
-                        gForceBar.style.left = '50%';
-                        gForceBar.style.width = barPct + '%';
-                        gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
-                    } else if (val < -0.05) {
-                        // Brake (Red/Left)
-                        gForceBar.style.left = (50 - barPct) + '%';
-                        gForceBar.style.width = barPct + '%';
-                        gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
-                    } else {
-                        gForceBar.style.width = '0%';
+                        mapContainer.style.transform = `translate(-50%, -50%) rotate(${-currentVisualHeading}deg)`;
                     }
-                    // Display Total G Magnitude
-                    gForceVal.innerText = latestGForce.toFixed(2) + ' G';
+
+                    // 3. G-FORCE UI
+                    const gForceBar = document.getElementById('gForceBar');
+                    const gForceVal = document.getElementById('gForceVal');
+
+                    if (gForceBar && gForceVal) {
+                        const val = -(latestAccelY / 9.81);
+                        // Bar Width Logic
+                        let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50);
+
+                        if (val > 0.05) {
+                            // Accel (Green/Right)
+                            gForceBar.style.left = '50%';
+                            gForceBar.style.width = barPct + '%';
+                            gForceBar.className = 'absolute top-0 bottom-0 bg-emerald-500 transition-all duration-75 ease-out';
+                        } else if (val < -0.05) {
+                            // Brake (Red/Left)
+                            gForceBar.style.left = (50 - barPct) + '%';
+                            gForceBar.style.width = barPct + '%';
+                            gForceBar.className = 'absolute top-0 bottom-0 bg-red-500 transition-all duration-75 ease-out';
+                        } else {
+                            gForceBar.style.width = '0%';
+                        }
+                        // Display Total G Magnitude
+                        gForceVal.innerText = latestGForce.toFixed(2) + ' G';
+                    }
+                } catch (e) {
+                    console.error("Visual Loop Error", e);
                 }
 
                 // Loop
-                sensorRafId = requestAnimationFrame(updateSensorVisuals);
+                if (window.isTrackingActive) {
+                    sensorRafId = requestAnimationFrame(updateSensorVisuals);
+                }
             }
 
 
