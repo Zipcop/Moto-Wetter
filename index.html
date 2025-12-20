@@ -1936,6 +1936,13 @@
                 </div>
             </div>
 
+            <!-- DETAIL MAP CONTAINER -->
+            <div id="rideDetailMap"
+                class="w-full h-48 bg-slate-900 rounded-xl overflow-hidden border border-slate-700/50 relative">
+                <div class="absolute inset-0 flex items-center justify-center text-slate-600 text-xs">Karte lädt...
+                </div>
+            </div>
+
             <!-- Secondary Stats -->
             <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="bg-slate-800/20 p-2 rounded-xl">
@@ -4272,7 +4279,8 @@
                 weather: {
                     temp: mainTemp,
                     desc: weatherSummary
-                }
+                },
+                gpsTrack: ridePathLatLons // SAVE TRACK
             };
 
             try {
@@ -4422,6 +4430,15 @@
             const dist = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
             safeSetText('detailDistance', dist);
 
+            // RENDER MAP
+            if (log.gpsTrack && log.gpsTrack.length > 1) {
+                setTimeout(() => renderRideMap(log.gpsTrack), 100);
+            } else {
+                // Clear/Hide Map if no data
+                const mc = document.getElementById('rideDetailMap');
+                if (mc) mc.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs">Keine Route aufgezeichnet</div>';
+            }
+
             // Weather
             safeSetText('detailTemp', log.weather.temp);
             safeSetText('detailWeather', log.weather.desc);
@@ -4450,7 +4467,59 @@
 
             const btnDelete = document.getElementById('btnDetailDelete');
             if (btnDelete) btnDelete.onclick = () => deleteSingleLog(id);
+            if (btnDelete) btnDelete.onclick = () => deleteSingleLog(id);
         }
+
+        let detailMapObj = null;
+        function renderRideMap(track) {
+            const container = document.getElementById('rideDetailMap');
+            if (!container) return;
+
+            // CLEANUP OLD MAP
+            if (detailMapObj) {
+                detailMapObj.remove();
+                detailMapObj = null;
+            }
+            container.innerHTML = ""; // Clear placeholder
+
+            // INIT MAP
+            detailMapObj = L.map('rideDetailMap', {
+                zoomControl: false,
+                attributionControl: false,
+                dragging: true,
+                touchZoom: true
+            });
+
+            // TILES
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(detailMapObj);
+
+            // DRAW SEGMENTS (Color Coded)
+            // Strategy: Iterate points, draw line from i to i+1 with color based on speed at i
+            const bounds = L.latLngBounds();
+
+            for (let i = 0; i < track.length - 1; i++) {
+                const p1 = track[i];
+                const p2 = track[i + 1];
+                const spd = p1.s || 0; // speed km/h
+
+                let color = '#22c55e'; // Green (<50)
+                if (spd > 50) color = '#eab308'; // Yellow (>50)
+                if (spd > 100) color = '#ef4444'; // Red (>100)
+
+                L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
+                    color: color,
+                    weight: 4,
+                    opacity: 0.8,
+                    smoothFactor: 1
+                }).addTo(detailMapObj);
+
+                bounds.extend([p1.lat, p1.lon]);
+            }
+            bounds.extend([track[track.length - 1].lat, track[track.length - 1].lon]);
+
+            detailMapObj.fitBounds(bounds, { padding: [10, 10] });
+        }
+
 
         function closeRideDetail() {
             const m = document.getElementById('rideDetailModal');
@@ -4528,8 +4597,9 @@
             // Reset Session
             sessionStartTime = Date.now();
             sessionMaxSpeed = 0; sessionMaxG = 0; sessionDistance = 0;
-            ridePathLatLons = [];
+            ridePathLatLons = []; // CLEAR TRACK
             gpsRetryMode = false;
+            lastTrackTime = 0; // NEW: Timer for sampling
 
             // 1. FAST FIX (Get location IMMEDIATELY via Network)
             if (gpsText) { gpsText.innerText = "Suche (Schnell)..."; gpsDot.className = "w-2 h-2 rounded-full bg-orange-500 animate-pulse"; }
@@ -4627,12 +4697,11 @@
             // Speed Update
             let kmh = 0;
             if (spd && spd > 0.5) kmh = spd * 3.6;
-            document.getElementById('motoSpeedDisplay').innerText = Math.round(kmh);
-            if (kmh > sessionMaxSpeed) sessionMaxSpeed = kmh;
+            currentMotoSpeed = (spd && spd > 0.5) ? spd * 3.6 : 0;
+            document.getElementById('motoSpeedDisplay').innerText = Math.round(currentMotoSpeed);
+            if (currentMotoSpeed > sessionMaxSpeed) sessionMaxSpeed = currentMotoSpeed;
 
-            // Distance (Simple)
-            // ... (Omitting Distance calc for brevity here, logic was in old duplicate block, ideally revived if needed)
-            // Ideally we re-insert that small logic:
+            // Distance
             if (!window.lastMotoPosTime) window.lastMotoPosTime = 0;
             const now = Date.now();
             if (window.lastMotoPosTime > 0 && spd !== null) {
@@ -4640,6 +4709,18 @@
                 if (dt < 10) sessionDistance += spd * dt;
             }
             window.lastMotoPosTime = now;
+
+            // TRACKING LOGIC (Sampling)
+            if (sessionStartTime > 0) { // Only if recording
+                if (now - lastTrackTime > 5000) { // Every 5 Seconds
+                    ridePathLatLons.push({
+                        lat: lat,
+                        lon: lon,
+                        s: Math.round(currentMotoSpeed) // Store Integer Speed
+                    });
+                    lastTrackTime = now;
+                }
+            }
         }
 
         function stopMotoTracking() {
