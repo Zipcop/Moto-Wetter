@@ -3816,7 +3816,15 @@
                 document.getElementById('dispMapOpacity').innerText = val + "%";
                 // Apply immediately
                 const mapEl = document.getElementById('motoLiveMap');
-                if (mapEl) mapEl.style.opacity = motoProfile.mapOpacity;
+                if (mapEl) {
+                    mapEl.style.opacity = motoProfile.mapOpacity;
+                    // FEATURE: High Contrast when fully opaque (Sunlight Mode)
+                    if (motoProfile.mapOpacity >= 1) {
+                        mapEl.style.filter = "contrast(1.2) brightness(1.3) saturate(1.1)";
+                    } else {
+                        mapEl.style.filter = "none";
+                    }
+                }
             }
             saveMotoProfile();
         }
@@ -3838,7 +3846,12 @@
             // Map Opacity UI init
             const dOp = document.getElementById('dispMapOpacity'); if (dOp) dOp.innerText = Math.round(motoProfile.mapOpacity * 100) + "%";
             const iOp = document.getElementById('inputMapOpacity'); if (iOp) iOp.value = Math.round(motoProfile.mapOpacity * 100);
-            const mapEl = document.getElementById('motoLiveMap'); if (mapEl) mapEl.style.opacity = motoProfile.mapOpacity;
+            const mapEl = document.getElementById('motoLiveMap');
+            if (mapEl) {
+                mapEl.style.opacity = motoProfile.mapOpacity;
+                if (motoProfile.mapOpacity >= 1) mapEl.style.filter = "contrast(1.2) brightness(1.3) saturate(1.1)";
+                else mapEl.style.filter = "none";
+            }
 
             const btn = document.getElementById('btnRainTol');
             const desc = document.getElementById('rainTolDesc');
