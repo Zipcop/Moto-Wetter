@@ -3908,44 +3908,7 @@
             isMotoMapInitialized = true;
         }
 
-        function updateMotoMapPosition(lat, lon) {
-            if (!motoMap || !motoMarker) return;
 
-            // Move marker
-            motoMarker.setLatLng([lat, lon]);
-
-            // Strict Centering
-            // Strict Centering (Preserve Zoom)
-            motoMap.setView([lat, lon], motoMap.getZoom(), { animate: true });
-
-            // ROTATION (Heading Up)
-            const heading = pos.coords.heading;
-            const mapContainer = document.getElementById('motoLiveMap');
-            if (heading !== null && heading !== undefined && !isNaN(heading)) {
-                // Rotate container opposite to heading
-                if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
-            } else {
-                // No Heading? Reset rotation (North Up)
-                if (mapContainer) mapContainer.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-            }
-
-            // Speed Update
-            let kmh = 0;
-            if (spd && spd > 0.5) kmh = spd * 3.6;
-            document.getElementById('motoSpeedDisplay').innerText = Math.round(kmh);
-            if (kmh > sessionMaxSpeed) sessionMaxSpeed = kmh;
-
-            // Distance (Simple)
-            // ... (Omitting Distance calc for brevity here, logic was in old duplicate block, ideally revived if needed)
-            // Ideally we re-insert that small logic:
-            if (!window.lastMotoPosTime) window.lastMotoPosTime = 0;
-            const now = Date.now();
-            if (window.lastMotoPosTime > 0 && spd !== null) {
-                const dt = (now - window.lastMotoPosTime) / 1000;
-                if (dt < 10) sessionDistance += spd * dt;
-            }
-            window.lastMotoPosTime = now;
-        }
 
         // --- ROUTE WEATHER LOGIC ---
         function openRouteModal() {
@@ -4138,6 +4101,13 @@
         function removeFavorite(n) { const idx = favorites.findIndex(fav => fav.name.toLowerCase() === n.toLowerCase()); if (idx > -1) { favorites.splice(idx, 1); saveFavorites(); } }
     </script>
     <script>
+        // --- SENSOR VARIABLES (SHARED) ---
+        let latestTilt = 0;
+        let latestHeading = 0;
+        let latestGForce = 0;
+        let latestAccelY = 0;
+        let sensorRafId = null;
+
         // --- MOTO LEAN ANGLE LOGIC ---
         let maxLeft = 0;
         let maxRight = 0;
@@ -4166,17 +4136,17 @@
             if (tilt > 90) tilt = 90;
             if (tilt < -90) tilt = -90;
 
-            // Update UI
-            updateMotoUI(tilt);
+            // Update State (UI updated in Loop)
+            latestTilt = tilt;
 
-            // Update Max
+            // Update Max Data (Keep logic here as it's data, not just visual)
             if (tilt < 0 && tilt < maxLeft) {
                 maxLeft = tilt;
-                maxLeftDisplay.innerText = Math.abs(Math.round(maxLeft)) + "°";
+                if (maxLeftDisplay) maxLeftDisplay.innerText = Math.abs(Math.round(maxLeft)) + "°";
             }
             if (tilt > 0 && tilt > maxRight) {
                 maxRight = tilt;
-                maxRightDisplay.innerText = Math.round(maxRight) + "°";
+                if (maxRightDisplay) maxRightDisplay.innerText = Math.round(maxRight) + "°";
             }
         }
 
@@ -4576,6 +4546,9 @@
             window.addEventListener('deviceorientation', handleCompass); // Map Rotation
             window.addEventListener('deviceorientation', handleMotoOrientation); // Lean Angle
             window.addEventListener('devicemotion', handleMotion);
+
+            // START RENDER LOOP (Butter Smooth UI)
+            startVisualLoop();
         }
 
         function handleCompass(e) {
@@ -4588,11 +4561,8 @@
             } else if (e.alpha) {
                 heading = 360 - e.alpha; // Android (roughly)
             }
-
-            const mapContainer = document.getElementById('motoLiveMap');
-            if (mapContainer && heading) {
-                mapContainer.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
-            }
+            // Just update State
+            latestHeading = heading;
         }
 
         function startSatWatch(highAcc) {
@@ -4681,6 +4651,8 @@
             window.removeEventListener('deviceorientation', handleMotoOrientation); // STOP Lean
             window.removeEventListener('devicemotion', handleMotion);
 
+            cancelAnimationFrame(sensorRafId); // STOP RENDER LOOP
+
             saveRideLog();
             try { unlockOrientation(); } catch (e) { }
             try { if (navigator.wakeLock) navigator.wakeLock.release ? navigator.wakeLock.release() : null; } catch (e) { }
@@ -4702,25 +4674,38 @@
             smoothAz = smoothAz + alpha * (az - smoothAz);
 
             // 1. Total G-Force (Linear Acceleration Magnitude)
-            // event.acceleration EXCLUDES gravity, so 0 when still.
-            // No need to subtract 1G again.
             const g = Math.sqrt(smoothAx * smoothAx + smoothAy * smoothAy + smoothAz * smoothAz) / 9.81;
 
-            // Update Session Max
+            // Update Session Max (Data Logic)
             if (g > sessionMaxG) sessionMaxG = g;
 
+            // Update State for Visuals
+            latestGForce = g;
+            latestAccelY = smoothAy; // For Brake/Accel
+        }
+
+        // --- VISUAL RENDER LOOP (requestAnimationFrame) ---
+        function startVisualLoop() {
+            if (sensorRafId) cancelAnimationFrame(sensorRafId);
+            updateSensorVisuals();
+        }
+
+        function updateSensorVisuals() {
+            // 1. TILT (Lean Angle)
+            updateMotoUI(latestTilt);
+
+            // 2. MAP ROTATION
+            const mapContainer = document.getElementById('motoLiveMap');
+            if (mapContainer && latestHeading) {
+                mapContainer.style.transform = `translate(-50%, -50%) rotate(${-latestHeading}deg)`;
+            }
+
+            // 3. G-FORCE UI
             const gForceBar = document.getElementById('gForceBar');
             const gForceVal = document.getElementById('gForceVal');
 
             if (gForceBar && gForceVal) {
-                // UI: Acceleration / Braking (longitudinal G)
-                // Using Smoothed Y
-                // Phone Orientation assumption: Top forward.
-                // Braking -> Phone tends to continue forward -> +Y acceleration (if excluding gravity) ? 
-                // Let's rely on previous polarity logic: "User said Accel shows as Brake -> Inverted val".
-
-                const val = -(smoothAy / 9.81);
-
+                const val = -(latestAccelY / 9.81);
                 // Bar Width Logic
                 let barPct = Math.min((Math.abs(val) / 0.8) * 50, 50);
 
@@ -4737,10 +4722,12 @@
                 } else {
                     gForceBar.style.width = '0%';
                 }
-
                 // Display Total G Magnitude
-                gForceVal.innerText = g.toFixed(2) + ' G';
+                gForceVal.innerText = latestGForce.toFixed(2) + ' G';
             }
+
+            // Loop
+            sensorRafId = requestAnimationFrame(updateSensorVisuals);
         }
 
 
