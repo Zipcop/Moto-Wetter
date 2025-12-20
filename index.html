@@ -1837,6 +1837,30 @@
         </div>
     </div>
 
+    <!-- FULLSCREEN RIDE MAP MODAL -->
+    <div id="fullscreenRideModal" class="hidden fixed inset-0 z-[200] bg-slate-950 flex flex-col animate-fade-in">
+        <!-- Close Button (Floating) -->
+        <button onclick="closeFullscreenRide()"
+            class="absolute top-4 right-4 z-[210] p-3 bg-slate-800/80 backdrop-blur rounded-full text-slate-400 hover:text-white shadow-xl border border-slate-700/50">
+            <i data-lucide="x" size="24"></i>
+        </button>
+
+        <!-- Stats Overlay (Floating) -->
+        <div
+            class="absolute top-4 left-4 z-[210] bg-slate-900/80 backdrop-blur p-4 rounded-2xl border border-slate-700/50 shadow-xl pointer-events-none">
+            <h3 id="fsMapTitle" class="text-sm font-black text-white uppercase tracking-tighter mb-1">Tour Map</h3>
+            <div class="flex gap-4 text-xs font-mono text-slate-300">
+                <div><span class="text-slate-500">DIST:</span> <span id="fsMapDist"
+                        class="text-white font-bold">--</span> km</div>
+                <div><span class="text-slate-500">MAX:</span> <span id="fsMapSpeed"
+                        class="text-white font-bold">--</span> km/h</div>
+            </div>
+        </div>
+
+        <!-- The Map -->
+        <div id="fullscreenRideMap" class="w-full h-full z-[0]"></div>
+    </div>
+
     <!-- CHANGELOG MODAL -->
     <div id="changelogModal"
         class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-fade-in modal-overlay">
@@ -4474,10 +4498,17 @@
             if (btnDelete) btnDelete.onclick = () => deleteSingleLog(id);
         }
 
+
         let detailMapObj = null;
+        let fsMapObj = null;
+
         function renderRideMap(track) {
             const container = document.getElementById('rideDetailMap');
             if (!container) return;
+
+            // Make clickable
+            container.style.cursor = "pointer";
+            container.onclick = () => openFullscreenRide(currentDetailId);
 
             // CLEANUP OLD MAP
             if (detailMapObj) {
@@ -4490,38 +4521,92 @@
             detailMapObj = L.map('rideDetailMap', {
                 zoomControl: false,
                 attributionControl: false,
-                dragging: true,
-                touchZoom: true
+                dragging: false, // Static preview
+                touchZoom: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false
             });
 
             // TILES
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(detailMapObj);
 
-            // DRAW SEGMENTS (Color Coded)
-            // Strategy: Iterate points, draw line from i to i+1 with color based on speed at i
+            // DRAW TRACK
+            drawTrackOnMap(detailMapObj, track);
+        }
+
+        // --- NEW: FULLSCREEN LOGIC ---
+        function openFullscreenRide(id) {
+            const modal = document.getElementById('fullscreenRideModal');
+            let logs = [];
+            try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
+            const log = logs.find(l => l.id === id);
+
+            if (!log || !log.gpsTrack || log.gpsTrack.length < 2) return;
+
+            modal.classList.remove('hidden');
+
+            // Set Title Stats
+            document.getElementById('fsMapTitle').innerText = log.name || "Fahrt " + log.date;
+            document.getElementById('fsMapDist').innerText = log.stats.distance ? (log.stats.distance / 1000).toFixed(1) : "0.0";
+            document.getElementById('fsMapSpeed').innerText = Math.round(log.stats.maxSpeed);
+
+
+            // Init Map if needed
+            if (!fsMapObj) {
+                fsMapObj = L.map('fullscreenRideMap', {
+                    zoomControl: false,
+                    attributionControl: false
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(fsMapObj);
+            }
+
+            // Wait for Modal Render then Draw
+            requestAnimationFrame(() => {
+                fsMapObj.invalidateSize();
+                // Clear existing layers (except tiles? actually remove simple way)
+                fsMapObj.eachLayer((layer) => {
+                    if (layer instanceof L.Polyline) {
+                        layer.remove();
+                    }
+                });
+                drawTrackOnMap(fsMapObj, log.gpsTrack);
+            });
+
+            // Re-create icons for modal
+            lucide.createIcons();
+        }
+
+        function closeFullscreenRide() {
+            document.getElementById('fullscreenRideModal').classList.add('hidden');
+        }
+
+        // SHARED DRAW FUNCTION
+        function drawTrackOnMap(mapInstance, track) {
             const bounds = L.latLngBounds();
 
             for (let i = 0; i < track.length - 1; i++) {
                 const p1 = track[i];
                 const p2 = track[i + 1];
-                const spd = p1.s || 0; // speed km/h
+                const spd = p1.s || 0;
 
-                let color = '#22c55e'; // Green (<50)
-                if (spd > 50) color = '#eab308'; // Yellow (>50)
-                if (spd > 100) color = '#ef4444'; // Red (>100)
+                let color = '#22c55e'; // Green
+                if (spd > 50) color = '#eab308'; // Yellow
+                if (spd > 100) color = '#ef4444'; // Red
 
                 L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
                     color: color,
                     weight: 4,
-                    opacity: 0.8,
+                    opacity: 0.9,
                     smoothFactor: 1
-                }).addTo(detailMapObj);
+                }).addTo(mapInstance);
 
                 bounds.extend([p1.lat, p1.lon]);
             }
             bounds.extend([track[track.length - 1].lat, track[track.length - 1].lon]);
 
-            detailMapObj.fitBounds(bounds, { padding: [10, 10] });
+            mapInstance.fitBounds(bounds, { padding: [20, 20] });
         }
 
 
