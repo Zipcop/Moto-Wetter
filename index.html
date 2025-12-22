@@ -4628,12 +4628,15 @@
                 if (spd > 50) color = '#eab308'; // Yellow
                 if (spd > 100) color = '#ef4444'; // Red
 
-                L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
+                const line = L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
                     color: color,
                     weight: 4,
                     opacity: 0.9,
                     smoothFactor: 1
                 }).addTo(mapInstance);
+
+                // FEATURE: Click to see Speed
+                line.bindPopup(`<div class="text-slate-800 font-bold text-center">${Math.round(spd)} km/h</div>`, { closeButton: false });
 
                 bounds.extend([p1.lat, p1.lon]);
             }
