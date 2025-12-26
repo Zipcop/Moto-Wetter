@@ -77,17 +77,20 @@
         }
 
         /* Cloudy */
+        /* Cloudy - NOW DARKER/BLUEISH (Uniform) */
         body.theme-cloudy-day {
-            background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+            /* Slate-700 to Slate-900 */
         }
 
         body.theme-cloudy-night {
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         }
 
-        /* Rain */
+        /* Rain - NOW DARKER */
         body.theme-rain-day {
-            background: linear-gradient(180deg, #334155 0%, #475569 100%);
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            /* Slate-800 to Slate-900 */
         }
 
         body.theme-rain-night {
@@ -3185,7 +3188,12 @@
 
             // WOLKEN (Verbessert: Mehr Volumen, nicht mehr matschig)
             if (isCloudy && !isFog) {
-                const cloudCount = isHeavyCloud ? 8 : 5;
+                let cloudCount = 5; // Default for Code 3 (Overcast)
+
+                if (isHeavyCloud) cloudCount = 8; // Storm/Rain
+                if (c === 2) cloudCount = 3; // Partly Cloudy
+                if (c === 1) cloudCount = 1; // Mainly Clear (Heiter)
+
                 const baseClass = isHeavyCloud ? "cloud-shape cloud-dark" : "cloud-shape";
 
                 for (let i = 0; i < cloudCount; i++) {
@@ -3194,7 +3202,10 @@
                     const height = 15 + Math.random() * 25; // 15vh - 40vh
                     const duration = 30 + Math.random() * 40;
                     const delay = Math.random() * -50;
-                    const opacity = isHeavyCloud ? (0.8 + Math.random() * 0.2) : (0.4 + Math.random() * 0.3); // Etwas weniger deckend
+
+                    // Code 1: Very subtle
+                    let opacity = isHeavyCloud ? (0.8 + Math.random() * 0.2) : (0.4 + Math.random() * 0.3);
+                    if (c === 1) opacity = 0.3; // Extra transparent for mainly clear
 
                     // Organic Blob Shape
                     const r = () => 30 + Math.random() * 70; // 30% - 100%
