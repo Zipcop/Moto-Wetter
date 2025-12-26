@@ -601,32 +601,34 @@
             box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
         }
 
-        @keyframes fog-drift {
-            0% {
-                transform: translateX(-10%);
-                opacity: 0.4;
+        @keyframes fog-pulse {
+
+            0%,
+            100% {
+                opacity: 0.1;
             }
 
             50% {
-                transform: translateX(10%);
-                opacity: 0.7;
-            }
-
-            100% {
-                transform: translateX(-10%);
-                opacity: 0.4;
+                opacity: 0.3;
             }
         }
 
         .fog-layer {
             position: absolute;
-            left: -20%;
-            right: -20%;
-            top: 20%;
-            height: 60%;
-            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
-            filter: blur(25px);
-            animation: fog-drift 10s infinite ease-in-out;
+            inset: 0;
+            background: linear-gradient(to top, rgba(200, 210, 230, 0.2) 0%, transparent 80%);
+            animation: fog-pulse 8s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .fog-cloud {
+            position: absolute;
+            background: rgba(220, 230, 250, 0.12);
+            filter: blur(40px);
+            border-radius: 40%;
+            animation: cloud-drift linear infinite;
+            /* Reuse drift */
+            pointer-events: none;
         }
 
         @keyframes cloud-drift {
@@ -641,10 +643,19 @@
 
         .cloud-shape {
             position: absolute;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 60%, transparent 70%);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 50%;
-            filter: blur(25px);
+            filter: blur(15px);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
             animation: cloud-drift linear infinite;
+            pointer-events: none;
+            /* Key fix */
+        }
+
+        .cloud-dark {
+            background: rgba(148, 163, 184, 0.8) !important;
+            /* Slate-400 */
+            box-shadow: 0 0 40px rgba(100, 116, 139, 0.6) !important;
         }
 
         .sun-orb {
@@ -870,7 +881,8 @@
         <!-- === VIEW 1: WEATHER === -->
         <section id="view-weather" class="w-screen h-full flex-shrink-0 snap-center relative overflow-hidden">
             <!-- BACKGROUND EFFECTS (Modified for Swipe) -->
-            <div id="splashEffects" style="position: absolute !important; inset: 0; z-index: 1;"></div>
+            <div id="splashEffects" style="position: absolute !important; inset: 0; z-index: 1; pointer-events: none;">
+            </div>
             <div id="lightningLayer" style="position: absolute !important; inset: 0; z-index: 20;"></div>
             <!-- FEATURE 7: Rain on Glass Canvas -->
             <canvas id="rainGlassCanvas"
@@ -1873,33 +1885,37 @@
             </div>
 
             <h2 class="text-2xl font-black text-white mb-1">Was ist neu?</h2>
-            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.4.0 Update</p>
+            <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-6">Version 1.5.0 "Atmosphere"</p>
 
             <div class="w-full text-left space-y-4 mb-8">
+                <!-- FEATURE 1: Visuals -->
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="siren" class="text-red-500" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="cloud-rain" class="text-sky-400" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Safety Center</h4>
-                        <p class="text-xs text-slate-400">Neuer SOS-Knopf für Notfälle. Standort teilen, 112-Notruf und
-                            Erste-Hilfe-Guide.</p>
+                        <h4 class="text-sm font-bold text-white">Atmosphäre 2.0</h4>
+                        <p class="text-xs text-slate-400">Komplett überarbeitete Wolken und Nebel für mehr Tiefe.
+                            Dynamische "Blob"-Formen und verbesserte Transparenz.</p>
                     </div>
                 </div>
 
+                <!-- FEATURE 2: Map Interaction -->
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="map" class="text-blue-400" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="map-pin" class="text-emerald-400" size="18"></i>
+                    </div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Tour Replay</h4>
-                        <p class="text-xs text-slate-400">Interaktive Karte im Fahrtenbuch. Deine Strecke als Heatmap
-                            (Tempo-Farben: Grün/Gelb/Rot).</p>
+                        <h4 class="text-sm font-bold text-white">Interaktive Touren</h4>
+                        <p class="text-xs text-slate-400">Tippe auf deine gefahrene Strecke in der Karte, um deine
+                            Geschwindigkeit an jedem Punkt zu sehen. Optimierte Touch-Erkennung.</p>
                     </div>
                 </div>
 
+                <!-- FEATURE 3: Fixes -->
                 <div class="flex gap-3">
-                    <div class="mt-1 min-w-[20px]"><i data-lucide="zap" class="text-yellow-400" size="18"></i></div>
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="wrench" class="text-slate-400" size="18"></i></div>
                     <div>
-                        <h4 class="text-sm font-bold text-white">Performance</h4>
-                        <p class="text-xs text-slate-400">Butterweiche 60fps Anzeigen für Schräglage & G-Kräfte dank
-                            neuer Render-Technik.</p>
+                        <h4 class="text-sm font-bold text-white">Verbesserungen</h4>
+                        <p class="text-xs text-slate-400">Fix für Profil-Einstellungen (Regen-Toleranz) &
+                            Interface-Optimierungen im Menü.</p>
                     </div>
                 </div>
 
@@ -1999,7 +2015,7 @@
 
     <!-- DEV MENU MODAL -->
     <div id="devMenu" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in modal-overlay">
+        class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in modal-overlay pointer-events-auto">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-5 relative shadow-2xl border border-red-500/30 modal-content">
             <button onclick="document.getElementById('devMenu').classList.add('hidden')"
@@ -2377,8 +2393,24 @@
 
             if (heavyOverride) {
                 const con = document.getElementById('splashEffects');
-                con.innerHTML += `<div class="cloud-shape" style="top:-5%; left:20%; width:110vw; height:40vh; animation-duration:32s; opacity:0.4;"></div>`;
-                con.innerHTML += `<div class="cloud-shape" style="bottom:35%; left:-20%; width:110vw; height:45vh; animation-duration:38s; opacity:0.3;"></div>`;
+                // Use new cloud logic
+                for (let i = 0; i < 8; i++) {
+                    const top = Math.random() * 50 - 10;
+                    const width = 35 + Math.random() * 45; // Smaller
+                    const height = 15 + Math.random() * 25;
+                    const duration = 30 + Math.random() * 40;
+                    const delay = Math.random() * -50;
+                    const opacity = 0.8 + Math.random() * 0.2;
+
+                    // Organic Blob
+                    const r = () => 30 + Math.random() * 70;
+                    const br = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+
+                    const div = document.createElement('div');
+                    div.className = "cloud-shape cloud-dark";
+                    div.style.cssText = `top:${top}%; left:-10%; width:${width}vw; height:${height}vh; border-radius:${br}; animation-duration:${duration}s; animation-delay:${delay}s; opacity:${opacity}; pointer-events: none;`;
+                    con.appendChild(div);
+                }
             }
         }
 
@@ -3151,13 +3183,24 @@
                 for (let i = 0; i < 100; i++) { h += `<div class="star" style="top:${Math.random() * 60}%;left:${Math.random() * 100}%;width:${1 + Math.random() * 2}px;height:${1 + Math.random() * 2}px;animation-delay:${Math.random() * 2}s;opacity:${0.3 + Math.random() * 0.7}"></div>`; }
             }
 
-            // WOLKEN (Mehr & Besser sichtbar)
+            // WOLKEN (Verbessert: Mehr Volumen, nicht mehr matschig)
             if (isCloudy && !isFog) {
-                h += `<div class="cloud-shape" style="top:10%; left:-5%; width:100vw; height:35vh; animation-duration:22s; opacity:0.6;"></div>`;
-                h += `<div class="cloud-shape" style="top:25%; right:-15%; width:90vw; height:30vh; animation-duration:28s; animation-direction:reverse; opacity:0.5;"></div>`;
-                if (isHeavyCloud) {
-                    h += `<div class="cloud-shape" style="top:-5%; left:20%; width:110vw; height:40vh; animation-duration:32s; opacity:0.4;"></div>`;
-                    h += `<div class="cloud-shape" style="bottom:35%; left:-20%; width:110vw; height:45vh; animation-duration:38s; opacity:0.3;"></div>`;
+                const cloudCount = isHeavyCloud ? 8 : 5;
+                const baseClass = isHeavyCloud ? "cloud-shape cloud-dark" : "cloud-shape";
+
+                for (let i = 0; i < cloudCount; i++) {
+                    const top = Math.random() * 50 - 10; // -10% bis 40%
+                    const width = 35 + Math.random() * 45; // 35vw - 80vw (Kleiner)
+                    const height = 15 + Math.random() * 25; // 15vh - 40vh
+                    const duration = 30 + Math.random() * 40;
+                    const delay = Math.random() * -50;
+                    const opacity = isHeavyCloud ? (0.8 + Math.random() * 0.2) : (0.4 + Math.random() * 0.3); // Etwas weniger deckend
+
+                    // Organic Blob Shape
+                    const r = () => 30 + Math.random() * 70; // 30% - 100%
+                    const br = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+
+                    h += `<div class="${baseClass}" style="top:${top}%; left:-10%; width:${width}vw; height:${height}vh; border-radius:${br}; animation-duration:${duration}s; animation-delay:${delay}s; opacity:${opacity};"></div>`;
                 }
             }
 
@@ -3176,7 +3219,18 @@
                     h += `<div class="snowflake" style="left:${Math.random() * 100}%; animation-delay:${Math.random() * 2}s; animation-duration:${3 + Math.random() * 2}s; opacity:${Math.random()}"></div>`;
                 }
             } else if (isFog) {
+                // Base Haze
                 h += `<div class="fog-layer"></div>`;
+                // Drifting Fog Patches
+                for (let i = 0; i < 4; i++) {
+                    const width = 120 + Math.random() * 60; // 120-180vw
+                    const top = 30 + Math.random() * 40; // 30-70% (Lower half)
+                    const height = 30 + Math.random() * 30;
+                    const duration = 60 + Math.random() * 60; // Very slow
+                    const delay = Math.random() * -60;
+
+                    h += `<div class="fog-cloud" style="top:${top}%; left:-20%; width:${width}vw; height:${height}vh; animation-duration:${duration}s; animation-delay:${delay}s;"></div>`;
+                }
             }
 
             if (con) con.innerHTML = h; if (loc) loc.innerHTML = h;
