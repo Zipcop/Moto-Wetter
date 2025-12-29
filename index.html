@@ -3672,21 +3672,66 @@
         function updateRadar() { if (typeof L !== 'undefined') { initRadarMap(); } }
         function toggleFullscreen() { const c = document.getElementById('radarSection'); isFullscreen = !isFullscreen; if (isFullscreen) { c.classList.add('radar-fullscreen'); document.getElementById('fullscreenIcon').setAttribute('data-lucide', 'x'); document.body.style.overflow = 'hidden'; } else { c.classList.remove('radar-fullscreen'); document.getElementById('fullscreenIcon').setAttribute('data-lucide', 'maximize-2'); document.body.style.overflow = ''; } lucide.createIcons(); setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 300); }
 
+        // NEW: Helper to determine effective weather code based on actual precipitation
+        function getEffectiveWeatherCode(code, precip) {
+            // Check if code indicates rain/drizzle/snow (Codes 51-99 roughly)
+            // 51-57: Drizzle
+            // 61-67: Rain
+            // 71-77: Snow
+            // 80-82: Showers
+            // 85-86: Snow Showers
+            // 95-99: Thunderstorm (allow Thunderstorm to pass even if 0 precip? Usually TS implies rain, but maybe dry lightning?)
+            // Let's be strict for "Rain" display as requested.
+
+            // List of codes that imply precipitation
+            const wetCodes = [
+                51, 53, 55, 56, 57,
+                61, 63, 65, 66, 67,
+                71, 73, 75, 77,
+                80, 81, 82,
+                85, 86
+            ];
+
+            if (wetCodes.includes(code)) {
+                // If implied wet, but precipitation is 0 (or very close to 0), fallback to Cloudy/Overcast
+                if (precip === 0) {
+                    // console.log("Fixing Weather Code: Rain indicated but 0mm. Showing Cloud instead.");
+                    return 3; // Bedeckt
+                }
+            }
+            return code;
+        }
+
         function updateUI(name, fromCache = false) {
             try {
-                if (name) document.getElementById('cityName').innerText = name; const cur = lastWeatherData.current;
-                document.getElementById('splashCity').innerText = name || "Unbekannt"; document.getElementById('splashTemp').innerText = Math.round(cur.temperature_2m);
-                const info = getWeatherInfo(cur.weather_code); document.getElementById('splashIcon').innerHTML = `<i data-lucide="${info.i}" class="w-24 h-24"></i>`; document.getElementById('splashDesc').innerText = info.t;
-                renderSplashEffects(cur.weather_code, cur.is_day);
+                if (name) document.getElementById('cityName').innerText = name;
+                let cur = lastWeatherData.current;
+
+                // --- FIX: Apply Effective Code Logic ---
+                // We clone cur roughly or just modify a local variable for display
+                // NOTE: We do NOT modify lastWeatherData.current permanently to keep original data for other calcs if needed,
+                // BUT for UI consistency it's better to use the effective code everywhere in this render cycle.
+
+                const effectiveCode = getEffectiveWeatherCode(cur.weather_code, cur.precipitation);
+
+                document.getElementById('splashCity').innerText = name || "Unbekannt";
+                document.getElementById('splashTemp').innerText = Math.round(cur.temperature_2m);
+
+                const info = getWeatherInfo(effectiveCode);
+                document.getElementById('splashIcon').innerHTML = `<i data-lucide="${info.i}" class="w-24 h-24"></i>`;
+                document.getElementById('splashDesc').innerText = info.t;
+
+                renderSplashEffects(effectiveCode, cur.is_day);
                 updateSunVisuals();
-                // PASS NEW PARAMETER
+
+                // PASS NEW PARAMETER (Effective Code)
                 updateMainValues(
                     cur.temperature_2m,
-                    cur.apparent_temperature, // NEW
+                    cur.apparent_temperature,
                     cur.wind_speed_10m,
                     cur.relative_humidity_2m,
                     cur.precipitation,
-                    cur.weather_code,
+                    effectiveCode, // USES EFFECTIVE CODE
                     cur.is_day,
                     0
                 );
