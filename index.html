@@ -2733,41 +2733,105 @@
                     if (extras) extras.classList.add('hidden');
                 }
 
-                // --- NEU: Hourly Rain Render ---
+                // --- NEU: Hourly Rain Render (Horizontal Bar Chart) ---
                 const rainCon = document.getElementById('dailyHourlyRain');
                 if (rainCon) {
-                    rainCon.innerHTML = '<div class="text-xs font-bold text-slate-400 mb-2 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm">Regen-Verlauf</div>';
-                    const h = lastWeatherData.hourly;
-                    // Find start index for this day
-                    const dateMatch = date.toISOString().slice(0, 10);
+                    rainCon.innerHTML = ''; // Clear
 
-                    let hasRainEntries = false;
+                    // Header (Scrollbar text removed as requested)
+                    const header = document.createElement('div');
+                    header.className = "flex justify-between items-center mb-3";
+                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Regen-Verlauf (Nur Regen-Stunden)</span>';
+                    rainCon.appendChild(header);
+
+                    const h = lastWeatherData.hourly;
+                    const dateMatch = date.toISOString().slice(0, 10); // YYYY-MM-DD matches start of ISO string
+
+                    // Container for bars
+                    // ADDED: scrollbar-hide class (requires CSS)
+                    const scrollArea = document.createElement('div');
+                    scrollArea.className = "flex overflow-x-auto gap-3 pb-2 touch-pan-x scrollbar-hide";
+                    // Inline style to ensure it works regardless of Tailwind config
+                    scrollArea.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
+
+                    let maxPrecipInDay = 0;
+
+                    // Identify the range of hours to display
+                    // We want: First hour with rain -> Last hour with rain.
+                    let startIdx = -1;
+                    let endIdx = -1;
+
                     for (let k = 0; k < h.time.length; k++) {
                         if (h.time[k].startsWith(dateMatch)) {
-                            const prec = h.precipitation[k];
-                            // Show even small amounts or if it's "wet" code, but main focus on >0
-                            if (prec > 0) {
-                                hasRainEntries = true;
-                                const timeObj = new Date(h.time[k]);
-                                const timeStr = timeObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                const barW = Math.min(100, prec * 30); // scale: 3mm approx full bar
-                                let barCol = "bg-blue-500";
-                                if (prec > 2) barCol = "bg-purple-500";
-                                else if (prec < 0.5) barCol = "bg-blue-300";
-
-                                rainCon.innerHTML += `
-                                <div class="flex items-center justify-between mb-1.5 p-2 bg-slate-800/40 rounded-lg">
-                                    <span class="text-xs text-slate-300 font-mono w-10">${timeStr}</span>
-                                    <div class="flex-grow mx-3 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                        <div class="${barCol} h-full" style="width: ${barW}%"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-blue-100 w-10 text-right">${prec.toFixed(1)}</span>
-                                </div>`;
+                            const p = h.precipitation[k];
+                            // Check if significant rain
+                            if (p > 0) {
+                                if (startIdx === -1) startIdx = k;
+                                endIdx = k;
+                                if (p > maxPrecipInDay) maxPrecipInDay = p;
                             }
                         }
                     }
-                    if (!hasRainEntries) {
-                        rainCon.innerHTML += `<div class="text-xs text-slate-500 italic text-center py-4">Kein Regen für diesen Tag vorhergesagt.</div>`;
+
+                    if (startIdx !== -1 && endIdx !== -1) {
+                        const scaleMax = Math.max(maxPrecipInDay, 2.0);
+
+                        // Loop from first rainy hour to last rainy hour
+                        for (let k = startIdx; k <= endIdx; k++) {
+                            const prec = h.precipitation[k];
+                            const timeObj = new Date(h.time[k]);
+                            const hour = timeObj.getHours();
+
+                            const heightPct = Math.min(100, (prec / scaleMax) * 100);
+                            const isHeavy = prec > 2.0;
+                            const hasRain = prec > 0;
+
+                            let barClass = "bg-gradient-to-t from-blue-500/50 to-blue-400";
+                            if (isHeavy) barClass = "bg-gradient-to-t from-blue-600/50 to-purple-500";
+
+                            // Visual difference for "Gap" hours (0 rain but in range)
+                            if (!hasRain) {
+                                barClass = "bg-slate-700/20";
+                            }
+
+                            const barHtml = `
+                                    <div class="flex-shrink-0 flex flex-col items-center gap-2 group min-w-[32px]">
+                                        <!-- Amount Label -->
+                                        <div class="h-4 flex items-end">
+                                            ${hasRain ? `<span class="text-[9px] font-bold ${isHeavy ? 'text-purple-300' : 'text-blue-200'}">${prec.toFixed(1)}</span>` : ''}
+                                        </div>
+                                        
+                                        <!-- Bar Track -->
+                                        <div class="h-24 w-2.5 bg-slate-800/50 rounded-full relative overflow-hidden flex items-end">
+                                            <!-- Fill -->
+                                            <div class="w-full rounded-full ${barClass} transition-all duration-500" style="height: ${hasRain ? Math.max(15, heightPct) : 100}%"></div>
+                                        </div>
+                                        
+                                        <!-- Hour Label -->
+                                        <span class="text-[10px] font-mono ${hasRain ? 'text-slate-400' : 'text-slate-600'}">${hour}h</span>
+                                    </div>
+                                `;
+                            scrollArea.innerHTML += barHtml;
+                        }
+                        rainCon.appendChild(scrollArea);
+
+                        // Inject CSS style for scrollbar hiding if not already present
+                        // Checking if style already added prevents duplicates but just adding to head is safe
+                        if (!document.getElementById('scrollbar-hide-style')) {
+                            const style = document.createElement('style');
+                            style.id = 'scrollbar-hide-style';
+                            style.textContent = `.scrollbar-hide::-webkit-scrollbar { display: none; }`;
+                            document.head.appendChild(style);
+                        }
+
+                    } else {
+                        // Keep the header but show friendly message
+                        rainCon.innerHTML += `
+                            <div class="flex flex-col items-center justify-center py-6 bg-slate-800/20 rounded-xl border border-dashed border-slate-700/50">
+                                <i data-lucide="sun" class="text-orange-300/50 mb-2" size="24"></i>
+                                <span class="text-xs text-slate-400">Kein Regen erwartet</span>
+                            </div>
+                        `;
                     }
                 }
 
