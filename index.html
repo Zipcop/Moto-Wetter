@@ -1746,6 +1746,31 @@
 
         </div>
     </div>
+
+    <!-- WARNING DETAILS MODAL -->
+    <div id="warningDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+        <div
+            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-red-500/30 modal-content pointer-events-auto">
+            <button onclick="document.getElementById('warningDetailsModal').classList.add('hidden')"
+                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+                    data-lucide="x" size="20"></i></button>
+            <h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i id="warningModalIcon"
+                    data-lucide="alert-triangle" size="24" class="text-red-400"></i> <span
+                    id="warningModalTitle">Warnung</span></h3>
+            <p class="text-xs text-slate-400 mb-4">Sicherheitshinweise</p>
+
+            <div id="warningModalContent" class="space-y-4">
+                <!-- Dynamic Content -->
+                <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <h4 class="text-sm font-bold text-red-200 mb-1">Was bedeutet das?</h4>
+                    <p id="warningDesc" class="text-xs text-slate-300 leading-relaxed"></p>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
     <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
         <div
@@ -2670,10 +2695,69 @@
 
         // Benachrichtigungs-Funktionen ENTFERNT (enableNotifications, checkAndSendNotification)
 
+        // --- WARNING DETAILS LOGIC ---
+        const WARNING_DATA = {
+            "Glätte": {
+                title: "Glättegefahr",
+                desc: "Die Temperaturen liegen im Bereich des Gefrierpunkts. Es besteht erhöhte Gefahr durch Reifglätte, überfrierende Nässe oder Eis.",
+                tips: ["Vermeide abruptes Bremsen und starkes Beschleunigen.", "Erhöhe den Sicherheitsabstand.", "Fahre Kurven besonders vorsichtig und langsam an.", "Achte auf schattige Bereiche (Brücken, Waldstücke)."]
+            },
+            "STURM": {
+                title: "Sturmwarnung",
+                desc: "Es treten Windgeschwindigkeiten von über 75 km/h auf. Das Fahren wird unberechenbar und gefährlich.",
+                tips: ["Achte auf herabfallende Äste und Dachziegel.", "Meide Waldgebiete und Alleen.", "Sei auf starken Seitenwind gefasst (besonders auf Brücken).", "Wenn möglich, verschiebe die Fahrt."]
+            },
+            "Windböen": {
+                title: "Starke Windböen",
+                desc: "Windgeschwindigkeiten über 50 km/h können das Motorrad plötzlich versetzen.",
+                tips: ["Halte den Lenker locker aber sicher.", "Sei vorbereitet auf Böen bei LKW-Überholmanövern oder Tunnelausfahrten.", "Passe die Geschwindigkeit an."]
+            },
+            "GEWITTER": {
+                title: "Gewitter",
+                desc: "Hohes Risiko für Blitzschlag, Hagel und extremen Starkregen.",
+                tips: ["Suche sofort Schutz (Tankstelle, Gebäude).", "Meide offene Flächen und alleinstehende Bäume.", "Weiterfahren ist lebensgefährlich – mach eine Pause."]
+            },
+            "Starkregen": {
+                title: "Starkregen",
+                desc: "Intensiver Niederschlag (> 5mm). Die Sicht ist stark eingeschränkt und es droht Aquaplaning.",
+                tips: ["Reduziere sofort die Geschwindigkeit.", "Gefahr von Aquaplaning – vermeide Pfützen und Spurrillen.", "Mach dich sichtbar (Warnblinker bei Stillstand)."]
+            },
+            "Nebel": {
+                title: "Nebel",
+                desc: "Die Sichtweite ist stark eingeschränkt (< 1km). Hindernisse werden spät erkannt.",
+                tips: ["Fahre bremsbereit und langsamer.", "Visier sauber halten (Beschlag).", "Abstand vergrößern.", "Nicht das Fernlicht nutzen (Eigenblendung)."]
+            }
+        };
+
+        function showWarningDetails(key) {
+            const data = WARNING_DATA[key];
+            if (!data) return;
+
+            safeSetText('warningModalTitle', data.title);
+            safeSetText('warningDesc', data.desc);
+            // Dynamic Icon Color/Type if needed, currently static alert-triangle
+
+
+
+            showModal('warningDetailsModal');
+        }
+
         function checkWarnings(c) {
             let w = null, col = "bg-yellow-500/80 border-yellow-400", ic = "alert-triangle";
-            if (c.weather_code >= 95) { w = "GEWITTER"; col = "bg-red-600/90 border-red-400"; ic = "cloud-lightning" } else if (c.wind_speed_10m >= 75) { w = "STURM"; col = "bg-red-600/90 border-red-400"; ic = "wind" } else if (c.wind_speed_10m >= 50) { w = "Windböen"; col = "bg-orange-500/80 border-orange-400"; ic = "wind" } else if (c.temperature_2m <= 3) { w = "Glätte"; col = "bg-blue-600/80 border-blue-400"; ic = "snowflake" } else if (c.precipitation >= 5) { w = "Starkregen"; col = "bg-blue-700/80 border-blue-400"; ic = "cloud-rain" } if (c.visibility < 1000) { w = "Nebel"; col = "bg-gray-600/90 border-gray-400"; ic = "cloud-fog" }
-            if (w) { warningContainer.innerHTML = `<div onclick="showMotoDetails()" class="w-full ${col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-4 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${ic}" size="24"></i><span>${w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`; warningContainer.classList.remove('hidden'); } else warningContainer.classList.add('hidden'); lucide.createIcons();
+            if (c.weather_code >= 95) { w = "GEWITTER"; col = "bg-red-600/90 border-red-400"; ic = "cloud-lightning" }
+            else if (c.wind_speed_10m >= 75) { w = "STURM"; col = "bg-red-600/90 border-red-400"; ic = "wind" }
+            else if (c.wind_speed_10m >= 50) { w = "Windböen"; col = "bg-orange-500/80 border-orange-400"; ic = "wind" }
+            else if (c.temperature_2m <= 3) { w = "Glätte"; col = "bg-blue-600/80 border-blue-400"; ic = "snowflake" }
+            else if (c.precipitation >= 5) { w = "Starkregen"; col = "bg-blue-700/80 border-blue-400"; ic = "cloud-rain" }
+            if (c.visibility < 1000) { w = "Nebel"; col = "bg-gray-600/90 border-gray-400"; ic = "cloud-fog" }
+
+            if (w) {
+                warningContainer.innerHTML = `<div onclick="showWarningDetails('${w}')" class="w-full ${col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-4 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${ic}" size="24"></i><span>${w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`;
+                warningContainer.classList.remove('hidden');
+            } else {
+                warningContainer.classList.add('hidden');
+            }
+            lucide.createIcons();
         }
 
         function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
@@ -3858,6 +3942,39 @@
             }, { timeout: 10000, enableHighAccuracy: true });
         }
         window.locateMe = locateMe; // Expose globally
+
+        // NEW: Manual Search Function
+        async function searchCity() {
+            const input = document.getElementById('cityInput');
+            const query = input.value.trim();
+            if (!query) return;
+
+            // Hide keyboard/suggestions
+            input.blur();
+            suggestionsList.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+
+            try {
+                // Exact search (or best match)
+                const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de&format=json`);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const place = data.results[0];
+                    currentLat = place.latitude;
+                    currentLon = place.longitude;
+                    fetchWeather(place.name, place.country);
+                } else {
+                    loadingIndicator.classList.add('hidden');
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('errorMessage').classList.add('hidden'), 3000);
+                }
+            } catch (e) {
+                console.error("Search failed", e);
+                loadingIndicator.classList.add('hidden');
+            }
+        }
 
         // Search Suggestions Logic
         cityInput.addEventListener('input', (e) => {
