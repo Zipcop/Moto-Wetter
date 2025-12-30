@@ -1719,6 +1719,10 @@
                     </div>
                 </div>
 
+                <!-- STÜNDLICHER TEMPERATUR VERLAUF (NEU) -->
+                <div id="dailyHourlyTemp"
+                    class="mt-4 mb-2 overflow-y-auto custom-scrollbar border-t border-slate-700/50 pt-2"></div>
+
                 <!-- STÜNDLICHER REGEN VERLAUF -->
                 <div id="dailyHourlyRain"
                     class="mt-4 mb-2 max-h-48 overflow-y-auto custom-scrollbar border-t border-slate-700/50 pt-2"></div>
@@ -2817,19 +2821,49 @@
                     if (extras) extras.classList.add('hidden');
                 }
 
-                // --- NEU: Hourly Rain Render (Horizontal Bar Chart) ---
+                const h = lastWeatherData.hourly;
+                const dateMatch = date.toISOString().slice(0, 10);
+
+                // --- Hourly Temp Render ---
+                const tempCon = document.getElementById('dailyHourlyTemp');
+                if (tempCon) {
+                    tempCon.innerHTML = '';
+                    const header = document.createElement('div');
+                    header.className = "flex justify-between items-center mb-3";
+                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Temperatur-Verlauf</span>';
+                    tempCon.appendChild(header);
+
+                    const scrollArea = document.createElement('div');
+                    scrollArea.className = "flex overflow-x-auto gap-3 pb-2 touch-pan-x scrollbar-hide";
+                    scrollArea.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
+
+                    for (let k = 0; k < h.time.length; k++) {
+                        if (h.time[k].startsWith(dateMatch)) {
+                            const hr = new Date(h.time[k]).getHours();
+                            const t = Math.round(h.temperature_2m[k]);
+                            const ic = getWeatherInfo(h.weather_code[k]).i;
+
+                            const el = document.createElement('div');
+                            el.className = "flex flex-col items-center justify-between min-w-[3.5rem] p-2 bg-slate-800/30 rounded-xl border border-slate-700/50 snap-start";
+                            el.innerHTML = `<span class="text-[10px] text-slate-500 font-mono mb-1">${hr}:00</span>
+                                            <i data-lucide="${ic}" size="18" class="text-slate-300 mb-1"></i>
+                                            <span class="text-sm font-bold text-white">${t}°</span>`;
+                            scrollArea.appendChild(el);
+                        }
+                    }
+                    tempCon.appendChild(scrollArea);
+                    lucide.createIcons();
+                }
+
+                // --- Hourly Rain Render ---
                 const rainCon = document.getElementById('dailyHourlyRain');
                 if (rainCon) {
-                    rainCon.innerHTML = ''; // Clear
-
-                    // Header (Scrollbar text removed as requested)
+                    rainCon.innerHTML = '';
                     const header = document.createElement('div');
                     header.className = "flex justify-between items-center mb-3";
                     header.innerHTML = '<span class="text-xs font-bold text-slate-400">Regen-Verlauf (Nur Regen-Stunden)</span>';
                     rainCon.appendChild(header);
-
-                    const h = lastWeatherData.hourly;
-                    const dateMatch = date.toISOString().slice(0, 10); // YYYY-MM-DD matches start of ISO string
+                    // h and dateMatch are already defined above
 
                     // Container for bars
                     // ADDED: scrollbar-hide class (requires CSS)
