@@ -2824,133 +2824,56 @@
                 const h = lastWeatherData.hourly;
                 const dateMatch = date.toISOString().slice(0, 10);
 
-                // --- Hourly Temp Render ---
-                const tempCon = document.getElementById('dailyHourlyTemp');
-                if (tempCon) {
-                    tempCon.innerHTML = '';
-                    const header = document.createElement('div');
-                    header.className = "flex justify-between items-center mb-3";
-                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Temperatur-Verlauf</span>';
-                    tempCon.appendChild(header);
+                // --- DATA PREPARATION ---
+                const hourlyTempData = [];
+                const hourlyRainData = [];
 
-                    const scrollArea = document.createElement('div');
-                    scrollArea.className = "flex overflow-x-auto gap-3 pb-2 touch-pan-x scrollbar-hide";
-                    scrollArea.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
+                for (let k = 0; k < h.time.length; k++) {
+                    if (h.time[k].startsWith(dateMatch)) {
+                        const hr = new Date(h.time[k]).getHours();
+                        const t = h.temperature_2m[k];
+                        const r = h.precipitation[k];
+                        const ic = getWeatherInfo(h.weather_code[k]).i;
+                        const label = hr + ":00";
 
-                    for (let k = 0; k < h.time.length; k++) {
-                        if (h.time[k].startsWith(dateMatch)) {
-                            const hr = new Date(h.time[k]).getHours();
-                            const t = Math.round(h.temperature_2m[k]);
-                            const ic = getWeatherInfo(h.weather_code[k]).i;
-
-                            const el = document.createElement('div');
-                            el.className = "flex flex-col items-center justify-between min-w-[3.5rem] p-2 bg-slate-800/30 rounded-xl border border-slate-700/50 snap-start";
-                            el.innerHTML = `<span class="text-[10px] text-slate-500 font-mono mb-1">${hr}:00</span>
-                                            <i data-lucide="${ic}" size="18" class="text-slate-300 mb-1"></i>
-                                            <span class="text-sm font-bold text-white">${t}°</span>`;
-                            scrollArea.appendChild(el);
-                        }
+                        hourlyTempData.push({ val: t, label: label, icon: ic });
+                        hourlyRainData.push({ val: r, label: label });
                     }
-                    tempCon.appendChild(scrollArea);
-                    lucide.createIcons();
                 }
 
-                // --- Hourly Rain Render ---
-                const rainCon = document.getElementById('dailyHourlyRain');
-                if (rainCon) {
-                    rainCon.innerHTML = '';
+                // --- RENDER SVG TEMP CHART ---
+                const tempCon = document.getElementById('dailyHourlyTemp');
+                if (tempCon && hourlyTempData.length > 1) {
+                    tempCon.style.overflowY = 'visible'; // SVG overflow fix
                     const header = document.createElement('div');
-                    header.className = "flex justify-between items-center mb-3";
-                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Regen-Verlauf (Nur Regen-Stunden)</span>';
+                    header.className = "flex justify-between items-center mb-1 px-1";
+                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Temperatur-Verlauf</span>';
+                    tempCon.innerHTML = '';
+                    tempCon.appendChild(header);
+
+                    const chartBox = document.createElement('div');
+                    chartBox.id = 'tempChartTarget';
+                    chartBox.className = "w-full h-32"; // 128px height
+                    tempCon.appendChild(chartBox);
+
+                    renderSmoothChart('tempChartTarget', hourlyTempData, { type: 'temp', height: 120 });
+                }
+
+                // --- RENDER SVG RAIN CHART ---
+                const rainCon = document.getElementById('dailyHourlyRain');
+                if (rainCon && hourlyRainData.length > 1) {
+                    rainCon.style.overflowY = 'visible';
+                    const header = document.createElement('div');
+                    header.className = "flex justify-between items-center mb-1 px-1";
+                    header.innerHTML = '<span class="text-xs font-bold text-slate-400">Regen-Verlauf</span>';
+                    rainCon.innerHTML = '';
                     rainCon.appendChild(header);
-                    // h and dateMatch are already defined above
+                    const chartBox = document.createElement('div');
+                    chartBox.id = 'rainChartTarget';
+                    chartBox.className = "w-full h-32";
+                    rainCon.appendChild(chartBox);
 
-                    // Container for bars
-                    // ADDED: scrollbar-hide class (requires CSS)
-                    const scrollArea = document.createElement('div');
-                    scrollArea.className = "flex overflow-x-auto gap-3 pb-2 touch-pan-x scrollbar-hide";
-                    // Inline style to ensure it works regardless of Tailwind config
-                    scrollArea.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
-
-                    let maxPrecipInDay = 0;
-
-                    // Identify the range of hours to display
-                    // We want: First hour with rain -> Last hour with rain.
-                    let startIdx = -1;
-                    let endIdx = -1;
-
-                    for (let k = 0; k < h.time.length; k++) {
-                        if (h.time[k].startsWith(dateMatch)) {
-                            const p = h.precipitation[k];
-                            // Check if significant rain
-                            if (p > 0) {
-                                if (startIdx === -1) startIdx = k;
-                                endIdx = k;
-                                if (p > maxPrecipInDay) maxPrecipInDay = p;
-                            }
-                        }
-                    }
-
-                    if (startIdx !== -1 && endIdx !== -1) {
-                        const scaleMax = Math.max(maxPrecipInDay, 2.0);
-
-                        // Loop from first rainy hour to last rainy hour
-                        for (let k = startIdx; k <= endIdx; k++) {
-                            const prec = h.precipitation[k];
-                            const timeObj = new Date(h.time[k]);
-                            const hour = timeObj.getHours();
-
-                            const heightPct = Math.min(100, (prec / scaleMax) * 100);
-                            const isHeavy = prec > 2.0;
-                            const hasRain = prec > 0;
-
-                            let barClass = "bg-gradient-to-t from-blue-500/50 to-blue-400";
-                            if (isHeavy) barClass = "bg-gradient-to-t from-blue-600/50 to-purple-500";
-
-                            // Visual difference for "Gap" hours (0 rain but in range)
-                            if (!hasRain) {
-                                barClass = "bg-slate-700/20";
-                            }
-
-                            const barHtml = `
-                                    <div class="flex-shrink-0 flex flex-col items-center gap-2 group min-w-[32px]">
-                                        <!-- Amount Label -->
-                                        <div class="h-4 flex items-end">
-                                            ${hasRain ? `<span class="text-[9px] font-bold ${isHeavy ? 'text-purple-300' : 'text-blue-200'}">${prec.toFixed(1)}</span>` : ''}
-                                        </div>
-                                        
-                                        <!-- Bar Track -->
-                                        <div class="h-24 w-2.5 bg-slate-800/50 rounded-full relative overflow-hidden flex items-end">
-                                            <!-- Fill -->
-                                            <div class="w-full rounded-full ${barClass} transition-all duration-500" style="height: ${hasRain ? Math.max(15, heightPct) : 100}%"></div>
-                                        </div>
-                                        
-                                        <!-- Hour Label -->
-                                        <span class="text-[10px] font-mono ${hasRain ? 'text-slate-400' : 'text-slate-600'}">${hour}h</span>
-                                    </div>
-                                `;
-                            scrollArea.innerHTML += barHtml;
-                        }
-                        rainCon.appendChild(scrollArea);
-
-                        // Inject CSS style for scrollbar hiding if not already present
-                        // Checking if style already added prevents duplicates but just adding to head is safe
-                        if (!document.getElementById('scrollbar-hide-style')) {
-                            const style = document.createElement('style');
-                            style.id = 'scrollbar-hide-style';
-                            style.textContent = `.scrollbar-hide::-webkit-scrollbar { display: none; }`;
-                            document.head.appendChild(style);
-                        }
-
-                    } else {
-                        // Keep the header but show friendly message
-                        rainCon.innerHTML += `
-                            <div class="flex flex-col items-center justify-center py-6 bg-slate-800/20 rounded-xl border border-dashed border-slate-700/50">
-                                <i data-lucide="sun" class="text-orange-300/50 mb-2" size="24"></i>
-                                <span class="text-xs text-slate-400">Kein Regen erwartet</span>
-                            </div>
-                        `;
-                    }
+                    renderSmoothChart('rainChartTarget', hourlyRainData, { type: 'rain', height: 120 });
                 }
 
                 const score = calculateMotoScore(
@@ -4070,6 +3993,202 @@
                 }
             }, 300);
         });
+
+        // --- SVG CHARTING HELPERS ---
+        function getSmoothPath(points) {
+            // Points: [[x,y], [x,y], ...]
+            if (points.length < 2) return "";
+
+            // Catmull-Rom to Bezier
+            const k = 0.25; // Tension
+            let path = `M ${points[0][0]},${points[0][1]}`;
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i === 0 ? 0 : i - 1];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[i + 2] || p2; // clamp end
+
+                const cp1x = p1[0] + (p2[0] - p0[0]) * k;
+                const cp1y = p1[1] + (p2[1] - p0[1]) * k;
+
+                const cp2x = p2[0] - (p3[0] - p1[0]) * k;
+                const cp2y = p2[1] - (p3[1] - p1[1]) * k;
+
+                path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+            }
+            return path;
+        }
+
+        function renderSmoothChart(containerId, dataPoints, config) {
+            // dataPoints: [{ val: number, label: string, icon: string }, ...]
+            // config: { type: 'temp'|'rain', height: number }
+            const container = document.getElementById(containerId);
+            if (!container || dataPoints.length === 0) return;
+
+            container.innerHTML = '';
+
+            const w = container.clientWidth || 300;
+            const h = config.height || 100;
+            const padTop = 20; const padBot = 20;
+            const padLeft = 25; // Space for Y-Axis
+            const chartW = w - padLeft;
+            const chartH = h - padTop - padBot;
+
+            // Y-Axis Helper
+            const addYLabel = (val, yPos) => {
+                const txt = document.createElementNS(svgNS, "text");
+                txt.setAttribute("x", padLeft - 4);
+                txt.setAttribute("y", yPos + 3);
+                txt.setAttribute("text-anchor", "end");
+                txt.setAttribute("fill", "#64748b"); // slate-500
+                txt.setAttribute("font-size", "9");
+                txt.setAttribute("font-family", "monospace");
+                txt.textContent = config.type === 'rain' ? val.toFixed(1) : Math.round(val) + "°";
+                svg.appendChild(txt);
+            };
+
+            // Min/Max Logic
+            let min, max;
+            if (config.type === 'rain') {
+                min = 0;
+                // Ensure we have some height even if small amounts, but handle 0 case
+                max = Math.max(...dataPoints.map(d => d.val));
+                if (max < 0.5) max = 0.5; // Minimum range to keep 0 low
+                // Add slight top buffer
+                max += (max - min) * 0.1;
+            } else {
+                min = Math.min(...dataPoints.map(d => d.val));
+                max = Math.max(...dataPoints.map(d => d.val));
+                const range = max - min || 1;
+                min -= range * 0.1; max += range * 0.1;
+            }
+
+            const safeRange = max - min;
+
+            // Scale X/Y
+            const stepX = chartW / (dataPoints.length - 1);
+            const points = dataPoints.map((d, i) => {
+                const x = padLeft + i * stepX;
+                const y = padTop + chartH - ((d.val - min) / safeRange) * chartH;
+                return [x, y];
+            });
+
+            // Generate Path
+            const linePath = getSmoothPath(points);
+
+            // SVG creation
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", h);
+            svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+            svg.style.overflow = "visible";
+
+            // Defs (Gradients)
+            const defs = document.createElementNS(svgNS, "defs");
+            const gid = `grad_${containerId}_${Date.now()}`;
+
+            // Draw Y-Axis Labels (Top, Mid, Bottom)
+            const yTop = padTop;
+            const yBot = padTop + chartH;
+            const yMid = padTop + chartH / 2;
+
+            addYLabel(max, yTop);
+            addYLabel(min + (safeRange / 2), yMid);
+            addYLabel(min, yBot);
+
+            // Optional: Horizontal Grid Lines
+            [yTop, yMid, yBot].forEach(y => {
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", padLeft);
+                line.setAttribute("y1", y);
+                line.setAttribute("x2", w);
+                line.setAttribute("y2", y);
+                line.setAttribute("stroke", "#334155"); // slate-700
+                line.setAttribute("stroke-width", "0.5");
+                line.setAttribute("stroke-dasharray", "2,2");
+                svg.appendChild(line);
+            });
+
+            if (config.type === 'temp') {
+                // RED (Top) to BLUE (Bottom)
+                const grad = document.createElementNS(svgNS, "linearGradient");
+                grad.setAttribute("id", gid);
+                grad.setAttribute("x1", "0");
+                grad.setAttribute("y1", "0");
+                grad.setAttribute("x2", "0");
+                grad.setAttribute("y2", "1"); // Top to Bottom
+                // Stops
+                grad.innerHTML = `<stop offset="0%" stop-color="#ef4444" /> <stop offset="100%" stop-color="#3b82f6" />`;
+                defs.appendChild(grad);
+
+                // Stroke Path
+                const pathEl = document.createElementNS(svgNS, "path");
+                pathEl.setAttribute("d", linePath);
+                pathEl.setAttribute("fill", "none");
+                pathEl.setAttribute("stroke", `url(#${gid})`);
+                pathEl.setAttribute("stroke-width", "4");
+                pathEl.setAttribute("stroke-linecap", "round");
+                svg.appendChild(defs);
+                svg.appendChild(pathEl);
+
+                // Time Labels Only
+                points.forEach((p, i) => {
+                    if (i % 3 === 0 || i === points.length - 1) { // Sparsity
+                        // Time Label
+                        const timeTxt = document.createElementNS(svgNS, "text");
+                        timeTxt.setAttribute("x", p[0]);
+                        timeTxt.setAttribute("y", h - 5);
+                        timeTxt.setAttribute("text-anchor", "middle");
+                        timeTxt.setAttribute("fill", "#94a3b8");
+                        timeTxt.setAttribute("font-size", "9");
+                        timeTxt.textContent = dataPoints[i].label;
+                        svg.appendChild(timeTxt);
+                    }
+                });
+
+            } else if (config.type === 'rain') {
+                // Blue Area
+                const grad = document.createElementNS(svgNS, "linearGradient");
+                grad.setAttribute("id", gid);
+                grad.setAttribute("x1", "0");
+                grad.setAttribute("y1", "0");
+                grad.setAttribute("x2", "0");
+                grad.setAttribute("y2", "1");
+                grad.innerHTML = `<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.8"/> <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1"/>`;
+                defs.appendChild(grad);
+
+                // Close Path for Area
+                // Calc base Y (0 value)
+                const zeroY = padTop + chartH - ((0 - min) / safeRange) * chartH;
+                const areaPathStr = linePath + ` L ${w},${zeroY} L ${padLeft},${zeroY} Z`;
+
+                const pathEl = document.createElementNS(svgNS, "path");
+                pathEl.setAttribute("d", areaPathStr);
+                pathEl.setAttribute("fill", `url(#${gid})`);
+                pathEl.setAttribute("stroke", "#60a5fa"); // Light blue stroke border
+                pathEl.setAttribute("stroke-width", "2");
+                svg.appendChild(defs);
+                svg.appendChild(pathEl);
+
+                // Time Label Only
+                points.forEach((p, i) => {
+                    if (i % 4 === 0) {
+                        const timeTxt = document.createElementNS(svgNS, "text");
+                        timeTxt.setAttribute("x", p[0]);
+                        timeTxt.setAttribute("y", h - 5);
+                        timeTxt.setAttribute("text-anchor", "middle");
+                        timeTxt.setAttribute("fill", "#94a3b8");
+                        timeTxt.setAttribute("font-size", "9");
+                        timeTxt.textContent = dataPoints[i].label;
+                        svg.appendChild(timeTxt);
+                    }
+                });
+            }
+
+            container.appendChild(svg);
+        }
 
         // Hide suggestions when clicking outside
         document.addEventListener('click', (e) => {
