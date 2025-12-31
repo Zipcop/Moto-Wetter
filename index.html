@@ -4003,17 +4003,24 @@
             const k = 0.25; // Tension
             let path = `M ${points[0][0]},${points[0][1]}`;
 
+            // Find "floor" (max Y value) to constrain
+            const maxY = Math.max(...points.map(p => p[1]));
+
             for (let i = 0; i < points.length - 1; i++) {
                 const p0 = points[i === 0 ? 0 : i - 1];
                 const p1 = points[i];
                 const p2 = points[i + 1];
                 const p3 = points[i + 2] || p2; // clamp end
 
-                const cp1x = p1[0] + (p2[0] - p0[0]) * k;
-                const cp1y = p1[1] + (p2[1] - p0[1]) * k;
+                let cp1x = p1[0] + (p2[0] - p0[0]) * k;
+                let cp1y = p1[1] + (p2[1] - p0[1]) * k;
 
-                const cp2x = p2[0] - (p3[0] - p1[0]) * k;
-                const cp2y = p2[1] - (p3[1] - p1[1]) * k;
+                let cp2x = p2[0] - (p3[0] - p1[0]) * k;
+                let cp2y = p2[1] - (p3[1] - p1[1]) * k;
+
+                // Clamp Control Points to Floor (prevent undershoot below 0)
+                if (cp1y > maxY) cp1y = maxY;
+                if (cp2y > maxY) cp2y = maxY;
 
                 path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
             }
