@@ -1232,9 +1232,7 @@
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300"><i
                                     data-lucide="clock" size="16"></i> Vorhersage</h3>
-                            <button onclick="toggleLegend()"
-                                class="text-slate-400 hover:text-white transition p-1 bg-slate-800/50 rounded-full hover:bg-slate-700"><i
-                                    data-lucide="info" size="16"></i></button>
+
                         </div>
                         <div id="hourlyContainer"
                             class="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x touch-pan-x scroll-fade-mask"
@@ -1814,31 +1812,7 @@
             </div>
         </div>
     </div>
-    <div id="legendModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
-        <div
-            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl border-slate-600/50 modal-content">
-            <button onclick="toggleLegend()"
-                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
-                    data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-4 text-blue-100 flex items-center gap-2"><i data-lucide="cloud-sun"
-                    size="20"></i> Legende</h3>
-            <div class="grid grid-cols-1 gap-2 text-sm text-slate-300">
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="sun"
-                        class="text-yellow-400 w-6 h-6"></i> <span>Klar</span></div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-sun"
-                        class="text-blue-200 w-6 h-6"></i> <span>Bewölkt</span></div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-fog"
-                        class="text-gray-400 w-6 h-6"></i> <span>Nebel</span></div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-rain"
-                        class="text-blue-400 w-6 h-6"></i> <span>Regen</span></div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="snowflake"
-                        class="text-white w-6 h-6"></i> <span>Schnee</span></div>
-                <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl"><i data-lucide="cloud-lightning"
-                        class="text-purple-400 w-6 h-6"></i> <span>Gewitter</span></div>
-            </div>
-        </div>
-    </div>
+
 
     <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
         class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
@@ -2071,6 +2045,8 @@
                 <!-- NEU: Vögel Button -->
                 <button onclick="forceEffect(0, 1, false, true)" class="dev-btn border-yellow-500/50 text-yellow-200">🦅
                     Vögel (Klar)</button>
+                <button onclick="simulateWarnings()" class="dev-btn border-red-500 text-red-400 font-bold">⚠️
+                    Warnungen</button>
             </div>
 
             <button onclick="resetEffects()"
@@ -2446,6 +2422,19 @@
             }
         }
 
+        function simulateWarnings() {
+            // Force multiple warnings: Storm + Ice + Fog
+            checkWarnings({
+                weather_code: 95, // Thunderstorm
+                wind_speed_10m: 80, // Storm
+                temperature_2m: 0, // Ice
+                precipitation: 10, // Heavy Rain
+                visibility: 500 // Fog
+            });
+            document.getElementById('devMenu').classList.add('hidden');
+            alert("Simuliere: Gewitter, Sturm, Glätte, Starkregen, Nebel");
+        }
+
         function updateSunVisualsDev(isDay) {
             const suns = document.querySelectorAll('.sun-orb');
             suns.forEach(s => s.remove());
@@ -2747,16 +2736,20 @@
         }
 
         function checkWarnings(c) {
-            let w = null, col = "bg-yellow-500/80 border-yellow-400", ic = "alert-triangle";
-            if (c.weather_code >= 95) { w = "GEWITTER"; col = "bg-red-600/90 border-red-400"; ic = "cloud-lightning" }
-            else if (c.wind_speed_10m >= 75) { w = "STURM"; col = "bg-red-600/90 border-red-400"; ic = "wind" }
-            else if (c.wind_speed_10m >= 50) { w = "Windböen"; col = "bg-orange-500/80 border-orange-400"; ic = "wind" }
-            else if (c.temperature_2m <= 3) { w = "Glätte"; col = "bg-blue-600/80 border-blue-400"; ic = "snowflake" }
-            else if (c.precipitation >= 5) { w = "Starkregen"; col = "bg-blue-700/80 border-blue-400"; ic = "cloud-rain" }
-            if (c.visibility < 1000) { w = "Nebel"; col = "bg-gray-600/90 border-gray-400"; ic = "cloud-fog" }
+            let activeWarnings = [];
 
-            if (w) {
-                warningContainer.innerHTML = `<div onclick="showWarningDetails('${w}')" class="w-full ${col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-4 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${ic}" size="24"></i><span>${w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`;
+            if (c.weather_code >= 95) activeWarnings.push({ w: "GEWITTER", col: "bg-red-600/90 border-red-400", ic: "cloud-lightning" });
+            if (c.wind_speed_10m >= 75) activeWarnings.push({ w: "STURM", col: "bg-red-600/90 border-red-400", ic: "wind" });
+            else if (c.wind_speed_10m >= 50) activeWarnings.push({ w: "Windböen", col: "bg-orange-500/80 border-orange-400", ic: "wind" });
+
+            if (c.temperature_2m <= 3) activeWarnings.push({ w: "Glätte", col: "bg-blue-600/80 border-blue-400", ic: "snowflake" });
+            if (c.precipitation >= 5) activeWarnings.push({ w: "Starkregen", col: "bg-blue-700/80 border-blue-400", ic: "cloud-rain" });
+            if (c.visibility < 1000) activeWarnings.push({ w: "Nebel", col: "bg-gray-600/90 border-gray-400", ic: "cloud-fog" });
+
+            if (activeWarnings.length > 0) {
+                warningContainer.innerHTML = activeWarnings.map(warn =>
+                    `<div onclick="showWarningDetails('${warn.w}')" class="w-full ${warn.col} border p-3 rounded-xl flex items-center justify-between shadow-lg animate-pulse-slow mb-3 text-white cursor-pointer"><div class="flex items-center gap-3 font-bold"><i data-lucide="${warn.ic}" size="24"></i><span>${warn.w}</span></div><i data-lucide="alert-circle" size="20"></i></div>`
+                ).join('');
                 warningContainer.classList.remove('hidden');
             } else {
                 warningContainer.classList.add('hidden');
@@ -2764,7 +2757,7 @@
             lucide.createIcons();
         }
 
-        function toggleLegend() { document.getElementById('legendModal').classList.toggle('hidden'); lucide.createIcons(); }
+
         function closeHourlyModal() { document.getElementById('hourlyDetailsModal').classList.add('hidden'); }
 
         async function showDailyDetails(index = 0) {
