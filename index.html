@@ -4424,21 +4424,37 @@
             }
 
             // --- TOOLTIP INTERACTION ZONES ---
-            const zoneWidth = stepX || chartW / points.length;
+            const overlay = document.createElementNS(svgNS, "rect");
+            overlay.setAttribute("x", padLeft);
+            overlay.setAttribute("y", 0);
+            overlay.setAttribute("width", chartW);
+            overlay.setAttribute("height", h);
+            overlay.setAttribute("fill", "transparent");
+            // Allow vertical scrolling. Browser will fire pointercancel if scroll starts!
+            overlay.style.touchAction = "pan-y";
+            overlay.style.cursor = "crosshair";
+            overlay.style.webkitTapHighlightColor = "transparent";
 
-            points.forEach((p, i) => {
-                const rect = document.createElementNS(svgNS, "rect");
-                // Center the interaction zone over the point
-                rect.setAttribute("x", p[0] - (zoneWidth / 2));
-                rect.setAttribute("y", 0);
-                rect.setAttribute("width", zoneWidth);
-                rect.setAttribute("height", h);
-                rect.setAttribute("fill", "transparent");
-                rect.style.cursor = "pointer";
+            let activeIdx = -1;
 
-                const showTooltip = (e) => {
-                    if (!tooltip) return;
+            const updateTooltip = (clientX) => {
+                if (!tooltip) return;
+                const rectBounds = overlay.getBoundingClientRect();
+                const svgRect = svg.getBoundingClientRect();
 
+                const localX = clientX - rectBounds.left;
+                const svgX = localX + padLeft;
+
+                let closestIdx = 0;
+                let minDist = Infinity;
+                for (let i = 0; i < points.length; i++) {
+                    const dist = Math.abs(points[i][0] - svgX);
+                    if (dist < minDist) { minDist = dist; closestIdx = i; }
+                }
+
+                if (closestIdx !== activeIdx) {
+                    activeIdx = closestIdx;
+                    const i = closestIdx;
                     const val = dataPoints[i].val;
                     let displayVal = Math.round(val);
                     if (config.type === 'rain') displayVal = val.toFixed(1) + " mm";
@@ -4447,36 +4463,53 @@
 
                     tooltip.innerHTML = `<span class="font-bold text-white">${dataPoints[i].label}</span><br/><span class="text-blue-400 font-bold">${displayVal}</span>`;
 
-                    // Positioning directly above the point
-                    const rectBounds = e.target.getBoundingClientRect();
-                    tooltip.style.left = (rectBounds.left + rectBounds.width / 2) + 'px';
-                    tooltip.style.top = (rectBounds.top + 10) + 'px';
+                    // Positioning: exact X of the point
+                    tooltip.style.left = (svgRect.left + points[i][0]) + 'px';
+                    tooltip.style.top = (svgRect.top + padTop - 5) + 'px';
 
                     tooltip.classList.remove('opacity-0');
                     tooltip.classList.add('opacity-100');
-                };
+                }
+            };
 
-                const hideTooltip = () => {
-                    if (tooltip) {
-                        tooltip.classList.remove('opacity-100');
-                        tooltip.classList.add('opacity-0');
-                    }
-                };
+            const hideTooltip = () => {
+                activeIdx = -1;
+                if (tooltip) {
+                    tooltip.classList.remove('opacity-100');
+                    tooltip.classList.add('opacity-0');
+                }
+            };
 
-                // Desktop events
-                rect.addEventListener("mouseenter", showTooltip);
-                rect.addEventListener("mouseleave", hideTooltip);
-
-                // Mobile events (Touch to see value)
-                rect.addEventListener("touchstart", (e) => {
-                    e.preventDefault();
-                    showTooltip(e);
-                    // Hide tooltip after a moment on mobile since there is no mouseleave
-                    setTimeout(hideTooltip, 2500);
-                });
-
-                svg.appendChild(rect);
+            // Mouse events
+            overlay.addEventListener('pointerenter', (e) => {
+                if (e.pointerType === 'mouse') updateTooltip(e.clientX);
             });
+
+            overlay.addEventListener('pointermove', (e) => {
+                updateTooltip(e.clientX);
+            });
+
+            overlay.addEventListener('pointerleave', hideTooltip);
+
+            // Touch Drag / Tap specific handling
+            overlay.addEventListener('pointerdown', (e) => {
+                // Capture the pointer to track movement outside the chart temporarily
+                // DO NOT prevent default so vertical scrolling continues to work!
+                overlay.setPointerCapture(e.pointerId);
+                updateTooltip(e.clientX);
+            });
+
+            overlay.addEventListener('pointerup', (e) => {
+                overlay.releasePointerCapture(e.pointerId);
+                hideTooltip();
+            });
+
+            overlay.addEventListener('pointercancel', (e) => {
+                // Fired immediately by the browser if the user starts scrolling vertically!
+                hideTooltip();
+            });
+
+            svg.appendChild(overlay);
 
             container.appendChild(svg);
         }
