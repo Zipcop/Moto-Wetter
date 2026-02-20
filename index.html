@@ -44,7 +44,6 @@
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
             width: 100%;
-            touch-action: pan-y;
         }
 
         /* ZURÜCKGESETZT: Originaler blauer Hintergrund ohne Bild */
@@ -174,19 +173,13 @@
         }
 
         /* PREMIUM GLASSMORPHISM */
-        /* PREMIUM GLASSMORPHISM */
         .glass-panel {
-            background: rgba(0, 0, 0, 0.2);
-            /* Lighter base for more light interaction */
-            backdrop-filter: blur(24px) saturate(140%);
-            /* High blur + saturation for vibrancy */
-            -webkit-backdrop-filter: blur(24px) saturate(140%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-top: 1px solid rgba(255, 255, 255, 0.25);
-            /* Highlight top edge */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            /* Lowlight bottom edge */
-            box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.25);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(24px) saturate(150%);
+            -webkit-backdrop-filter: blur(24px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.3);
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
@@ -307,9 +300,21 @@
             pointer-events: auto;
         }
 
+        .modal-overlay.active .modal-content {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
         .modal-overlay {
+            opacity: 0;
             pointer-events: none;
-            /* Prevent clicks when hidden/fading out */
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-content {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .dot-forecast {
@@ -462,27 +467,32 @@
         input[type=range] {
             -webkit-appearance: none;
             appearance: none;
-            /* Fix: Define standard property */
             background: transparent;
+            outline: none;
         }
 
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
-            background: #3b82f6;
+            background: #60a5fa;
             cursor: pointer;
-            margin-top: -4px;
-            box-shadow: 0 0 0 2px rgba(15, 23, 42, 1);
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
             border: 2px solid white;
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
         }
 
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             cursor: pointer;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0.2) var(--past-pct, 100%), rgba(168, 85, 247, 0.6) var(--past-pct, 100%));
+            background: linear-gradient(to right, rgba(96, 165, 250, 0.6) var(--past-pct, 100%), rgba(255, 255, 255, 0.1) var(--past-pct, 100%));
             border-radius: 2px;
         }
 
@@ -947,8 +957,7 @@
                             <button onclick="toggleSettings()"
                                 class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50 relative"
                                 title="Einstellungen"><i data-lucide="settings-2" size="18"></i></button>
-                            <button
-                                onclick="document.getElementById('favoritesModal').classList.remove('hidden'); renderFavoritesList()"
+                            <button onclick="showModal('favoritesModal'); renderFavoritesList()"
                                 class="text-slate-400 hover:text-white transition p-1.5 rounded-full hover:bg-slate-700/50"
                                 title="Favoriten"><i data-lucide="heart" size="18"></i></button>
                         </div>
@@ -956,7 +965,7 @@
                     <form onsubmit="event.preventDefault(); searchCity();" class="flex gap-2 relative">
                         <div class="relative flex-grow">
                             <input type="search" id="cityInput" placeholder="Stadt eingeben..."
-                                class="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 px-4 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition appearance-none"
+                                class="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 px-4 text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 shadow-inner transition appearance-none"
                                 autocomplete="off">
                             <div id="suggestionsList"
                                 class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
@@ -972,8 +981,8 @@
                     <div class="flex justify-center items-center gap-3 mt-4">
                         <div id="cityName" class="text-xl font-bold tracking-wide text-blue-100">--</div>
                         <button id="favToggleBtn" onclick="toggleFavoriteCurrent()"
-                            class="transition active:scale-95 opacity-80 hover:opacity-100"><i data-lucide="heart"
-                                class="text-slate-500" size="20"></i></button>
+                            class="transition active:scale-95 opacity-80 hover:opacity-100 hover:scale-110"><i
+                                data-lucide="heart" class="text-slate-400" size="20"></i></button>
                     </div>
                     <div id="offlineBanner"
                         class="hidden flex items-center justify-center gap-2 text-[10px] text-orange-300 font-bold mb-1 bg-orange-500/20 rounded py-1 px-3 mx-auto w-fit animate-pulse cursor-pointer hover:bg-orange-500/30 transition"
@@ -1031,14 +1040,14 @@
                     </div>
                     <div id="statusSection" class="grid grid-cols-2 gap-4 transition-all duration-300">
                         <div id="card-weather" onclick="showDailyDetails(0)"
-                            class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer relative group overflow-hidden">
+                            class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 hover:scale-[1.03] cursor-pointer relative group overflow-hidden">
 
                             <!-- Hero Temperature -->
                             <div class="relative z-10 flex flex-col items-center mt-2">
                                 <div class="flex items-start leading-none"
                                     style="text-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                                     <span id="temperature"
-                                        class="text-[7rem] font-[200] tracking-tighter text-white">--</span>
+                                        class="text-[7rem] font-[200] tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2),_0_10px_30px_rgba(0,0,0,0.5)]">--</span>
                                     <span class="text-4xl font-light mt-6 text-white/60">°</span>
                                 </div>
 
@@ -1094,7 +1103,7 @@
                                     <div
                                         class="absolute inset-0 rounded-full border-2 border-slate-600 bg-slate-900 shadow-inner flex items-center justify-center">
                                         <span
-                                            class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-500 font-bold">N</span>
+                                            class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-400 font-bold">N</span>
                                         <span
                                             class="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-slate-600 font-bold">S</span>
                                         <span
@@ -1121,7 +1130,7 @@
                                 <!-- Text Info -->
                                 <div class="flex flex-col items-start gap-0.5">
                                     <span
-                                        class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Wind</span>
+                                        class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Wind</span>
                                     <div class="flex items-baseline gap-1">
                                         <span id="windSpeed" class="text-xl font-bold text-white leading-none">--</span>
                                         <span class="text-xs text-slate-400">km/h</span>
@@ -1135,9 +1144,9 @@
                             </div>
                         </div>
                         <div id="card-moto" onclick="showMotoDetails()"
-                            class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer group">
+                            class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 hover:scale-[1.03] cursor-pointer group">
                             <div
-                                class="absolute top-2 right-2 text-slate-500 opacity-0 group-hover:opacity-100 transition">
+                                class="absolute top-2 right-2 text-slate-400 opacity-0 group-hover:opacity-100 hover:scale-110 transition">
                                 <i data-lucide="info" size="12"></i>
                             </div>
                             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Moto Index</h3>
@@ -1183,11 +1192,11 @@
                         <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i
                                 data-lucide="umbrella" size="16"></i> Niederschlag (1h)</h3>
                         <div class="flex justify-between items-end h-24 gap-2" id="rainBarsContainer">
-                            <div class="text-xs text-slate-500 w-full text-center flex items-center justify-center">
+                            <div class="text-xs text-slate-400 w-full text-center flex items-center justify-center">
                                 Keine Daten
                             </div>
                         </div>
-                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
                             <span>Jetzt</span><span>15m</span><span>30m</span><span>45m</span>
                         </div>
                     </div>
@@ -1246,12 +1255,12 @@
                     </div>
                 </div>
 
-                <div id="startPrompt" class="text-center py-20 text-slate-500 hidden"><i data-lucide="bike"
+                <div id="startPrompt" class="text-center py-20 text-slate-400 hidden"><i data-lucide="bike"
                         class="mx-auto mb-4 h-16 w-16 opacity-30"></i>
                     <p>Standort wird ermittelt...</p>
                 </div>
                 <!-- FOOTER ANGEPASST -->
-                <div class="text-center text-[10px] text-slate-500 mt-6 pb-4 font-medium tracking-wide opacity-60">
+                <div class="text-center text-[10px] text-slate-400 mt-6 pb-4 font-medium tracking-wide opacity-60">
                     MOTO WETTER • RIDE SAFE • N.W.
                 </div>
             </main>
@@ -1282,7 +1291,7 @@
                     <h2
                         class="text-3xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500">
                         Moto <span class="text-white">Lean</span></h2>
-                    <p class="text-xs font-mono text-slate-500">LIVE ANGLE TRACKING</p>
+                    <p class="text-xs font-mono text-slate-400">LIVE ANGLE TRACKING</p>
                 </div>
 
                 <!-- CENTER GROUP: Gauge (Higher) -->
@@ -1338,7 +1347,7 @@
                 <!-- G-Force Meter (Moved Here) -->
                 <div class="flex flex-col items-center w-48 mb-4">
                     <div
-                        class="flex justify-between w-full text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
+                        class="flex justify-between w-full text-[8px] font-bold text-slate-400 uppercase tracking-widest px-1">
                         <span>Brake</span>
                         <span>Accel</span>
                     </div>
@@ -1357,7 +1366,7 @@
                 <div class="flex items-center justify-center gap-8 mb-6 w-full max-w-sm">
                     <!-- Angle Side -->
                     <div class="flex flex-col items-center flex-1">
-                        <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Neigung</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Neigung</span>
                         <div class="text-6xl font-black text-white tabular-nums tracking-tighter leading-none"
                             id="motoAngleDisplay">0°</div>
                         <div class="flex gap-4 mt-2 text-[10px] font-bold text-slate-400">
@@ -1374,7 +1383,7 @@
                         <span class="text-[10px] text-blue-500 uppercase font-bold tracking-widest mb-1">Tempo</span>
                         <div class="text-6xl font-black text-blue-400 tabular-nums tracking-tighter leading-none"
                             id="motoSpeedDisplay">0</div>
-                        <span class="text-[10px] text-slate-500 mt-2 font-mono">km/h</span>
+                        <span class="text-[10px] text-slate-400 mt-2 font-mono">km/h</span>
 
                     </div>
                 </div>
@@ -1452,8 +1461,8 @@
                             </div>
                             <input type="range" min="0" max="25" step="1" id="inputMinTemp"
                                 oninput="updateMotoSettings('minTemp', this.value)"
-                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                                 <span>0°</span><span>25°</span>
                             </div>
                         </div>
@@ -1464,8 +1473,8 @@
                             </div>
                             <input type="range" min="20" max="100" step="5" id="inputMaxWind"
                                 oninput="updateMotoSettings('maxWind', this.value)"
-                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                                 <span>20</span><span>100</span>
                             </div>
                         </div>
@@ -1475,7 +1484,7 @@
                             <button id="btnRainTol" onclick="toggleRainTolerance()"
                                 class="px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-600 text-white border border-blue-500">Streng</button>
                         </div>
-                        <div id="rainTolDesc" class="text-[10px] text-slate-500 mt-1 text-right">Kein Tropfen erlaubt!
+                        <div id="rainTolDesc" class="text-[10px] text-slate-400 mt-1 text-right">Kein Tropfen erlaubt!
                         </div>
 
                         <!-- NEW: Map Opacity -->
@@ -1486,8 +1495,8 @@
                             </div>
                             <input type="range" min="0" max="100" step="5" id="inputMapOpacity"
                                 oninput="updateMotoMapSettings('opacity', this.value)"
-                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                                 <span>0%</span><span>100%</span>
                             </div>
                         </div>
@@ -1508,7 +1517,7 @@
                     </button>
                     <div id="content-grid" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
                         <div id="gridConfigList" class="space-y-1 mb-2 mt-2"></div>
-                        <div class="text-[10px] text-slate-500 text-right">Maximal 6 Infos</div>
+                        <div class="text-[10px] text-slate-400 text-right">Maximal 6 Infos</div>
                         <div id="gridAvailableList" class="space-y-1 mt-3 pt-3 border-t border-slate-700/50"></div>
                     </div>
                 </div>
@@ -1555,44 +1564,12 @@
     </div>
 
     <!-- BEST RIDE DETAILS MODAL -->
-    <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
-        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content">
-            <button onclick="hideModal('bestRideModal')"
-                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
-                    data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
-                    size="20"></i> Beste Zeit Details</h3>
-
-            <div class="flex flex-col items-center mb-6">
-                <div id="brDetailScoreCircle"
-                    class="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-500/10 mb-2">
-                    <span id="brDetailScore" class="text-xl font-black text-yellow-100">--</span>
-                </div>
-                <div id="brDetailTime" class="text-2xl font-bold text-white">--:-- - --:--</div>
-                <div id="brDetailDay" class="text-sm text-yellow-200/80 font-medium uppercase tracking-wider">--</div>
-            </div>
-
-            <div class="space-y-3">
-                <h4
-                    class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700/50 pb-1 mb-2">
-                    Warum diese Zeit?</h4>
-                <div id="brReasonsList" class="space-y-2">
-                    <!-- Dynamic Reasons -->
-                </div>
-            </div>
-            <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind, Regenrisiko
-                und Tageszeit.</p>
-        </div>
-    </div>
-
-    <!-- BEST RIDE DETAILS MODAL -->
-    <div id="bestRideModal" onclick="if(event.target === this) hideModal('bestRideModal')"
+    <div id="bestRideModal" onclick="if(event.target === this) hideModal(this.id)"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 modal-overlay">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border-yellow-500/30 modal-content max-h-[85vh] flex flex-col">
             <div class="shrink-0">
-                <button onclick="document.getElementById('bestRideModal').classList.add('hidden')"
+                <button onclick="hideModal('bestRideModal')"
                     class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-1 rounded-full"><i
                         data-lucide="x" size="20"></i></button>
                 <h3 class="text-lg font-bold mb-4 text-yellow-300 flex items-center gap-2"><i data-lucide="star"
@@ -1625,7 +1602,7 @@
                         <!-- Dynamic Reasons -->
                     </div>
                 </div>
-                <p class="text-[10px] text-slate-500 text-center mt-6 italic">Basierend auf Temperatur, Wind,
+                <p class="text-[10px] text-slate-400 text-center mt-6 italic">Basierend auf Temperatur, Wind,
                     Regenrisiko
                     und Tageszeit.</p>
             </div>
@@ -1633,12 +1610,12 @@
     </div>
 
     <!-- DAILY DETAILS MODAL (Updated) -->
-    <div id="dailyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="dailyDetailsModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content max-h-[80vh] flex flex-col">
             <div class="shrink-0 mb-2">
-                <button onclick="document.getElementById('dailyDetailsModal').classList.add('hidden')"
+                <button onclick="hideModal('dailyDetailsModal')"
                     class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
                         data-lucide="x" size="20"></i></button>
                 <h3 class="text-lg font-bold mb-2 text-blue-100 flex items-center gap-2"><i data-lucide="calendar"
@@ -1670,7 +1647,7 @@
                     <div class="w-full bg-slate-700 rounded-full h-1.5 mb-1">
                         <div id="detailPrecipProbBar" class="bg-blue-500 h-1.5 rounded-full" style="width:0%"></div>
                     </div>
-                    <div class="text-[10px] text-right text-slate-500"><span id="detailPrecipProb">0</span>% Wahrsch.
+                    <div class="text-[10px] text-right text-slate-400"><span id="detailPrecipProb">0</span>% Wahrsch.
                     </div>
                 </div>
 
@@ -1734,27 +1711,64 @@
         </div>
     </div>
 
-    <div id="motoDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="motoDetailsModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
-            class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-slate-500/50 modal-content">
-            <button onclick="document.getElementById('motoDetailsModal').classList.add('hidden')"
-                class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
+            class="glass-panel w-full max-w-sm rounded-3xl p-0 relative shadow-2xl border border-slate-500/50 modal-content overflow-hidden flex flex-col max-h-[85vh]">
+
+            <button onclick="hideModal('motoDetailsModal')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/80 p-2 rounded-full z-20"><i
                     data-lucide="x" size="20"></i></button>
-            <h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i data-lucide="bike" size="24"
-                    class="text-blue-400"></i> Moto Analyse</h3>
-            <p class="text-xs text-slate-400 mb-4">Details</p>
-            <div id="motoAnalysisList" class="space-y-3 mb-6"></div>
+
+            <!-- Gradient Glow Header -->
+            <div id="motoAnalysisGlow"
+                class="absolute top-0 left-0 right-0 h-40 bg-blue-500/20 blur-3xl -z-10 rounded-full transform -translate-y-1/2 transition-colors duration-500">
+            </div>
+
+            <div class="p-6 pb-2 z-10 shrink-0">
+                <h3 class="text-xl font-black mb-6 text-white flex items-center gap-2"><i data-lucide="activity"
+                        size="24" class="text-blue-400"></i> Moto Analyse</h3>
+
+                <!-- Score Card -->
+                <div
+                    class="flex items-center justify-between bg-slate-800/60 backdrop-blur-md p-4 rounded-2xl border border-slate-700/50 shadow-xl relative overflow-hidden">
+                    <div class="z-10">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">
+                            Fahr-Bedingungen</div>
+                        <div id="motoAnalysisReason" class="text-lg font-bold text-white tracking-tight">Wird
+                            berechnet...</div>
+                    </div>
+                    <div class="z-10 flex flex-col items-center justify-center shrink-0">
+                        <div id="motoAnalysisScoreCircle"
+                            class="w-14 h-14 rounded-full border-4 flex items-center justify-center shadow-lg bg-slate-900 border-slate-600">
+                            <span id="motoAnalysisScoreText" class="text-2xl font-black text-white">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scrollable Factors -->
+            <div class="px-6 pb-6 overflow-y-auto custom-scrollbar z-10 flex-1">
+                <p
+                    class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-3 border-b border-slate-700/50 pb-2">
+                    Einflussfaktoren</p>
+                <div id="motoAnalysisList" class="space-y-2 mb-6"></div>
+
+                <p
+                    class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-3 border-b border-slate-700/50 pb-2">
+                    Tages-Prognose</p>
+                <div id="motoScoreChart" class="w-full h-24 mb-2"></div>
+            </div>
 
         </div>
     </div>
 
     <!-- WARNING DETAILS MODAL -->
-    <div id="warningDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="warningDetailsModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-red-500/30 modal-content pointer-events-auto">
-            <button onclick="document.getElementById('warningDetailsModal').classList.add('hidden')"
+            <button onclick="hideModal('warningDetailsModal')"
                 class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-2 text-white flex items-center gap-2"><i id="warningModalIcon"
@@ -1773,8 +1787,8 @@
             </div>
         </div>
     </div>
-    <div id="hourlyDetailsModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="hourlyDetailsModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
             class="glass-panel w-full max-w-xs rounded-2xl p-5 relative shadow-2xl border border-slate-500/50 modal-content">
             <button onclick="closeHourlyModal()"
@@ -1814,12 +1828,12 @@
     </div>
 
 
-    <div id="favoritesModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="favoritesModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-red-500/30 modal-content max-h-[70vh] flex flex-col pointer-events-auto">
 
-            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
+            <button onclick="hideModal('favoritesModal')"
                 class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full z-50 cursor-pointer"><i
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-4 text-red-200 flex items-center gap-2"><i data-lucide="heart" size="20"
@@ -1828,17 +1842,17 @@
                 <!-- List -->
             </div>
 
-            <button onclick="document.getElementById('favoritesModal').classList.add('hidden')"
+            <button onclick="hideModal('favoritesModal')"
                 class="w-full mt-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition z-50 cursor-pointer">Schließen</button>
         </div>
     </div>
 
     <!-- RIDE HISTORY MODAL -->
-    <div id="rideHistoryModal" onclick="if(event.target === this) this.classList.add('hidden')"
-        class="hidden fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in modal-overlay">
+    <div id="rideHistoryModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
         <div
             class="glass-panel w-full max-w-sm rounded-2xl p-6 relative shadow-2xl border border-blue-500/30 modal-content h-[80vh] flex flex-col pointer-events-auto">
-            <button onclick="document.getElementById('rideHistoryModal').classList.add('hidden')"
+            <button onclick="hideModal('rideHistoryModal')"
                 class="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800/80 p-1 rounded-full"><i
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2"><i data-lucide="history" size="20"
@@ -1856,7 +1870,8 @@
     </div>
 
     <!-- FULLSCREEN RIDE MAP MODAL -->
-    <div id="fullscreenRideModal" class="hidden fixed inset-0 z-[300] bg-slate-950 flex flex-col animate-fade-in">
+    <div id="fullscreenRideModal"
+        class="modal-overlay hidden fixed inset-0 z-[300] bg-slate-950 flex flex-col animate-fade-in">
         <!-- Close Button (Floating) -->
         <button onclick="closeFullscreenRide()"
             class="absolute top-12 right-4 z-[210] p-3 bg-slate-800/80 backdrop-blur rounded-full text-slate-400 hover:text-white shadow-xl border border-slate-700/50">
@@ -1868,9 +1883,9 @@
             class="absolute top-12 left-4 z-[210] bg-slate-900/80 backdrop-blur p-4 rounded-2xl border border-slate-700/50 shadow-xl pointer-events-none">
             <h3 id="fsMapTitle" class="text-sm font-black text-white uppercase tracking-tighter mb-1">Tour Map</h3>
             <div class="flex gap-4 text-xs font-mono text-slate-300">
-                <div><span class="text-slate-500">DIST:</span> <span id="fsMapDist"
+                <div><span class="text-slate-400">DIST:</span> <span id="fsMapDist"
                         class="text-white font-bold">--</span> km</div>
-                <div><span class="text-slate-500">MAX:</span> <span id="fsMapSpeed"
+                <div><span class="text-slate-400">MAX:</span> <span id="fsMapSpeed"
                         class="text-white font-bold">--</span> km/h</div>
             </div>
         </div>
@@ -1880,8 +1895,8 @@
     </div>
 
     <!-- CHANGELOG MODAL -->
-    <div id="changelogModal"
-        class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-fade-in modal-overlay">
+    <div id="changelogModal" onclick="if(event.target === this) hideModal(this.id)"
+        class="modal-overlay hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-fade-in">
         <div
             class="glass-panel w-full max-w-sm rounded-3xl p-6 relative shadow-2xl border border-emerald-500/30 flex flex-col items-center text-center pointer-events-auto">
 
@@ -1955,7 +1970,7 @@
 
             <!-- Header -->
             <div class="text-center">
-                <div id="detailDate" class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">DATA
+                <div id="detailDate" class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">DATA
                     Loading...</div>
                 <h2 id="detailTitle" class="text-2xl font-black text-white leading-none">Tour Name</h2>
                 <div id="detailTimeDuration" class="text-sm text-slate-400 mt-2 font-mono">12:30 • 45min</div>
@@ -1967,7 +1982,7 @@
                     class="bg-slate-800/40 p-4 rounded-2xl flex flex-col items-center justify-center border border-slate-700/30">
                     <div class="text-3xl font-black text-white flex items-end gap-1">
                         <span id="detailMaxSpeed">0</span>
-                        <span class="text-sm font-bold text-slate-500 mb-1">km/h</span>
+                        <span class="text-sm font-bold text-slate-400 mb-1">km/h</span>
                     </div>
                     <div class="text-[10px] text-slate-400 uppercase font-bold mt-1">Top Speed</div>
                 </div>
@@ -1976,7 +1991,7 @@
                     class="bg-slate-800/40 p-4 rounded-2xl flex flex-col items-center justify-center border border-slate-700/30">
                     <div class="text-3xl font-black text-white flex items-end gap-1">
                         <span id="detailDistance">0.0</span>
-                        <span class="text-sm font-bold text-slate-500 mb-1">km</span>
+                        <span class="text-sm font-bold text-slate-400 mb-1">km</span>
                     </div>
                     <div class="text-[10px] text-slate-400 uppercase font-bold mt-1">Distanz</div>
                 </div>
@@ -1992,15 +2007,15 @@
             <!-- Secondary Stats -->
             <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="bg-slate-800/20 p-2 rounded-xl">
-                    <div class="text-[10px] text-slate-500 uppercase">Max G</div>
+                    <div class="text-[10px] text-slate-400 uppercase">Max G</div>
                     <div id="detailMaxG" class="text-lg font-bold text-white">0.0</div>
                 </div>
                 <div class="bg-slate-800/20 p-2 rounded-xl">
-                    <div class="text-[10px] text-slate-500 uppercase">Lean L</div>
+                    <div class="text-[10px] text-slate-400 uppercase">Lean L</div>
                     <div id="detailLeanL" class="text-lg font-bold text-blue-400">0°</div>
                 </div>
                 <div class="bg-slate-800/20 p-2 rounded-xl">
-                    <div class="text-[10px] text-slate-500 uppercase">Lean R</div>
+                    <div class="text-[10px] text-slate-400 uppercase">Lean R</div>
                     <div id="detailLeanR" class="text-lg font-bold text-blue-400">0°</div>
                 </div>
             </div>
@@ -2029,7 +2044,7 @@
                     data-lucide="x" size="20"></i></button>
             <h3 class="text-lg font-bold mb-1 text-red-400 flex items-center gap-2"><i data-lucide="terminal"
                     size="20"></i> Developer FX</h3>
-            <p class="text-xs text-slate-500 mb-4 font-mono">Effekte erzwingen (nur visuell)</p>
+            <p class="text-xs text-slate-400 mb-4 font-mono">Effekte erzwingen (nur visuell)</p>
 
             <div class="grid grid-cols-2 gap-2 mb-4">
                 <button onclick="forceEffect(0, 1)" class="dev-btn">☀️ Klar (Tag)</button>
@@ -2503,14 +2518,11 @@
         }
         function toggleSettings() {
             const m = document.getElementById('settingsModal');
-            if (m.classList.contains('hidden')) {
-                // Opening - Animate
-                m.classList.remove('hidden');
-                renderSettingsList();
-                renderMotoSettingsUI();
+            // Assuming we check visibility using the active class since we migrated to showModal
+            if (m.classList.contains('hidden') || m.style.display === 'none') {
                 showModal('settingsModal');
+                renderSettingsList();
             } else {
-                // Closing
                 hideModal('settingsModal');
             }
         }
@@ -2519,11 +2531,11 @@
             const l = document.getElementById('layoutList'); l.innerHTML = '';
             const n = { bestRideSection: 'Best Ride (Top)', statusSection: 'Übersicht', rainChartSection: 'Niederschlag (1h)', radarSection: 'Radar (Live)', timelineSection: 'Vorhersage', forecast7DaySection: '7-Tage Trend' };
             layoutConfig.order.forEach((id, i) => {
-                l.innerHTML += `<div class="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="flex items-center gap-3"><span class="text-slate-400 font-mono text-xs">${i + 1}</span><span class="font-bold text-white">${n[id]}</span></div><div class="flex items-center gap-2"><button onclick="moveItem('${id}',-1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-up" size="16"></i></button><button onclick="moveItem('${id}',1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-down" size="16"></i></button><div class="w-px h-4 bg-slate-600 mx-1"></div><button onclick="toggleVisibility('${id}')" class="${layoutConfig.visibility[id] ? 'text-green-400' : 'text-slate-500'} p-1 hover:bg-slate-700 rounded"><i data-lucide="${layoutConfig.visibility[id] ? 'eye' : 'eye-off'}" size="18"></i></button></div></div>`;
+                l.innerHTML += `<div class="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="flex items-center gap-3"><span class="text-slate-400 font-mono text-xs">${i + 1}</span><span class="font-bold text-white">${n[id]}</span></div><div class="flex items-center gap-2"><button onclick="moveItem('${id}',-1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-up" size="16"></i></button><button onclick="moveItem('${id}',1)" class="p-1 hover:bg-slate-700 rounded"><i data-lucide="arrow-down" size="16"></i></button><div class="w-px h-4 bg-slate-600 mx-1"></div><button onclick="toggleVisibility('${id}')" class="${layoutConfig.visibility[id] ? 'text-green-400' : 'text-slate-400'} p-1 hover:bg-slate-700 rounded"><i data-lucide="${layoutConfig.visibility[id] ? 'eye' : 'eye-off'}" size="18"></i></button></div></div>`;
             });
-            document.getElementById('vis-weather-btn').className = layoutConfig.visibility.sub_weather ? 'text-green-400' : 'text-slate-500';
+            document.getElementById('vis-weather-btn').className = layoutConfig.visibility.sub_weather ? 'text-green-400' : 'text-slate-400';
             document.getElementById('vis-weather-btn').innerHTML = `<i data-lucide="${layoutConfig.visibility.sub_weather ? 'eye' : 'eye-off'}" size="18"></i>`;
-            document.getElementById('vis-moto-btn').className = layoutConfig.visibility.sub_moto ? 'text-green-400' : 'text-slate-500';
+            document.getElementById('vis-moto-btn').className = layoutConfig.visibility.sub_moto ? 'text-green-400' : 'text-slate-400';
             document.getElementById('vis-moto-btn').innerHTML = `<i data-lucide="${layoutConfig.visibility.sub_moto ? 'eye' : 'eye-off'}" size="18"></i>`;
 
             // Render Moto Grid Settings
@@ -2827,7 +2839,7 @@
                         const t = h.temperature_2m[k];
                         const r = h.precipitation[k];
                         const ic = getWeatherInfo(h.weather_code[k]).i;
-                        const label = hr + ":00";
+                        const label = hr + "h";
 
                         hourlyTempData.push({ val: t, label: label, icon: ic });
                         hourlyRainData.push({ val: r, label: label });
@@ -2899,7 +2911,7 @@
         function showChangelog() {
             const m = document.getElementById('changelogModal');
             if (m) {
-                m.classList.remove('hidden');
+                showModal('changelogModal');
                 lucide.createIcons();
             }
         }
@@ -2934,11 +2946,83 @@
             if (!lastWeatherData) return;
             const c = lastWeatherData.current;
             const ana = calculateMotoAnalysis(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
+            const scrollStats = calculateMotoScore(c.temperature_2m, c.wind_speed_10m, c.precipitation, c.is_day, c.weather_code);
+            const scoreColor = getScoreColor(scrollStats.score);
+
+            // Update UI Score & Text
+            const scoreNum = document.getElementById('motoAnalysisScoreText');
+            scoreNum.innerText = scrollStats.score;
+            scoreNum.className = `text-2xl font-black ${scoreColor.bg.split(' ')[0].replace('bg-', 'text-')}`;
+
+            document.getElementById('motoAnalysisReason').innerText = scrollStats.reason;
+
+            // Map standard Tailwind colors to modal styling
+            const baseColor = scoreColor.bg.split(' ')[0];
+            const colorMap = {
+                'bg-emerald-500': { border: 'border-emerald-500', glow: 'bg-emerald-500/20' },
+                'bg-blue-500': { border: 'border-blue-500', glow: 'bg-blue-500/20' },
+                'bg-yellow-500': { border: 'border-yellow-500', glow: 'bg-yellow-500/20' },
+                'bg-orange-500': { border: 'border-orange-500', glow: 'bg-orange-500/20' },
+                'bg-red-500': { border: 'border-red-500', glow: 'bg-red-500/30' }
+            };
+            const mapping = colorMap[baseColor] || { border: 'border-slate-500', glow: 'bg-slate-500/20' };
+
+            document.getElementById('motoAnalysisScoreCircle').className = `w-14 h-14 rounded-full border-4 flex items-center justify-center shadow-lg bg-slate-900 ${mapping.border}`;
+            document.getElementById('motoAnalysisGlow').className = `absolute top-0 left-0 right-0 h-40 blur-3xl -z-10 rounded-full transform -translate-y-1/2 transition-colors duration-500 ${mapping.glow}`;
+
+            // Build Details List securely
+            let htmlInner = "";
+            ana.pros.forEach(p => {
+                htmlInner += `<div class="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0"><i data-lucide="check" class="text-emerald-400" size="18"></i></div><span class="text-sm font-bold text-emerald-100">${p}</span></div>`;
+            });
+            ana.cons.forEach(x => {
+                htmlInner += `<div class="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl"><div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="text-red-400" size="18"></i></div><span class="text-sm font-bold text-red-100">${x}</span></div>`;
+            });
+
+            if (!htmlInner) htmlInner = `<div class="text-center text-slate-400 text-sm italic py-4">Keine nennenswerten Faktoren.</div>`;
+
             const l = document.getElementById('motoAnalysisList');
-            l.innerHTML = "";
-            ana.pros.forEach(p => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i data-lucide="check-circle" class="text-emerald-400 flex-shrink-0" size="16"></i><span class="text-xs text-emerald-100">${p}</span></div>`);
-            ana.cons.forEach(x => l.innerHTML += `<div class="flex items-center gap-3 p-2 bg-red-500/10 border border-red-500/30 rounded-xl"><i data-lucide="alert-triangle" class="text-red-400 flex-shrink-0" size="16"></i><span class="text-xs text-red-100">${x}</span></div>`);
-            if (!ana.pros.length && !ana.cons.length) l.innerHTML = `<div class="text-center text-slate-400 text-xs italic">Alles normal.</div>`;
+            l.innerHTML = htmlInner;
+
+            // --- FEATURE: 24h Score Chart ---
+            const h = lastWeatherData.hourly;
+            const chartContainer = document.getElementById('motoScoreChart');
+            if (h && h.time && chartContainer) {
+                const off = (lastWeatherData.utc_offset_seconds || 0) * 1000;
+                const todayIso = new Date(Date.now() + off).toISOString().slice(0, 10);
+
+                // Find start of current day (00:00)
+                let start = h.time.findIndex(t => t.startsWith(todayIso + "T00:00"));
+                if (start === -1) start = 0; // fallback if current day 0:00 isn't explicitly found
+
+                let scorePoints = [];
+                for (let i = start; i < start + 24; i++) {
+                    if (!h.time[i]) break;
+
+                    const hr = new Date(h.time[i]).getHours();
+                    const s = calculateMotoScore(
+                        Math.round(h.temperature_2m[i]),
+                        h.wind_speed_10m[i],
+                        h.precipitation[i],
+                        h.is_day[i],
+                        h.weather_code[i]
+                    );
+
+                    scorePoints.push({
+                        val: s.score,
+                        label: hr + "h"
+                    });
+                }
+
+                // Clear existing and render the smooth SVG chart
+                chartContainer.innerHTML = '';
+                // Use a slight timeout to ensure Modal size is calculated properly if display:none issues
+                setTimeout(() => {
+                    renderSmoothChart('motoScoreChart', scorePoints, { type: 'score', height: 96 });
+                }, 10);
+            }
+            // --- END CHART FEATURE ---
+
             showModal('motoDetailsModal');
             lucide.createIcons();
         }
@@ -3190,7 +3274,7 @@
                         // Generate HTML
                         gridContainer.innerHTML += `
                         <div class="bg-slate-800/40 rounded-lg p-1.5 flex flex-col items-center border border-slate-700/30">
-                            <span class="text-[9px] text-slate-500 uppercase tracking-wide truncate w-full text-center">${def.label}</span>
+                            <span class="text-[9px] text-slate-400 uppercase tracking-wide truncate w-full text-center">${def.label}</span>
                             <span class="text-[10px] font-bold ${valCls}">${valTxt}</span>
                         </div>`;
                     });
@@ -3347,7 +3431,7 @@
 
         function renderRainChart(minutely15) {
             const container = document.getElementById('rainBarsContainer');
-            if (!minutely15 || !minutely15.precipitation || minutely15.precipitation.length < 4) { container.innerHTML = '<div class="text-xs text-slate-500 w-full text-center flex items-center justify-center">Keine Daten</div>'; return; }
+            if (!minutely15 || !minutely15.precipitation || minutely15.precipitation.length < 4) { container.innerHTML = '<div class="text-xs text-slate-400 w-full text-center flex items-center justify-center">Keine Daten</div>'; return; }
             container.innerHTML = '';
             let startIndex = 0;
             const now = Date.now();
@@ -3379,7 +3463,7 @@
                 const max = Math.round(d.temperature_2m_max[i]);
                 const info = getWeatherInfo(code);
                 // ADDED: id="day-item-${i}" for specific transition trigger
-                con.innerHTML += `<div id="day-item-${i}" onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-500">/</span><span class="text-red-400">${max}°</span></div></div>`;
+                con.innerHTML += `<div id="day-item-${i}" onclick="showDailyDetails(${i})" class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 cursor-pointer transition active:scale-95"><span class="w-24 font-bold text-sm">${i === 0 ? 'Heute' : day}</span><div class="flex items-center gap-2 text-blue-200"><i data-lucide="${info.i}" size="18"></i><span class="text-xs w-20 truncate">${info.t}</span></div><div class="flex gap-3 text-sm font-mono"><span class="text-blue-400">${min}°</span><span class="text-slate-400">/</span><span class="text-red-400">${max}°</span></div></div>`;
             }
             lucide.createIcons();
         }
@@ -3397,7 +3481,8 @@
         function updateMarker() {
             if (!radarMap) return;
             if (radarMarker) radarMap.removeLayer(radarMarker);
-            const icon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#ef4444; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #ef4444;'></div>", iconSize: [12, 12], iconAnchor: [6, 6] });
+            const h = `<div class="w-full h-full bg-red-500 rounded-full border-2 border-white shadow-[0_0_10px_rgba(239,68,68,1)] relative flex items-center justify-center"><div class="absolute w-6 h-6 rounded-full border border-red-500 animate-[ping_2s_ease-out_infinite] opacity-75"></div></div>`;
+            const icon = L.divIcon({ className: 'custom-div-icon', html: h, iconSize: [12, 12], iconAnchor: [6, 6] });
             radarMarker = L.marker([currentLat, currentLon], { icon: icon }).addTo(radarMap);
         }
 
@@ -3497,8 +3582,11 @@
             const timeline = document.getElementById('radarTimeline');
             if (timeline && isRadarPlaying) { timeline.value = index; }
 
+            // RainViewer API has strict native zoom limits that vary by region (sometimes as low as 8).
+            // UPDATE: The recent RainViewer Free API has clamped public global map tile access to maximum zoom 7.
+            // By setting maxNativeZoom: 7, Leaflet mathematically scales those {x} and {y} tiles up.
             const layerUrl = `https://tilecache.rainviewer.com${tsObj.path}/256/{z}/{x}/{y}/2/1_1.png`;
-            const newLayer = L.tileLayer(layerUrl, { opacity: 0.7, zIndex: 100 });
+            const newLayer = L.tileLayer(layerUrl, { opacity: 0.7, zIndex: 100, maxZoom: 20, maxNativeZoom: 7, tileSize: 256 });
             newLayer.addTo(radarMap);
             radarLayers[tsObj.time] = newLayer;
             Object.keys(radarLayers).forEach(key => { if (parseInt(key) !== tsObj.time) { if (radarMap.hasLayer(radarLayers[key])) { radarMap.removeLayer(radarLayers[key]); } delete radarLayers[key]; } });
@@ -3608,7 +3696,6 @@
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     el.classList.add('active');
-                    el.style.opacity = '1';
                 });
             });
         }
@@ -3617,12 +3704,11 @@
             const el = document.getElementById(id);
             if (!el) return;
             el.classList.remove('active');
-            el.style.opacity = '0';
             setTimeout(() => {
                 if (!el.classList.contains('active')) {
                     el.classList.add('hidden');
                 }
-            }, 300);
+            }, 400); // Align with 0.4s modal-content transition
         }
 
         function updateBestRideUI() {
@@ -3996,9 +4082,6 @@
             const k = 0.25; // Tension
             let path = `M ${points[0][0]},${points[0][1]}`;
 
-            // Find "floor" (max Y value) to constrain
-            const maxY = Math.max(...points.map(p => p[1]));
-
             for (let i = 0; i < points.length - 1; i++) {
                 const p0 = points[i === 0 ? 0 : i - 1];
                 const p1 = points[i];
@@ -4011,9 +4094,15 @@
                 let cp2x = p2[0] - (p3[0] - p1[0]) * k;
                 let cp2y = p2[1] - (p3[1] - p1[1]) * k;
 
-                // Clamp Control Points to Floor (prevent undershoot below 0)
-                if (cp1y > maxY) cp1y = maxY;
-                if (cp2y > maxY) cp2y = maxY;
+                // Local Monotonic Clamp: Prevents ANY vertical overshoot beyond the segment endpoints.
+                // This forcefully flattens the curve at peaks and valleys, solving the 'dip below zero' bug.
+                const minY = Math.min(p1[1], p2[1]);
+                const maxYLocal = Math.max(p1[1], p2[1]);
+
+                if (cp1y < minY) cp1y = minY;
+                if (cp1y > maxYLocal) cp1y = Math.max(p1[1], maxYLocal); // safety assignment
+                if (cp2y < minY) cp2y = minY;
+                if (cp2y > maxYLocal) cp2y = Math.max(p2[1], maxYLocal);
 
                 path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
             }
@@ -4027,6 +4116,19 @@
             if (!container || dataPoints.length === 0) return;
 
             container.innerHTML = '';
+
+            // Check for existing tooltip, or create it
+            let tooltip = document.getElementById('chartTooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'chartTooltip';
+                tooltip.className = 'absolute pointer-events-none bg-slate-800 text-white text-[10px] px-2 py-1 rounded shadow-lg border border-slate-700 opacity-0 transition-opacity z-[9999] transform -translate-x-1/2 -translate-y-full mt-[-10px]';
+                document.body.appendChild(tooltip);
+            }
+
+            // Ensure container has relative positioning for proper interaction areas if needed, 
+            // but we use absolute page coords for tooltip
+            container.style.position = 'relative';
 
             const w = container.clientWidth || 300;
             const h = config.height || 100;
@@ -4044,7 +4146,15 @@
                 txt.setAttribute("fill", "#64748b"); // slate-500
                 txt.setAttribute("font-size", "9");
                 txt.setAttribute("font-family", "monospace");
-                txt.textContent = config.type === 'rain' ? val.toFixed(1) : Math.round(val) + "°";
+
+                if (config.type === 'rain') {
+                    txt.textContent = val.toFixed(1);
+                } else if (config.type === 'score') {
+                    txt.textContent = Math.round(val);
+                } else {
+                    txt.textContent = Math.round(val) + "°";
+                }
+
                 svg.appendChild(txt);
             };
 
@@ -4057,6 +4167,9 @@
                 if (max < 0.5) max = 0.5; // Minimum range to keep 0 low
                 // Add slight top buffer
                 max += (max - min) * 0.1;
+            } else if (config.type === 'score') {
+                min = 0;
+                max = 10; // Fixed exact range for Moto Score (0-10)
             } else {
                 min = Math.min(...dataPoints.map(d => d.val));
                 max = Math.max(...dataPoints.map(d => d.val));
@@ -4085,9 +4198,18 @@
             svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
             svg.style.overflow = "visible";
 
-            // Defs (Gradients)
+            // Defs (Gradients & Filters)
             const defs = document.createElementNS(svgNS, "defs");
             const gid = `grad_${containerId}_${Date.now()}`;
+            const glowId = `glow_${containerId}_${Date.now()}`;
+
+            // Drop Shadow Filter for premium 3D line effect
+            const filter = document.createElementNS(svgNS, "filter");
+            filter.setAttribute("id", glowId);
+            filter.setAttribute("x", "-20%"); filter.setAttribute("y", "-20%");
+            filter.setAttribute("width", "140%"); filter.setAttribute("height", "140%");
+            filter.innerHTML = `<feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000000" flood-opacity="0.65"/>`;
+            defs.appendChild(filter);
 
             // Draw Y-Axis Labels (Top, Mid, Bottom)
             const yTop = padTop;
@@ -4107,12 +4229,13 @@
                 line.setAttribute("y2", y);
                 line.setAttribute("stroke", "#334155"); // slate-700
                 line.setAttribute("stroke-width", "0.5");
-                line.setAttribute("stroke-dasharray", "2,2");
+                line.setAttribute("stroke-dasharray", "4,4");
+                line.setAttribute("opacity", "0.6");
                 svg.appendChild(line);
             });
 
             if (config.type === 'temp') {
-                // RED (Top) to BLUE (Bottom)
+                // RED (Top) to Orange (Mid) to BLUE (Bottom)
                 const grad = document.createElementNS(svgNS, "linearGradient");
                 grad.setAttribute("id", gid);
                 grad.setAttribute("x1", "0");
@@ -4120,7 +4243,7 @@
                 grad.setAttribute("x2", "0");
                 grad.setAttribute("y2", "1"); // Top to Bottom
                 // Stops
-                grad.innerHTML = `<stop offset="0%" stop-color="#ef4444" /> <stop offset="100%" stop-color="#3b82f6" />`;
+                grad.innerHTML = `<stop offset="0%" stop-color="#ef4444" /> <stop offset="50%" stop-color="#f97316" /> <stop offset="100%" stop-color="#3b82f6" />`;
                 defs.appendChild(grad);
 
                 // Stroke Path
@@ -4128,35 +4251,48 @@
                 pathEl.setAttribute("d", linePath);
                 pathEl.setAttribute("fill", "none");
                 pathEl.setAttribute("stroke", `url(#${gid})`);
-                pathEl.setAttribute("stroke-width", "4");
+                pathEl.setAttribute("stroke-width", "4.5");
                 pathEl.setAttribute("stroke-linecap", "round");
+                pathEl.setAttribute("stroke-linejoin", "round");
+                pathEl.setAttribute("filter", `url(#${glowId})`); // Apply Glow
                 svg.appendChild(defs);
                 svg.appendChild(pathEl);
 
-                // Time Labels Only
+                // Time Labels
                 points.forEach((p, i) => {
-                    if (i % 3 === 0 || i === points.length - 1) { // Sparsity
-                        // Time Label
+                    let drawLabel = false;
+                    if (i === points.length - 1) drawLabel = true;
+                    else if (i % 4 === 0) {
+                        // Prevent overlap if the 'every 4th' label is too close to the end
+                        if (points.length - 1 - i < 3) drawLabel = false;
+                        else drawLabel = true;
+                    }
+
+                    if (drawLabel) {
                         const timeTxt = document.createElementNS(svgNS, "text");
                         timeTxt.setAttribute("x", p[0]);
                         timeTxt.setAttribute("y", h - 5);
-                        timeTxt.setAttribute("text-anchor", "middle");
-                        timeTxt.setAttribute("fill", "#94a3b8");
-                        timeTxt.setAttribute("font-size", "9");
+                        timeTxt.setAttribute("text-anchor", i === points.length - 1 ? "end" : "middle");
+                        if (i === points.length - 1) timeTxt.setAttribute("x", p[0] + 5);
+
+                        timeTxt.setAttribute("fill", "#64748b"); // Darker slate for premium look
+                        timeTxt.setAttribute("font-size", "10");
+                        timeTxt.setAttribute("font-family", "sans-serif");
+                        timeTxt.setAttribute("font-weight", "500");
                         timeTxt.textContent = dataPoints[i].label;
                         svg.appendChild(timeTxt);
                     }
                 });
 
             } else if (config.type === 'rain') {
-                // Blue Area
+                // Blue Area Graphic
                 const grad = document.createElementNS(svgNS, "linearGradient");
                 grad.setAttribute("id", gid);
                 grad.setAttribute("x1", "0");
                 grad.setAttribute("y1", "0");
                 grad.setAttribute("x2", "0");
                 grad.setAttribute("y2", "1");
-                grad.innerHTML = `<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.8"/> <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1"/>`;
+                grad.innerHTML = `<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.8"/> <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>`;
                 defs.appendChild(grad);
 
                 // Close Path for Area
@@ -4164,28 +4300,183 @@
                 const zeroY = padTop + chartH - ((0 - min) / safeRange) * chartH;
                 const areaPathStr = linePath + ` L ${w},${zeroY} L ${padLeft},${zeroY} Z`;
 
+                const areaEl = document.createElementNS(svgNS, "path");
+                areaEl.setAttribute("d", areaPathStr);
+                areaEl.setAttribute("fill", `url(#${gid})`);
+
                 const pathEl = document.createElementNS(svgNS, "path");
-                pathEl.setAttribute("d", areaPathStr);
-                pathEl.setAttribute("fill", `url(#${gid})`);
+                pathEl.setAttribute("d", linePath);
+                pathEl.setAttribute("fill", "none");
                 pathEl.setAttribute("stroke", "#60a5fa"); // Light blue stroke border
-                pathEl.setAttribute("stroke-width", "2");
+                pathEl.setAttribute("stroke-width", "3");
+                pathEl.setAttribute("stroke-linecap", "round");
+                pathEl.setAttribute("stroke-linejoin", "round");
+                pathEl.setAttribute("filter", `url(#${glowId})`);
+
                 svg.appendChild(defs);
+                svg.appendChild(areaEl);
                 svg.appendChild(pathEl);
 
                 // Time Label Only
                 points.forEach((p, i) => {
-                    if (i % 4 === 0) {
+                    // Sparsity logic: Show every 4th label, OR the very last label.
+                    // But if the very last label is shown, prevent the 2nd-to-last or 3rd-to-last from drawing and overlapping it.
+                    let drawLabel = false;
+
+                    if (i === points.length - 1) {
+                        drawLabel = true;
+                    } else if (i % 4 === 0) {
+                        // Check if this 'every 4th' label is too close to the end label
+                        if (points.length - 1 - i < 3) {
+                            drawLabel = false;
+                        } else {
+                            drawLabel = true;
+                        }
+                    }
+
+                    if (drawLabel) {
                         const timeTxt = document.createElementNS(svgNS, "text");
                         timeTxt.setAttribute("x", p[0]);
                         timeTxt.setAttribute("y", h - 5);
-                        timeTxt.setAttribute("text-anchor", "middle");
-                        timeTxt.setAttribute("fill", "#94a3b8");
-                        timeTxt.setAttribute("font-size", "9");
+                        timeTxt.setAttribute("text-anchor", i === points.length - 1 ? "end" : "middle");
+
+                        // Offset the very last label slightly so it doesn't get clipped by the right border
+                        if (i === points.length - 1) {
+                            timeTxt.setAttribute("x", p[0] + 5);
+                        }
+
+                        timeTxt.setAttribute("fill", "#64748b");
+                        timeTxt.setAttribute("font-size", "10");
+                        timeTxt.setAttribute("font-family", "sans-serif");
+                        timeTxt.setAttribute("font-weight", "500");
+                        timeTxt.textContent = dataPoints[i].label;
+                        svg.appendChild(timeTxt);
+                    }
+                });
+            } else if (config.type === 'score') {
+                // Gradient for the stroke (Line) - Red/Orange/Blue or Green to Red
+                // Match the visual style of Moto Score (Top: Green/Blueish, Bot: Red/Orange)
+                const gidStroke = `grad_stroke_${containerId}_${Date.now()}`;
+                const gradStroke = document.createElementNS(svgNS, "linearGradient");
+                gradStroke.setAttribute("id", gidStroke);
+                gradStroke.setAttribute("x1", "0");
+                gradStroke.setAttribute("y1", "0");
+                gradStroke.setAttribute("x2", "0");
+                gradStroke.setAttribute("y2", "1");
+                gradStroke.innerHTML = `<stop offset="0%" stop-color="#3b82f6" /> <stop offset="50%" stop-color="#8b5cf6" /> <stop offset="100%" stop-color="#ef4444" />`;
+                defs.appendChild(gradStroke);
+
+                // Gradient for the area fill
+                const gidFill = `grad_fill_${containerId}_${Date.now()}`;
+                const gradFill = document.createElementNS(svgNS, "linearGradient");
+                gradFill.setAttribute("id", gidFill);
+                gradFill.setAttribute("x1", "0");
+                gradFill.setAttribute("y1", "0");
+                gradFill.setAttribute("x2", "0");
+                gradFill.setAttribute("y2", "1");
+                gradFill.innerHTML = `<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"/> <stop offset="100%" stop-color="#ef4444" stop-opacity="0.0"/>`;
+                defs.appendChild(gradFill);
+
+                // Close Path for Area Fill
+                const zeroY = padTop + chartH - ((0 - min) / safeRange) * chartH;
+                const areaPathStr = linePath + ` L ${w},${zeroY} L ${padLeft},${zeroY} Z`;
+
+                const areaEl = document.createElementNS(svgNS, "path");
+                areaEl.setAttribute("d", areaPathStr);
+                areaEl.setAttribute("fill", `url(#${gidFill})`);
+
+                // Stroke Path
+                const pathEl = document.createElementNS(svgNS, "path");
+                pathEl.setAttribute("d", linePath);
+                pathEl.setAttribute("fill", "none");
+                pathEl.setAttribute("stroke", `url(#${gidStroke})`);
+                pathEl.setAttribute("stroke-width", "4");
+                pathEl.setAttribute("stroke-linecap", "round");
+
+                svg.appendChild(defs);
+                svg.appendChild(areaEl);
+                svg.appendChild(pathEl);
+
+                // Time Labels
+                points.forEach((p, i) => {
+                    let drawLabel = false;
+                    if (i === points.length - 1) drawLabel = true;
+                    else if (i % 4 === 0) {
+                        if (points.length - 1 - i < 3) drawLabel = false;
+                        else drawLabel = true;
+                    }
+
+                    if (drawLabel) {
+                        const timeTxt = document.createElementNS(svgNS, "text");
+                        timeTxt.setAttribute("x", p[0]);
+                        timeTxt.setAttribute("y", h - 5);
+                        timeTxt.setAttribute("text-anchor", i === points.length - 1 ? "end" : "middle");
+                        if (i === points.length - 1) timeTxt.setAttribute("x", p[0] + 5);
+
+                        timeTxt.setAttribute("fill", "#64748b");
+                        timeTxt.setAttribute("font-size", "10");
+                        timeTxt.setAttribute("font-family", "sans-serif");
+                        timeTxt.setAttribute("font-weight", "500");
                         timeTxt.textContent = dataPoints[i].label;
                         svg.appendChild(timeTxt);
                     }
                 });
             }
+
+            // --- TOOLTIP INTERACTION ZONES ---
+            const zoneWidth = stepX || chartW / points.length;
+
+            points.forEach((p, i) => {
+                const rect = document.createElementNS(svgNS, "rect");
+                // Center the interaction zone over the point
+                rect.setAttribute("x", p[0] - (zoneWidth / 2));
+                rect.setAttribute("y", 0);
+                rect.setAttribute("width", zoneWidth);
+                rect.setAttribute("height", h);
+                rect.setAttribute("fill", "transparent");
+                rect.style.cursor = "pointer";
+
+                const showTooltip = (e) => {
+                    if (!tooltip) return;
+
+                    const val = dataPoints[i].val;
+                    let displayVal = Math.round(val);
+                    if (config.type === 'rain') displayVal = val.toFixed(1) + " mm";
+                    else if (config.type === 'temp') displayVal = displayVal + "°";
+                    else if (config.type === 'score') displayVal = displayVal + " / 10";
+
+                    tooltip.innerHTML = `<span class="font-bold text-white">${dataPoints[i].label}</span><br/><span class="text-blue-400 font-bold">${displayVal}</span>`;
+
+                    // Positioning directly above the point
+                    const rectBounds = e.target.getBoundingClientRect();
+                    tooltip.style.left = (rectBounds.left + rectBounds.width / 2) + 'px';
+                    tooltip.style.top = (rectBounds.top + 10) + 'px';
+
+                    tooltip.classList.remove('opacity-0');
+                    tooltip.classList.add('opacity-100');
+                };
+
+                const hideTooltip = () => {
+                    if (tooltip) {
+                        tooltip.classList.remove('opacity-100');
+                        tooltip.classList.add('opacity-0');
+                    }
+                };
+
+                // Desktop events
+                rect.addEventListener("mouseenter", showTooltip);
+                rect.addEventListener("mouseleave", hideTooltip);
+
+                // Mobile events (Touch to see value)
+                rect.addEventListener("touchstart", (e) => {
+                    e.preventDefault();
+                    showTooltip(e);
+                    // Hide tooltip after a moment on mobile since there is no mouseleave
+                    setTimeout(hideTooltip, 2500);
+                });
+
+                svg.appendChild(rect);
+            });
 
             container.appendChild(svg);
         }
@@ -4317,7 +4608,7 @@
                         <div class="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg">
                             <div>
                                 <div class="text-xs font-bold text-slate-300">${f.label}</div>
-                                <div class="text-[10px] text-slate-500">${f.desc}</div>
+                                <div class="text-[10px] text-slate-400">${f.desc}</div>
                             </div>
                             <div class="h-4 w-4 rounded border ${f.active ? 'bg-blue-500 border-blue-500' : 'border-slate-500'} flex items-center justify-center">
                                 ${f.active ? '<i data-lucide="check" size="10" class="text-white"></i>' : ''}
@@ -4402,7 +4693,7 @@
         function openRouteModal() {
             document.getElementById('routeStartName').innerText = currentCityName || "Unbekannt";
             document.getElementById('routeDestInput').value = "";
-            document.getElementById('routeModal').classList.remove('hidden');
+            showModal('routeModal');
             document.getElementById('routeDestInput').focus();
         }
 
@@ -4459,13 +4750,13 @@
                     
                     <div class="flex items-center justify-between mb-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
                         <div class="text-center">
-                            <div class="text-[10px] text-slate-500 uppercase font-bold">Start</div>
+                            <div class="text-[10px] text-slate-400 uppercase font-bold">Start</div>
                             <div class="font-bold text-white text-sm">${currentCityName}</div>
                             <div class="text-xs text-slate-400">${Math.round(startCur.temperature_2m)}°</div>
                         </div>
                         <i data-lucide="arrow-right" class="text-slate-600"></i>
                         <div class="text-center">
-                            <div class="text-[10px] text-slate-500 uppercase font-bold">Ziel</div>
+                            <div class="text-[10px] text-slate-400 uppercase font-bold">Ziel</div>
                             <div class="font-bold text-white text-sm">${destRealName}</div>
                             <div class="text-xs text-slate-400">${Math.round(endCur.temperature_2m)}°</div>
                         </div>
@@ -4473,12 +4764,12 @@
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div class="bg-slate-800/30 p-4 rounded-xl border ${sCol.bg} flex flex-col items-center">
-                            <div class="text-xs text-slate-500 mb-1">Start Score</div>
+                            <div class="text-xs text-slate-400 mb-1">Start Score</div>
                             <div class="text-3xl font-black ${sCol.bg.split(' ')[1]}">${startScore.score}</div>
                             <div class="text-[10px] text-slate-400">${startScore.reason}</div>
                         </div>
                         <div class="bg-slate-800/30 p-4 rounded-xl border ${eCol.bg} flex flex-col items-center">
-                            <div class="text-xs text-slate-500 mb-1">Ziel Score</div>
+                            <div class="text-xs text-slate-400 mb-1">Ziel Score</div>
                             <div class="text-3xl font-black ${eCol.bg.split(' ')[1]}">${endScore.score}</div>
                             <div class="text-[10px] text-slate-400">${endScore.reason}</div>
                         </div>
@@ -4530,18 +4821,18 @@
         function updateFavIconState() {
             const btn = document.getElementById('favToggleBtn'); if (!btn || !currentCityName) return;
             const isFav = isFavorite(currentCityName);
-            btn.innerHTML = isFav ? `<i data-lucide="heart" class="text-red-500 fill-red-500" size="20"></i>` : `<i data-lucide="heart" class="text-slate-500" size="20"></i>`;
+            btn.innerHTML = isFav ? `<i data-lucide="heart" class="text-red-500 fill-red-500" size="20"></i>` : `<i data-lucide="heart" class="text-slate-400" size="20"></i>`;
             lucide.createIcons();
         }
 
         function renderFavoritesList() {
             const l = document.getElementById('favoritesListContent'); if (!l) return;
             l.innerHTML = '';
-            if (favorites.length === 0) { l.innerHTML = '<div class="text-center text-slate-500 py-6 italic text-sm">Noch keine Favoriten gespeichert.<br>Tippe auf das Herz beim Ort!</div>'; return; }
+            if (favorites.length === 0) { l.innerHTML = '<div class="text-center text-slate-400 py-6 italic text-sm">Noch keine Favoriten gespeichert.<br>Tippe auf das Herz beim Ort!</div>'; return; }
             favorites.forEach(fav => {
                 l.innerHTML += `<div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 mb-2 fav-item group hover:bg-slate-700/50">
-                    <div onclick="loadFavorite('${fav.name}', '${fav.country}', ${fav.lat}, ${fav.lon})" class="flex-grow font-bold text-slate-200 text-sm flex items-center justify-start gap-2 text-left"><i data-lucide="map-pin" size="14" class="text-slate-500 shrink-0"></i> ${fav.name}</div>
-                    <button onclick="removeFavorite('${fav.name}')" class="p-2 text-slate-500 hover:text-red-400 transition bg-slate-800 rounded-lg hover:bg-slate-900 border border-slate-700"><i data-lucide="trash-2" size="14"></i></button>
+                    <div onclick="loadFavorite('${fav.name}', '${fav.country}', ${fav.lat}, ${fav.lon})" class="flex-grow font-bold text-slate-200 text-sm flex items-center justify-start gap-2 text-left"><i data-lucide="map-pin" size="14" class="text-slate-400 shrink-0"></i> ${fav.name}</div>
+                    <button onclick="removeFavorite('${fav.name}')" class="p-2 text-slate-400 hover:text-red-400 transition bg-slate-800 rounded-lg hover:bg-slate-900 border border-slate-700"><i data-lucide="trash-2" size="14"></i></button>
                 </div>`;
             });
             lucide.createIcons();
@@ -4807,7 +5098,7 @@
             try { logs = JSON.parse(localStorage.getItem('motoRideLogs_v1') || '[]'); } catch (e) { }
 
             if (logs.length === 0) {
-                list.innerHTML = '<div class="text-center text-slate-500 mt-10 italic">Keine Fahrten gespeichert.</div>';
+                list.innerHTML = '<div class="text-center text-slate-400 mt-10 italic">Keine Fahrten gespeichert.</div>';
                 return;
             }
 
@@ -4849,25 +5140,25 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="text-xs text-slate-500 font-mono">${durMin}m ${durSec}s</div>
+                            <div class="text-xs text-slate-400 font-mono">${durMin}m ${durSec}s</div>
                             ${log.stats.distance ? `<div class="text-[10px] text-blue-400 font-bold">${distKm}km</div>` : ''}
                         </div>
                     </div>
                 <div class="grid grid-cols-4 gap-2 text-center">
                     <div>
-                        <div class="text-[8px] text-slate-500 uppercase">Max Speed</div>
+                        <div class="text-[8px] text-slate-400 uppercase">Max Speed</div>
                         <div class="text-sm font-bold text-white">${log.stats.maxSpeed} <span class="text-[9px] text-slate-400 font-normal">km/h</span></div>
                     </div>
                     <div>
-                        <div class="text-[8px] text-slate-500 uppercase">Max G</div>
+                        <div class="text-[8px] text-slate-400 uppercase">Max G</div>
                         <div class="text-sm font-bold text-white">${log.stats.maxG}</div>
                     </div>
                     <div>
-                        <div class="text-[8px] text-slate-500 uppercase">Lean L</div>
+                        <div class="text-[8px] text-slate-400 uppercase">Lean L</div>
                         <div class="text-sm font-bold text-blue-400">${log.stats.leanL}°</div>
                     </div>
                     <div>
-                        <div class="text-[8px] text-slate-500 uppercase">Lean R</div>
+                        <div class="text-[8px] text-slate-400 uppercase">Lean R</div>
                         <div class="text-sm font-bold text-blue-400">${log.stats.leanR}°</div>
                     </div>
                 </div>
@@ -4928,7 +5219,7 @@
                     } catch (e) { }
                 } else {
                     const mc = document.getElementById('rideDetailMap');
-                    if (mc) mc.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs">Keine Route aufgezeichnet</div>';
+                    if (mc) mc.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">Keine Route aufgezeichnet</div>';
                 }
 
                 // Weather
@@ -4936,11 +5227,7 @@
                 safeSetText('detailTemp', wx.temp || "--");
                 safeSetText('detailWeather', wx.desc || "--");
 
-                const m = document.getElementById('rideDetailModal');
-                if (m) {
-                    m.classList.remove('hidden');
-                    setTimeout(() => m.classList.remove('opacity-0'), 10);
-                }
+                showModal('rideDetailModal');
 
                 // Wire buttons
                 const btnRename = document.getElementById('btnDetailRename');
@@ -5021,7 +5308,7 @@
                 return;
             }
 
-            modal.classList.remove('hidden');
+            showModal('fullscreenRideModal');
 
             // Set Title Stats (Defensive)
             const stats = log.stats || {};
@@ -5037,6 +5324,8 @@
                     attributionControl: false
                 });
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(fsMapObj);
+
+                // If there's an active radar frame, we should show it here too (Optional, currently user reported radar on main map)
             }
 
             // Wait for Modal Render then Draw
@@ -5050,6 +5339,7 @@
                 });
                 drawTrackOnMap(fsMapObj, log.gpsTrack);
             });
+
 
             // Re-create icons for modal
             lucide.createIcons();
@@ -5202,13 +5492,18 @@
 
             // Motion Sensors (Compass + G + Lean)
             // Remove first to be safe
-            window.removeEventListener('deviceorientation', handleCompass);
-            window.removeEventListener('deviceorientation', handleMotoOrientation);
-            window.removeEventListener('devicemotion', handleMotion);
+            window.removeEventListener('deviceorientationabsolute', handleCompass, true);
+            window.removeEventListener('deviceorientation', handleCompass, true);
+            window.removeEventListener('deviceorientation', handleMotoOrientation, true);
+            window.removeEventListener('devicemotion', handleMotion, true);
 
-            window.addEventListener('deviceorientation', handleCompass); // Map Rotation
-            window.addEventListener('deviceorientation', handleMotoOrientation); // Lean Angle
-            window.addEventListener('devicemotion', handleMotion);
+            if ('ondeviceorientationabsolute' in window) {
+                window.addEventListener('deviceorientationabsolute', handleCompass, true); // True North Map Rotation
+            } else {
+                window.addEventListener('deviceorientation', handleCompass, true);
+            }
+            window.addEventListener('deviceorientation', handleMotoOrientation, true); // Lean Angle does not strictly require absolute N
+            window.addEventListener('devicemotion', handleMotion, true);
 
             // START RENDER LOOP (Butter Smooth UI)
             startVisualLoop();
@@ -5319,9 +5614,10 @@
             if (motoWatchId) navigator.geolocation.clearWatch(motoWatchId);
             motoWatchId = null; // Ensure clear
 
-            window.removeEventListener('deviceorientation', handleCompass); // STOP Compass
-            window.removeEventListener('deviceorientation', handleMotoOrientation); // STOP Lean
-            window.removeEventListener('devicemotion', handleMotion);
+            window.removeEventListener('deviceorientationabsolute', handleCompass, true); // STOP Compass
+            window.removeEventListener('deviceorientation', handleCompass, true);
+            window.removeEventListener('deviceorientation', handleMotoOrientation, true); // STOP Lean
+            window.removeEventListener('devicemotion', handleMotion, true);
 
             cancelAnimationFrame(sensorRafId); // STOP RENDER LOOP
             sensorRafId = null;
@@ -5491,7 +5787,7 @@
 
         <!-- MAIN LOCATION DISPLAY -->
         <div class="flex flex-col items-center justify-center w-full text-center space-y-4">
-            <div class="text-xs text-slate-500 uppercase tracking-[0.2em] font-bold">Dein Standort</div>
+            <div class="text-xs text-slate-400 uppercase tracking-[0.2em] font-bold">Dein Standort</div>
 
             <div class="bg-red-900/10 border border-red-500/30 rounded-2xl p-6 w-full relative overflow-hidden group">
                 <div class="absolute inset-0 bg-red-500/5 animate-pulse"></div>
