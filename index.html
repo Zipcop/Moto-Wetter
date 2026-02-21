@@ -58,6 +58,7 @@
             padding-right: 1rem;
             font-family: 'Outfit', sans-serif;
             color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
             transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
@@ -171,40 +172,38 @@
 
         /* PREMIUM MODERN GLASSMORPHISM (iOS-Style / Clean) */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(15, 23, 42, 0.35);
             backdrop-filter: blur(32px) saturate(140%);
             -webkit-backdrop-filter: blur(32px) saturate(140%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             /* Sehr feiner Rahmen */
             border-radius: 32px !important;
             /* Extrem weiche Ecken */
-            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .glass-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.45);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 9999px !important;
             /* Pill shape */
             color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Hover effects for Desktop ONLY */
         @media (hover: hover) {
             .glass-panel:hover {
-                background: rgba(255, 255, 255, 0.06);
-                transform: translateY(-2px);
-                box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+                background: rgba(15, 23, 42, 0.45);
+                box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
 
             .glass-btn:hover {
-                background: rgba(255, 255, 255, 0.15);
-                transform: translateY(-1px) scale(1.02);
+                background: rgba(15, 23, 42, 0.6);
             }
 
             .leaflet-bar a:hover {
@@ -944,6 +943,8 @@
             <div id="splashScreen" onclick="dismissSplash()">
                 <div id="splashLocalEffects"></div>
                 <div class="mt-10 text-center opacity-0 animate-float-up splash-content">
+                    <h2 id="splashGreeting" class="text-3xl font-black text-white mb-1 drop-shadow-md tracking-tight">
+                    </h2>
                     <div
                         class="flex items-center justify-center gap-2 text-blue-300 mb-2 uppercase tracking-widest text-xs font-bold">
                         <i data-lucide="map-pin" size="14"></i> Aktueller Standort
@@ -1080,7 +1081,7 @@
                     </div>
                     <div id="statusSection" class="grid grid-cols-2 gap-4 transition-all duration-300 stagger-1">
                         <div id="card-weather" onclick="showDailyDetails(0)"
-                            class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 hover:scale-[1.03] cursor-pointer relative group overflow-hidden">
+                            class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 cursor-pointer relative group overflow-hidden">
 
                             <!-- Hero Temperature -->
                             <div class="relative z-10 flex flex-col items-center mt-2">
@@ -1184,7 +1185,7 @@
                             </div>
                         </div>
                         <div id="card-moto" onclick="showMotoDetails()"
-                            class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 hover:scale-[1.03] cursor-pointer group">
+                            class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 active:scale-95 cursor-pointer group">
                             <div
                                 class="absolute top-2 right-2 text-slate-400 opacity-0 group-hover:opacity-100 hover:scale-110 transition">
                                 <i data-lucide="info" size="12"></i>
@@ -1495,6 +1496,16 @@
                             class="text-slate-400 transition-transform duration-300"></i>
                     </button>
                     <div id="content-profile" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                        <!-- NEW: User Name Setting -->
+                        <div class="flex items-center justify-between mb-4 mt-2 pb-3 border-b border-slate-700/50">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-slate-300">Dein Name</span>
+                                <span id="profileUserNameDisplay" class="text-[10px] text-slate-400">Biker</span>
+                            </div>
+                            <button onclick="changeUserName()"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-700 hover:bg-slate-600 text-white border border-slate-500 flex items-center gap-1">Ändern</button>
+                        </div>
+
                         <div class="mb-4 mt-2">
                             <div class="flex justify-between text-xs text-slate-300 mb-1"><span>Min. Temp
                                     (Wohlfühl)</span><span id="dispMinTemp" class="font-bold text-white">10°C</span>
@@ -2562,10 +2573,23 @@
             lucide.createIcons();
             setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 200);
         }
+        function changeUserName() {
+            let currentName = localStorage.getItem('motoWetterUserName') || "Biker";
+            let newName = prompt("Neuen Namen eingeben:", currentName);
+            if (newName !== null && newName.trim() !== "") {
+                localStorage.setItem('motoWetterUserName', newName.trim());
+                document.getElementById('splashGreeting').innerText = `Hallo ${newName.trim()}!`;
+
+                const profileDisplay = document.getElementById('profileUserNameDisplay');
+                if (profileDisplay) profileDisplay.innerText = newName.trim();
+            }
+        }
         function toggleSettings() {
             const m = document.getElementById('settingsModal');
             // Assuming we check visibility using the active class since we migrated to showModal
             if (m.classList.contains('hidden') || m.style.display === 'none') {
+                const profileDisplay = document.getElementById('profileUserNameDisplay');
+                if (profileDisplay) profileDisplay.innerText = localStorage.getItem('motoWetterUserName') || "Biker";
                 showModal('settingsModal');
                 renderSettingsList();
             } else {
@@ -4005,7 +4029,21 @@
                 document.getElementById('startPrompt').classList.add('hidden');
                 document.getElementById('dynamicContent').classList.remove('hidden');
                 loadingIndicator.classList.add('hidden'); updateRadar();
-                if (isFirstLoad) { document.getElementById('splashScreen').classList.remove('splash-hidden'); isFirstLoad = false; }
+                if (isFirstLoad) {
+                    let userName = localStorage.getItem('motoWetterUserName');
+                    if (!userName) {
+                        // Verzögert den Prompt minimal, damit der Browser rendern kann
+                        setTimeout(() => {
+                            userName = prompt("Willkommen bei Moto Wetter!\nWie ist dein Name?") || "Biker";
+                            localStorage.setItem('motoWetterUserName', userName.trim());
+                            document.getElementById('splashGreeting').innerText = `Hallo ${userName.trim()}!`;
+                        }, 100);
+                    } else {
+                        document.getElementById('splashGreeting').innerText = `Hallo ${userName}!`;
+                    }
+                    document.getElementById('splashScreen').classList.remove('splash-hidden');
+                    isFirstLoad = false;
+                }
             } catch (e) { console.error("UpdateUI Error", e); loadingIndicator.classList.add('hidden'); }
         }
 
@@ -5924,6 +5962,17 @@
                 window.location.href = "tel:112";
             }
         }
+    </script>
+    <script>
+        // Globale Haptik für alle interaktiven Elemente
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('click', (e) => {
+                const target = e.target.closest('.glass-panel[onclick], button, .glass-btn, .fav-item, a');
+                if (target && navigator.vibrate) {
+                    navigator.vibrate(15);
+                }
+            });
+        });
     </script>
 </body>
 
