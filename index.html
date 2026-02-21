@@ -4030,17 +4030,8 @@
                 document.getElementById('dynamicContent').classList.remove('hidden');
                 loadingIndicator.classList.add('hidden'); updateRadar();
                 if (isFirstLoad) {
-                    let userName = localStorage.getItem('motoWetterUserName');
-                    if (!userName) {
-                        // Verzögert den Prompt minimal, damit der Browser rendern kann
-                        setTimeout(() => {
-                            userName = prompt("Willkommen bei Moto Wetter!\nWie ist dein Name?") || "Biker";
-                            localStorage.setItem('motoWetterUserName', userName.trim());
-                            document.getElementById('splashGreeting').innerText = `Hallo ${userName.trim()}!`;
-                        }, 100);
-                    } else {
-                        document.getElementById('splashGreeting').innerText = `Hallo ${userName}!`;
-                    }
+                    let userName = localStorage.getItem('motoWetterUserName') || "Biker";
+                    document.getElementById('splashGreeting').innerText = `Hallo ${userName}!`;
                     document.getElementById('splashScreen').classList.remove('splash-hidden');
                     isFirstLoad = false;
                 }
