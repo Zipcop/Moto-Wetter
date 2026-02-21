@@ -3471,9 +3471,9 @@
         function initRadarMap() {
             const container = document.getElementById('radarMap');
             if (!container) return;
-            if (radarMap) { radarMap.setView([currentLat, currentLon], 8); updateMarker(); return; }
-            radarMap = L.map('radarMap', { zoomControl: false, attributionControl: true }).setView([currentLat, currentLon], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM &copy; CARTO &copy; RainViewer', subdomains: 'abcd', maxZoom: 20 }).addTo(radarMap);
+            if (radarMap) { radarMap.setView([currentLat, currentLon], 6); updateMarker(); return; }
+            radarMap = L.map('radarMap', { zoomControl: false, attributionControl: true }).setView([currentLat, currentLon], 6);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM &copy; CARTO &copy; DWD', subdomains: 'abcd', maxZoom: 20 }).addTo(radarMap);
             updateMarker();
             fetchRadarData();
         }
@@ -3487,47 +3487,49 @@
         }
 
         async function fetchRadarData() {
-            // NEW: Added Proxy Fallback mechanism to fix "Offline" issue
-            const radarUrl = 'https://api.rainviewer.com/public/weather-maps.json';
-
             try {
-                let data;
-                try {
-                    // Try direct fetch first
-                    const response = await fetch(radarUrl);
-                    if (!response.ok) throw new Error("Direct fetch failed");
-                    data = await response.json();
-                } catch (e) {
-                    console.warn("Direct radar fetch failed, trying proxy...", e);
-                    // Fallback to CORS proxy
-                    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(radarUrl);
-                    const response = await fetch(proxyUrl);
-                    data = await response.json();
+                // DWD Radar WMS generates its time based on 5 minute intervals.
+                // We create a timeline ranging from -60 minutes to +120 minutes (Prognose)
+                radarTimestamps = [];
+                const now = new Date();
+                // Round down to nearest 5 minutes
+                now.setMinutes(Math.floor(now.getMinutes() / 5) * 5);
+                now.setSeconds(0);
+                now.setMilliseconds(0);
+
+                // 12 frames past (1 hour)
+                for (let i = 12; i > 0; i--) {
+                    const t = new Date(now.getTime() - i * 5 * 60000);
+                    radarTimestamps.push({ time: t.getTime() / 1000, dateObj: t, isFuture: false, offsetMin: -i * 5 });
                 }
 
-                if (data && data.radar && data.radar.past) {
-                    radarTimestamps = data.radar.past;
-                    lastPastIndex = radarTimestamps.length - 1;
+                // Current
+                radarTimestamps.push({ time: now.getTime() / 1000, dateObj: now, isFuture: false, offsetMin: 0 });
+                lastPastIndex = radarTimestamps.length - 1;
 
-                    const nowIndex = lastPastIndex;
-                    if (data.radar.nowcast) { radarTimestamps = radarTimestamps.concat(data.radar.nowcast); }
-
-                    const timeline = document.getElementById('radarTimeline');
-                    if (timeline) {
-                        timeline.max = radarTimestamps.length - 1;
-                        timeline.value = nowIndex;
-
-                        const total = radarTimestamps.length;
-                        const pct = (lastPastIndex / (total - 1)) * 100;
-                        timeline.style.setProperty('--past-pct', pct + '%');
-                    }
-
-                    currentRadarIndex = nowIndex;
-                    showRadarFrame(currentRadarIndex);
-                    updatePlayButtonIcon();
+                // 24 frames future (2 hours forecast)
+                for (let i = 1; i <= 24; i++) {
+                    const t = new Date(now.getTime() + i * 5 * 60000);
+                    radarTimestamps.push({ time: t.getTime() / 1000, dateObj: t, isFuture: true, offsetMin: i * 5 });
                 }
+
+                currentRadarIndex = lastPastIndex;
+
+                const timeline = document.getElementById('radarTimeline');
+                if (timeline) {
+                    timeline.max = radarTimestamps.length - 1;
+                    timeline.value = currentRadarIndex;
+
+                    const total = radarTimestamps.length;
+                    const pct = (lastPastIndex / (total - 1)) * 100;
+                    timeline.style.setProperty('--past-pct', pct + '%');
+                }
+
+                showRadarFrame(currentRadarIndex);
+                updatePlayButtonIcon();
+
             } catch (e) {
-                console.error("Radar fetch completely failed", e);
+                console.error("Radar initialization failed", e);
                 document.getElementById('radarTimeLabel').innerText = "Offline";
             }
         }
@@ -3540,7 +3542,7 @@
                 radarAnimationInterval = setInterval(() => {
                     currentRadarIndex = (currentRadarIndex + 1) % radarTimestamps.length;
                     showRadarFrame(currentRadarIndex);
-                }, 800);
+                }, 1000); // 1s per frame for WMS
             }
         }
 
@@ -3557,13 +3559,22 @@
         function showRadarFrame(index) {
             if (!radarMap || !radarTimestamps[index]) return;
             const tsObj = radarTimestamps[index];
-            const time = new Date(tsObj.time * 1000);
-            const hours = time.getHours().toString().padStart(2, '0');
-            const minutes = time.getMinutes().toString().padStart(2, '0');
-            document.getElementById('radarTimeLabel').innerText = `${hours}:${minutes}`;
+            const time = tsObj.dateObj;
+
+            // Format for UI Display depending on offset min
+            let displayStr = "";
+            if (tsObj.offsetMin === 0) {
+                displayStr = "Jetzt";
+            } else if (tsObj.offsetMin < 0) {
+                displayStr = `${tsObj.offsetMin}m`;
+            } else {
+                displayStr = `+${tsObj.offsetMin}m`;
+            }
+
+            document.getElementById('radarTimeLabel').innerText = displayStr;
 
             // UI: Handle Future vs Live
-            const isFuture = index > lastPastIndex;
+            const isFuture = tsObj.isFuture;
             const liveDot = document.getElementById('radarLiveDot');
             const statusText = document.getElementById('radarStatusText');
 
@@ -3582,14 +3593,34 @@
             const timeline = document.getElementById('radarTimeline');
             if (timeline && isRadarPlaying) { timeline.value = index; }
 
-            // RainViewer API has strict native zoom limits that vary by region (sometimes as low as 8).
-            // UPDATE: The recent RainViewer Free API has clamped public global map tile access to maximum zoom 7.
-            // By setting maxNativeZoom: 7, Leaflet mathematically scales those {x} and {y} tiles up.
-            const layerUrl = `https://tilecache.rainviewer.com${tsObj.path}/256/{z}/{x}/{y}/2/1_1.png`;
-            const newLayer = L.tileLayer(layerUrl, { opacity: 0.7, zIndex: 100, maxZoom: 20, maxNativeZoom: 7, tileSize: 256 });
+            // Format time string for DWD WMS: YYYY-MM-DDTHH:MM:00Z
+            const isoTime = time.toISOString().substring(0, 16) + ":00Z";
+
+            // DWD WMS Layer 
+            const layerUrl = 'https://maps.dwd.de/geoserver/dwd/wms';
+
+            const newLayer = L.tileLayer.wms(layerUrl, {
+                layers: 'dwd:Radar_rv_product_1x1km_ger',
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.7,
+                time: isoTime,
+                zIndex: 100,
+                attribution: '© Deutscher Wetterdienst (DWD)'
+            });
+
             newLayer.addTo(radarMap);
             radarLayers[tsObj.time] = newLayer;
-            Object.keys(radarLayers).forEach(key => { if (parseInt(key) !== tsObj.time) { if (radarMap.hasLayer(radarLayers[key])) { radarMap.removeLayer(radarLayers[key]); } delete radarLayers[key]; } });
+
+            // Clean up old layers
+            Object.keys(radarLayers).forEach(key => {
+                if (parseInt(key) !== tsObj.time) {
+                    if (radarMap.hasLayer(radarLayers[key])) {
+                        radarMap.removeLayer(radarLayers[key]);
+                    }
+                    delete radarLayers[key];
+                }
+            });
         }
 
         function calculateBestRide(h) {
@@ -4422,94 +4453,6 @@
                     }
                 });
             }
-
-            // --- TOOLTIP INTERACTION ZONES ---
-            const overlay = document.createElementNS(svgNS, "rect");
-            overlay.setAttribute("x", padLeft);
-            overlay.setAttribute("y", 0);
-            overlay.setAttribute("width", chartW);
-            overlay.setAttribute("height", h);
-            overlay.setAttribute("fill", "transparent");
-            // Allow vertical scrolling. Browser will fire pointercancel if scroll starts!
-            overlay.style.touchAction = "pan-y";
-            overlay.style.cursor = "crosshair";
-            overlay.style.webkitTapHighlightColor = "transparent";
-
-            let activeIdx = -1;
-
-            const updateTooltip = (clientX) => {
-                if (!tooltip) return;
-                const rectBounds = overlay.getBoundingClientRect();
-                const svgRect = svg.getBoundingClientRect();
-
-                const localX = clientX - rectBounds.left;
-                const svgX = localX + padLeft;
-
-                let closestIdx = 0;
-                let minDist = Infinity;
-                for (let i = 0; i < points.length; i++) {
-                    const dist = Math.abs(points[i][0] - svgX);
-                    if (dist < minDist) { minDist = dist; closestIdx = i; }
-                }
-
-                if (closestIdx !== activeIdx) {
-                    activeIdx = closestIdx;
-                    const i = closestIdx;
-                    const val = dataPoints[i].val;
-                    let displayVal = Math.round(val);
-                    if (config.type === 'rain') displayVal = val.toFixed(1) + " mm";
-                    else if (config.type === 'temp') displayVal = displayVal + "°";
-                    else if (config.type === 'score') displayVal = displayVal + " / 10";
-
-                    tooltip.innerHTML = `<span class="font-bold text-white">${dataPoints[i].label}</span><br/><span class="text-blue-400 font-bold">${displayVal}</span>`;
-
-                    // Positioning: exact X of the point
-                    tooltip.style.left = (svgRect.left + points[i][0]) + 'px';
-                    tooltip.style.top = (svgRect.top + padTop - 5) + 'px';
-
-                    tooltip.classList.remove('opacity-0');
-                    tooltip.classList.add('opacity-100');
-                }
-            };
-
-            const hideTooltip = () => {
-                activeIdx = -1;
-                if (tooltip) {
-                    tooltip.classList.remove('opacity-100');
-                    tooltip.classList.add('opacity-0');
-                }
-            };
-
-            // Mouse events
-            overlay.addEventListener('pointerenter', (e) => {
-                if (e.pointerType === 'mouse') updateTooltip(e.clientX);
-            });
-
-            overlay.addEventListener('pointermove', (e) => {
-                updateTooltip(e.clientX);
-            });
-
-            overlay.addEventListener('pointerleave', hideTooltip);
-
-            // Touch Drag / Tap specific handling
-            overlay.addEventListener('pointerdown', (e) => {
-                // Capture the pointer to track movement outside the chart temporarily
-                // DO NOT prevent default so vertical scrolling continues to work!
-                overlay.setPointerCapture(e.pointerId);
-                updateTooltip(e.clientX);
-            });
-
-            overlay.addEventListener('pointerup', (e) => {
-                overlay.releasePointerCapture(e.pointerId);
-                hideTooltip();
-            });
-
-            overlay.addEventListener('pointercancel', (e) => {
-                // Fired immediately by the browser if the user starts scrolling vertically!
-                hideTooltip();
-            });
-
-            svg.appendChild(overlay);
 
             container.appendChild(svg);
         }
