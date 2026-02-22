@@ -63,7 +63,20 @@
             position: relative;
         }
 
-        /* NOISE TEXTURE REMOVED per User Request */
+        /* BACKGROUND LANDSCAPE */
+        .landscape-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 45vh;
+            /* Increased height again */
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.85;
+            transition: opacity 1s ease;
+        }
+
 
         /* DYNAMIC ATMOSPHERES - Classes toggled by JS */
 
@@ -930,6 +943,27 @@
     <!-- VIEW CONTAINER -->
     <div id="view-container" class="fixed inset-0 w-full h-full flex overflow-hidden scroll-smooth no-scrollbar">
 
+        <!-- BACKGROUND LANDSCAPE (Global for App) -->
+        <div class="landscape-layer">
+            <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="absolute inset-0 w-full h-full">
+                <!-- Sky/Mountains -->
+                <path d="M0,170 L0,130 Q150,100 250,120 T500,110 T750,125 T1000,100 L1000,170 Z"
+                    fill="rgba(15,23,42,0.3)" />
+                <path d="M0,180 L0,150 Q200,120 400,140 T800,130 T1000,135 L1000,180 Z" fill="rgba(15,23,42,0.5)" />
+
+                <!-- Tannen/Bäume auf den Hügeln -->
+                <path
+                    d="M50,142 L55,120 L60,142 Z M65,145 L69,128 L73,145 Z M200,135 L206,110 L212,135 Z M350,140 L354,125 L358,140 Z M500,136 L506,105 L512,136 Z M530,138 L534,115 L538,138 Z M700,133 L705,110 L710,133 Z M850,135 L856,105 L862,135 Z M900,135 L904,118 L908,135 Z"
+                    fill="rgba(15,23,42,0.6)" />
+
+                <!-- Extra Curvy Mountain Road -->
+                <!-- Removed road as requested -->
+
+                <!-- Foreground hill to cover the bottom edge nicely -->
+                <path d="M0,200 L0,195 Q250,185 500,190 T1000,185 L1000,200 Z" fill="rgba(15,23,42,0.95)" />
+            </svg>
+        </div>
+
         <!-- === VIEW 1: WEATHER === -->
         <section id="view-weather" class="w-screen h-full flex-shrink-0 snap-center relative overflow-hidden">
             <!-- BACKGROUND EFFECTS (Modified for Swipe) -->
@@ -1229,16 +1263,32 @@
                         </div>
                     </div>
 
-                    <div id="rainChartSection" class="glass-panel rounded-2xl p-4 stagger-2">
-                        <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300 mb-3"><i
-                                data-lucide="umbrella" size="16"></i> Niederschlag (1h)</h3>
-                        <div class="flex justify-between items-end h-24 gap-2" id="rainBarsContainer">
-                            <div class="text-xs text-slate-400 w-full text-center flex items-center justify-center">
-                                Keine Daten
+                    <div id="rainChartSection"
+                        class="glass-panel rounded-2xl p-4 stagger-2 cursor-pointer transition active:scale-95 touch-manipulation"
+                        onclick="toggleRainChart()">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-semibold flex items-center gap-2 text-slate-300"><i
+                                    data-lucide="umbrella" size="16"></i> <span
+                                    id="rainChartTitleText">Niederschlag</span></h3>
+                            <div class="flex items-center gap-2">
+                                <span id="rainProbBadge"
+                                    class="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-[10px] hidden whitespace-nowrap flex items-center gap-1"><i
+                                        data-lucide="droplets" size="12"></i><span id="rainProbText">--%</span></span>
+                                <i data-lucide="chevron-down" id="rainChartChevron"
+                                    class="text-slate-400 transition-transform duration-300" size="16"></i>
                             </div>
                         </div>
-                        <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
-                            <span>Jetzt</span><span>15m</span><span>30m</span><span>45m</span>
+                        <div id="rainChartContent"
+                            class="max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out">
+                            <div class="relative w-full mt-3 pt-3 border-t border-slate-700/50">
+                                <div class="flex items-end h-24 gap-1.5 overflow-x-auto snap-x custom-scrollbar pb-1"
+                                    id="rainBarsContainer" style="touch-action: pan-x;">
+                                    <div
+                                        class="text-xs text-slate-400 w-full text-center flex items-center justify-center h-full">
+                                        Keine Daten
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -2975,27 +3025,23 @@
 
         // --- CHANGELOG SYSTEM ---
         // --- CHANGELOG SYSTEM ---
-        const CURRENT_APP_VERSION = "1.2.7";
+        const CURRENT_APP_VERSION = "2.3"; // Update this when deploying new features
 
-        // Manual Open
-        function showChangelog() {
-            const m = document.getElementById('changelogModal');
-            if (m) {
-                showModal('changelogModal');
-                lucide.createIcons();
+        function checkChangelog() {
+            const lastSeenVersion = localStorage.getItem('motoWeather_lastSeenVersion');
+
+            if (lastSeenVersion !== CURRENT_APP_VERSION) {
+                // Show changelog if version is new or not set
+                setTimeout(() => {
+                    showChangelog();
+                    localStorage.setItem('motoWeather_lastSeenVersion', CURRENT_APP_VERSION);
+                }, 1500); // Slight delay so users see the main app first
             }
         }
 
-        function checkChangelog() {
-            // DISABLED AUTO-SHOW per User Request
-            /*
-             const lastVer = localStorage.getItem('lastRunVersion_v1');
-             if(lastVer !== CURRENT_APP_VERSION) {
-                  showChangelog();
-                  localStorage.setItem('lastRunVersion_v1', CURRENT_APP_VERSION);
-             }
-             */
-            // Still update version silently so we track it? No, irrelevant if we don't show it.
+        function showChangelog() {
+            showModal('changelogModal');
+            lucide.createIcons();
         }
 
         function closeChangelog() {
@@ -3499,10 +3545,51 @@
             if (con) con.innerHTML = h; if (loc) loc.innerHTML = h;
         }
 
+        let rainChartExpanded = false;
+        function toggleRainChart() {
+            rainChartExpanded = !rainChartExpanded;
+            const content = document.getElementById('rainChartContent');
+            const titleText = document.getElementById('rainChartTitleText');
+            const chevron = document.getElementById('rainChartChevron');
+
+            if (rainChartExpanded) {
+                content.classList.remove('max-h-0', 'opacity-0');
+                content.classList.add('max-h-[250px]', 'opacity-100');
+                if (chevron) chevron.classList.add('rotate-180');
+                if (titleText) titleText.innerText = 'Niederschlag (3h)';
+            } else {
+                content.classList.add('max-h-0', 'opacity-0');
+                content.classList.remove('max-h-[250px]', 'opacity-100');
+                if (chevron) chevron.classList.remove('rotate-180');
+                if (titleText) titleText.innerText = 'Niederschlag';
+            }
+            if (lastWeatherData && lastWeatherData.minutely_15) renderRainChart(lastWeatherData.minutely_15);
+        }
+
         function renderRainChart(minutely15) {
             const container = document.getElementById('rainBarsContainer');
-            if (!minutely15 || !minutely15.precipitation || minutely15.precipitation.length < 4) { container.innerHTML = '<div class="text-xs text-slate-400 w-full text-center flex items-center justify-center">Keine Daten</div>'; return; }
+            if (!minutely15 || !minutely15.precipitation || minutely15.precipitation.length < 4) { container.innerHTML = '<div class="text-xs text-slate-400 w-full h-full text-center flex items-center justify-center">Keine Daten</div>'; return; }
             container.innerHTML = '';
+
+            const badge = document.getElementById('rainProbBadge');
+            const probText = document.getElementById('rainProbText');
+            if (badge && probText && lastWeatherData && lastWeatherData.hourly && lastWeatherData.hourly.precipitation_probability) {
+                let currentHourlyIndex = 0;
+                const nowHour = Date.now();
+                if (lastWeatherData.hourly.time) {
+                    for (let k = 0; k < lastWeatherData.hourly.time.length; k++) {
+                        if (new Date(lastWeatherData.hourly.time[k]).getTime() >= nowHour - 3600 * 1000) { currentHourlyIndex = k; break; }
+                    }
+                }
+                const prob = lastWeatherData.hourly.precipitation_probability[currentHourlyIndex];
+                if (prob !== undefined && prob > 0) {
+                    probText.innerText = `${prob}%`;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
             let startIndex = 0;
             const now = Date.now();
             if (minutely15.time) {
@@ -3512,13 +3599,25 @@
                     }
                 }
             }
-            for (let i = 0; i < 4; i++) {
+
+            const pointsToShow = 12; // Always render 3h, visibility handled by CSS
+            const barWidthClass = "min-w-[45px] flex-shrink-0";
+
+            for (let i = 0; i < pointsToShow; i++) {
                 const dataIndex = startIndex + i;
                 if (dataIndex >= minutely15.precipitation.length) break;
                 const val = minutely15.precipitation[dataIndex];
-                const height = Math.min(100, (val / 2.0) * 100);
-                const color = val > 1.0 ? "bg-blue-500" : "bg-blue-300/70";
-                container.innerHTML += `<div class="w-1/4 h-full flex flex-col justify-end items-center gap-1"><div class="w-full rounded-t-md ${color} rain-bar" style="height: ${Math.max(5, height)}%"></div><span class="text-[9px] text-slate-400">${val > 0 ? val.toFixed(1) : '0'}</span></div>`;
+                const height = Math.min(100, (val / 3.0) * 100);
+                const color = val > 1.5 ? "bg-blue-600 border-t border-blue-400/50" : (val > 0.5 ? "bg-blue-500" : (val > 0 ? "bg-blue-400/80" : "bg-blue-300/20"));
+
+                let timeLabel = "";
+                if (i === 0) timeLabel = "Jetzt";
+                else {
+                    const d = new Date(minutely15.time[dataIndex]);
+                    timeLabel = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                }
+
+                container.innerHTML += `<div class="${barWidthClass} h-full flex flex-col justify-end items-center gap-1 snap-start"><div class="w-full rounded-t-sm ${color} rain-bar transition-all duration-500" style="height: ${Math.max(4, height)}%"></div><span class="text-[9px] font-bold ${val > 0 ? 'text-white' : 'text-slate-500'}">${val > 0 ? val.toFixed(1) : '0'}</span><span class="text-[9px] font-medium text-slate-400">${timeLabel}</span></div>`;
             }
         }
 
@@ -4056,7 +4155,7 @@
 
             // Added apparent_temperature to current fetch
             // NEU: cloud_cover, wind_gusts_10m, surface_pressure (dew_point_2m entfernt)
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index,cloud_cover,wind_gusts_10m,surface_pressure&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,visibility,uv_index,cloud_cover,wind_gusts_10m,surface_pressure&hourly=temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&minutely_15=precipitation&forecast_days=7&timezone=auto&_t=${Date.now()}`;
             try { const r = await fetch(url); if (!r.ok) throw new Error(); lastWeatherData = await r.json(); saveToCache(name, lastWeatherData); updateUI(name); }
             catch (e) {
                 if (!isBackground) { // Only show errors if user initiated
