@@ -450,13 +450,28 @@
             font-family: inherit !important;
         }
 
+        .leaflet-bottom.leaflet-right {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
         .leaflet-control-attribution {
-            background: rgba(15, 23, 42, 0.8) !important;
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(4px);
             color: #64748b !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 9px !important;
+            border-radius: 8px !important;
+            /* Abgerundete Ecken überall, da mittig */
+            padding: 2px 8px !important;
+            margin-bottom: 2px !important;
+            text-align: center !important;
         }
 
         .leaflet-control-attribution a {
             color: #94a3b8 !important;
+            text-decoration: none !important;
         }
 
         .leaflet-control-zoom {
@@ -1315,7 +1330,7 @@
                                     class="text-[10px] text-slate-400 mr-2 uppercase tracking-wider font-bold">Live</span>
                             </div>
                             <div
-                                class="absolute bottom-6 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
+                                class="absolute bottom-10 left-4 right-4 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 flex items-center gap-3 z-[400]">
                                 <button onclick="toggleRadarPlayback()" id="radarPlayBtn"
                                     class="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition shadow-lg shrink-0 touch-manipulation"><i
                                         data-lucide="pause" size="16"></i></button>
@@ -1323,7 +1338,7 @@
                                     oninput="handleRadarScrub(this.value)"
                                     class="flex-grow h-1 bg-slate-600 rounded-lg cursor-pointer touch-manipulation">
                                 <span id="radarTimeLabel"
-                                    class="text-xs font-mono font-bold text-white min-w-[40px] text-right">--:--</span>
+                                    class="text-xs tabular-nums tracking-wide font-bold text-white min-w-[40px] text-center">--:--</span>
                             </div>
                         </div>
                     </div>
