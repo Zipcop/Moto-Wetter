@@ -1617,66 +1617,66 @@
                             </div>
                         </div>
 
-
                     </div>
+
                 </div>
-
-                <!-- Grid Config Section (Collapsible) -->
-                <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
-                    <button onclick="toggleSettingsSection('grid')"
-                        class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
-                        <!-- UMBENANNT: Info-Kacheln -> MOTO INDEX INFOS -->
-                        <h4 class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2"><i
-                                data-lucide="layout-grid" size="14"></i> MOTO INDEX INFOS</h4>
-                        <i id="icon-grid" data-lucide="chevron-right"
-                            class="text-slate-400 transition-transform duration-300"></i>
-                    </button>
-                    <div id="content-grid" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
-                        <div id="gridConfigList" class="space-y-1 mb-2 mt-2"></div>
-                        <div class="text-[10px] text-slate-400 text-right">Maximal 6 Infos</div>
-                        <div id="gridAvailableList" class="space-y-1 mt-3 pt-3 border-t border-slate-700/50"></div>
-                    </div>
-                </div>
-
-                <!-- Layout Section (Collapsible) -->
-                <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
-                    <button onclick="toggleSettingsSection('layout')"
-                        class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
-                        <h4 class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2"><i
-                                data-lucide="eye" size="14"></i> Layout</h4>
-                        <i id="icon-layout" data-lucide="chevron-right"
-                            class="text-slate-400 transition-transform duration-300"></i>
-                    </button>
-                    <div id="content-layout" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
-                        <div class="space-y-2 mt-2" id="layoutList"></div>
-                        <div class="pt-2 mt-2 border-t border-slate-600/50">
-                            <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg mb-2">
-                                <span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')"
-                                    id="vis-weather-btn" class="text-green-400"><i data-lucide="eye"
-                                        size="18"></i></button>
-                            </div>
-                            <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg"><span>Moto
-                                    Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn"
-                                    class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Changelog Button (Manual) -->
-                <button onclick="showChangelog()"
-                    class="w-full p-3 mt-4 bg-slate-800/50 rounded-xl border border-emerald-500/30 flex items-center justify-between text-left hover:bg-emerald-500/10 transition group">
-                    <span class="text-xs font-bold uppercase text-emerald-400 flex items-center gap-2">
-                        <i data-lucide="sparkles" size="14"></i> Was ist neu?
-                    </span>
-                    <i data-lucide="chevron-right" class="text-slate-400 group-hover:text-white transition"></i>
-                </button>
-
-
-                <button onclick="resetLayout()"
-                    class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Reset
-                    App</button>
             </div>
+
+            <!-- Grid Config Section (Collapsible) -->
+            <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
+                <button onclick="toggleSettingsSection('grid')"
+                    class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
+                    <!-- UMBENANNT: Info-Kacheln -> MOTO INDEX INFOS -->
+                    <h4 class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2"><i
+                            data-lucide="layout-grid" size="14"></i> MOTO INDEX INFOS</h4>
+                    <i id="icon-grid" data-lucide="chevron-right"
+                        class="text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div id="content-grid" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                    <div id="gridConfigList" class="space-y-1 mb-2 mt-2"></div>
+                    <div class="text-[10px] text-slate-400 text-right">Maximal 6 Infos</div>
+                    <div id="gridAvailableList" class="space-y-1 mt-3 pt-3 border-t border-slate-700/50"></div>
+                </div>
+            </div>
+
+            <!-- Layout Section (Collapsible) -->
+            <div class="bg-slate-800/50 rounded-xl border border-slate-600/50 overflow-hidden">
+                <button onclick="toggleSettingsSection('layout')"
+                    class="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 transition">
+                    <h4 class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2"><i data-lucide="eye"
+                            size="14"></i> Layout</h4>
+                    <i id="icon-layout" data-lucide="chevron-right"
+                        class="text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div id="content-layout" class="hidden p-3 pt-0 border-t border-slate-700/50 mt-1">
+                    <div class="space-y-2 mt-2" id="layoutList"></div>
+                    <div class="pt-2 mt-2 border-t border-slate-600/50">
+                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg mb-2">
+                            <span>Wetter-Daten</span><button onclick="toggleSubVisibility('weather')"
+                                id="vis-weather-btn" class="text-green-400"><i data-lucide="eye" size="18"></i></button>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded-lg"><span>Moto
+                                Index</span><button onclick="toggleSubVisibility('moto')" id="vis-moto-btn"
+                                class="text-green-400"><i data-lucide="eye" size="18"></i></button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Changelog Button (Manual) -->
+            <button onclick="showChangelog()"
+                class="w-full p-3 mt-4 bg-slate-800/50 rounded-xl border border-emerald-500/30 flex items-center justify-between text-left hover:bg-emerald-500/10 transition group">
+                <span class="text-xs font-bold uppercase text-emerald-400 flex items-center gap-2">
+                    <i data-lucide="sparkles" size="14"></i> Was ist neu?
+                </span>
+                <i data-lucide="chevron-right" class="text-slate-400 group-hover:text-white transition"></i>
+            </button>
+
+
+            <button onclick="resetLayout()"
+                class="w-full py-2 mt-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">Reset
+                App</button>
         </div>
+    </div>
     </div>
 
     <!-- BEST RIDE DETAILS MODAL -->
@@ -3672,31 +3672,109 @@
 
         async function fetchRadarData() {
             try {
-                // DWD Radar WMS generates its time based on 5 minute intervals.
-                // We create a timeline ranging from -60 minutes to +120 minutes (Prognose)
+                // Fetch strict DWD GetCapabilities to get exact valid timestamps
+                // Fetch strict DWD GetCapabilities to get exact valid timestamps
+                // This prevents the "blank tiles" issue by only requesting times the server actually has.
+                const url = 'https://maps.dwd.de/geoserver/dwd/wms?request=GetCapabilities&service=WMS&version=1.3.0';
+
+                const response = await fetch(url);
+                const xmlText = await response.text();
+
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
                 radarTimestamps = [];
-                const now = new Date();
-                // Round down to nearest 5 minutes
-                now.setMinutes(Math.floor(now.getMinutes() / 5) * 5);
-                now.setSeconds(0);
-                now.setMilliseconds(0);
+                let timeDimension = null;
 
-                // 12 frames past (1 hour)
-                for (let i = 12; i > 0; i--) {
-                    const t = new Date(now.getTime() - i * 5 * 60000);
-                    radarTimestamps.push({ time: t.getTime() / 1000, dateObj: t, isFuture: false, offsetMin: -i * 5 });
+                // Find all Layer elements
+                const layers = xmlDoc.getElementsByTagName("Layer");
+                for (let i = 0; i < layers.length; i++) {
+                    const nameNode = layers[i].getElementsByTagName("Name")[0];
+                    if (nameNode && (nameNode.textContent === "dwd:Radar_rv_product_1x1km_ger" || nameNode.textContent === "Radar_rv_product_1x1km_ger")) {
+                        // Extract time dimension
+                        const dims = layers[i].getElementsByTagName("Dimension");
+                        for (let j = 0; j < dims.length; j++) {
+                            if (dims[j].getAttribute("name") === "time") {
+                                timeDimension = dims[j].textContent.trim();
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
 
-                // Current
-                radarTimestamps.push({ time: now.getTime() / 1000, dateObj: now, isFuture: false, offsetMin: 0 });
-                lastPastIndex = radarTimestamps.length - 1;
+                if (!timeDimension) throw new Error("Could not find time dimension in DWD Capabilities");
 
-                // 24 frames future (2 hours forecast)
-                for (let i = 1; i <= 24; i++) {
-                    const t = new Date(now.getTime() + i * 5 * 60000);
-                    radarTimestamps.push({ time: t.getTime() / 1000, dateObj: t, isFuture: true, offsetMin: i * 5 });
-                }
+                // Parse ISO 8601 intervals, e.g., '2026-02-22T12:00:00.000Z/2026-02-22T17:00:00.000Z/PT5M'
+                // and comma separated lists '2026-02-22T12:00:00Z,2026-02-22T12:05:00Z'
+                const timeStringsArray = timeDimension.split(',');
+                const nowMs = Date.now();
+                const extractedTimesMs = [];
 
+                timeStringsArray.forEach(tStr => {
+                    tStr = tStr.trim();
+                    if (tStr.includes('/')) {
+                        // It's an interval: start/end/duration (e.g., PT5M)
+                        const parts = tStr.split('/');
+                        if (parts.length === 3) {
+                            const startMs = new Date(parts[0]).getTime();
+                            const endMs = new Date(parts[1]).getTime();
+                            const stepStr = parts[2];
+
+                            // Extract minutes from PT5M or PT10M
+                            let stepMs = 5 * 60000; // Default 5 mins
+                            const minMatch = stepStr.match(/PT(\d+)M/);
+                            if (minMatch) {
+                                stepMs = parseInt(minMatch[1]) * 60000;
+                            }
+
+                            if (!isNaN(startMs) && !isNaN(endMs)) {
+                                for (let t = startMs; t <= endMs; t += stepMs) {
+                                    extractedTimesMs.push(t);
+                                }
+                            }
+                        }
+                    } else {
+                        // Single static timestamp
+                        const t = new Date(tStr).getTime();
+                        if (!isNaN(t)) extractedTimesMs.push(t);
+                    }
+                });
+
+                // Remove duplicates and sort
+                const uniqueTimes = [...new Set(extractedTimesMs)].sort((a, b) => a - b);
+
+                // Keep only the last 60 minutes (past) and up to 120 mins (forecast) to optimize UI
+                uniqueTimes.forEach(tsMs => {
+                    const offsetMin = Math.round((tsMs - nowMs) / 60000);
+                    if (offsetMin >= -60 && offsetMin <= 120) {
+                        const dateObj = new Date(tsMs);
+                        radarTimestamps.push({
+                            time: Math.floor(tsMs / 1000),
+                            dateObj: dateObj,
+                            isoString: dateObj.toISOString(),
+                            isFuture: offsetMin > 0,
+                            offsetMin: offsetMin
+                        });
+                    }
+                });
+
+                if (radarTimestamps.length === 0) throw new Error("No valid recent radar timestamps found");
+
+                // Sort chronologically just in case
+                radarTimestamps.sort((a, b) => a.time - b.time);
+
+                // Find "Jetzt" (closest to 0 or last past)
+                let closestIdx = 0;
+                let minDiff = Infinity;
+                radarTimestamps.forEach((ts, idx) => {
+                    if (!ts.isFuture) {
+                        const diff = Math.abs(ts.offsetMin);
+                        if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
+                    }
+                });
+
+                lastPastIndex = closestIdx;
                 currentRadarIndex = lastPastIndex;
 
                 const timeline = document.getElementById('radarTimeline');
@@ -3705,7 +3783,7 @@
                     timeline.value = currentRadarIndex;
 
                     const total = radarTimestamps.length;
-                    const pct = (lastPastIndex / (total - 1)) * 100;
+                    const pct = total > 1 ? (lastPastIndex / (total - 1)) * 100 : 100;
                     timeline.style.setProperty('--past-pct', pct + '%');
                 }
 
@@ -3714,7 +3792,7 @@
 
             } catch (e) {
                 console.error("Radar initialization failed", e);
-                document.getElementById('radarTimeLabel').innerText = "Offline";
+                document.getElementById('radarTimeLabel').innerText = "Err: " + e.message;
             }
         }
 
@@ -3777,8 +3855,8 @@
             const timeline = document.getElementById('radarTimeline');
             if (timeline && isRadarPlaying) { timeline.value = index; }
 
-            // Format time string for DWD WMS: YYYY-MM-DDTHH:MM:00Z
-            const isoTime = time.toISOString().substring(0, 16) + ":00Z";
+            // Use the precise iso string we got from the server
+            const isoTime = tsObj.isoString;
 
             // DWD WMS Layer 
             const layerUrl = 'https://maps.dwd.de/geoserver/dwd/wms';
@@ -4096,6 +4174,11 @@
                 if (precip === 0) {
                     // console.log("Fixing Weather Code: Rain indicated but 0mm. Showing Cloud instead.");
                     return 3; // Bedeckt
+                }
+            } else {
+                // If it's a dry code but there is precipitation, upgrade it to Rain
+                if (precip > 0) {
+                    return 61; // Regen
                 }
             }
             return code;
